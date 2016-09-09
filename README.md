@@ -1,4 +1,4 @@
-# jopama
+# Jopama
 Scalable distributed database.
 
 # internals
