@@ -1,18 +1,18 @@
 # Jopama
 Scalable distributed database.
 
-# internals
+# Internals
 There are two types of objects stored:
 * data
 * transaction
 
 ## Data object
-### data
+#### Data
 * version: INT (initially 0)
 * value: object data (initially NULL)
 * owner: INT (initially NULL)
 
-### operations
+#### Operations
 * lock (id):
 	* owner := id
 * unlock:
