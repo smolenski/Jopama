@@ -13,14 +13,29 @@ There are two types of objects stored:
 * owner: INT (initially NULL)
 
 #### Operations
-* lock (id):
-	* owner := id
+* lock (tid):
+	* self.tid := tid
 * unlock:
-	* owner := NULL
+	* self.tid := NULL
+* update (value):
+	* self.value := value 
 * query:
-	* returns (owner,version,value)
-* update (new_value):
-	* version := version + 1
-	* value := new_value
+	* return value
 
 ## Transaction object
+#### Data
+* ++ensambleTid (in ensamble of 5)
+* list(ids)
+* fun: values -> values
+
+#### Operations
+# perform
+	* locking (ensambleTid)
+	* querying and saving in transaction
+	* updating
+	* fencingWithUnlocking (ensambleTid)
+
+
+
+
+
