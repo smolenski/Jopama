@@ -11,6 +11,7 @@ There are two types of objects stored:
 * version: INT (initially 0)
 * value: object data (initially NULL)
 * owner: INT (initially NULL)
+* ensambleTidFence[numEnsambles]
 
 #### Operations
 * lock (tid):
@@ -29,7 +30,7 @@ There are two types of objects stored:
 * fun: values -> values
 
 #### Operations
-# perform
+* perform
 	* locking (ensambleTid)
 	* querying and saving in transaction
 	* updating
