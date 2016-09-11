@@ -36,6 +36,7 @@ There are two types of objects stored:
 	* locking (ensambleTid)
 	* querying and saving in transaction
 	* updating
+	* waiting until lowest not commited is eqaul ensambleTid
 	* fencingWithUnlocking (ensambleTid)
 
 
