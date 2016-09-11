@@ -31,6 +31,8 @@ There are two types of objects stored:
 
 #### Operations
 * perform
+	* assign ensambleTid
+	* locally locking (these object are locked by this transactions and all transactions with lowest ensambleTid will not need to lock any of these objects)
 	* locking (ensambleTid)
 	* querying and saving in transaction
 	* updating
