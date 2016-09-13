@@ -43,12 +43,12 @@ There are two types of objects stored:
 * done: false
 
 #### Data (locking - independently for each id)
-* both retrieved atomically: rver, rown
-* both retrieved atomically: vtolock, vlocked
-* vlocked=rver,own=TID <- vlocked=NIL,own=TID
-* vlocked=NIL,own=TID <- vlocked=NIL,vtolock=rval,own=NIL
-* vlocked=NIL,vtolock=rval,own=NIL <- vlocked=NIL,vtolock<rval,own=NIL
-* own=NIL <- vlocked=NIL,own!=NIL,own!=TID
-* vlocked=NIL,vtolock=rval,own=NIL <- vlocked=NIL,vtolock=NIL
-
+* both retrieved and updated atomically: rver, rown
+* both retrieved and updated atomically: vtolock, vlocked
+* retrieve both periodically, and do actions with respect to these rules:
+	* vlocked=rver,own=TID <- vlocked=NIL,own=TID
+	* vlocked=NIL,own=TID <- vlocked=NIL,vtolock=rval,own=NIL
+	* vlocked=NIL,vtolock=rval,own=NIL <- vlocked=NIL,vtolock<rval,own=NIL
+	* own=NIL <- vlocked=NIL,own!=NIL,own!=TID
+	* vlocked=NIL,vtolock=rval,own=NIL <- vlocked=NIL,vtolock=NIL
 
