@@ -10,36 +10,45 @@ There are two types of objects stored:
 #### Data
 * version: INT (initially 0)
 * value: object data (initially NULL)
-* owner: INT (initially NULL)
-* ensambleTidFence[numEnsambles]
+* owner: INT (initially NULL) - LOCKED/UNLOCKED
 
 #### Operations
 * lock (tid):
-	* self.tid := tid
+	* self.owner := tid
 * unlock:
 	* self.tid := NULL
 * update (value):
 	* self.value := value 
+	* self.version := self.version + 1
 * query:
-	* return value
+	* return version,value,owner
 
 ## Transaction object
-#### Data
-* ++ensambleTid (in ensamble of 5)
-* list(ids)
+#### Data ()
+* tid
 * fun: values -> values
+* [ids]:
+	* versionToLock
+	* versionLocked
+	* valueLocked
+* done
 
-#### Operations
-* perform
-	* assign ensambleTid
-	* locally locking (these object are locked by this transactions and all transactions with lowest ensambleTid will not need to lock any of these objects)
-	* locking (ensambleTid)
-	* querying and saving in transaction
-	* updating
-	* waiting until lowest not commited is eqaul ensambleTid
-	* fencingWithUnlocking (ensambleTid)
+#### Data (initial)
+* 1022
+* fun: lambda values : e + 1 for e in values
+* [ids]
+	* NULL
+	* NULL
+	* NULL
+* done: false
 
-
-
+#### Data (locking - independently for each id)
+both retrieved atomically: rver, rown
+both retrieved atomically: vtolock, vlocked
+vlocked=rver,own=TID <- vlocked=NIL,own=TID
+vlocked=NIL,own=TID <- vlocked=NIL,vtolock=rval,own=NIL
+vlocked=NIL,vtolock=rval,own=NIL <- vlocked=NIL,vtolock<rval,own=NIL
+own=NIL <- vlocked=NIL,own!=NIL,own!=TID
+vlocked=NIL,vtolock=rval,own=NIL <- vlocked=NIL,vtolock=NIL
 
 
