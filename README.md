@@ -61,5 +61,11 @@ There are two types of objects stored:
 		* read rver,rown if rown=TID then cmpSet(rver)(vlocked=NIL -> vlocked=rver)
 	* updating/retrieving value:
 		* read vlocked,value if vlocked!=NIL and value=NIL then read rver,rown,rval cmpSet(vlocked=rver,value=NIL -> value=rval)
-* updating value and releasing:
-	* read whole transaction, if all values retrieved then outValues=fun(value), for each value do cmpSet(rver=vlocked -> rval=outValue,++rver,rown=NIL)
+
+* computing:
+	* read transaction, if all values != NIL
+		* outValues = fun(values)
+
+* updating values and releasing:
+	* read transaction, if all values != NIL and done == false -> retrieve rver[]; cmpSet(rver=vlocked -> rval=outValue,++rver,rown=NIL)
+	* read transaction, if all values != NIL and done == false, retrieve rown[]; cmpSet(done=true)
