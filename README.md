@@ -6,66 +6,28 @@ There are two types of objects stored:
 * data
 * transaction
 
-## Data object
-#### Data
-* version: INT (initially 0)
-* value: object data (initially NULL)
-* owner: INT (initially NULL) - LOCKED/UNLOCKED
+Object:
+- rver
+- rown
+- val
+- newval
 
-#### Operations
-* lock (tid):
-	* self.owner := tid
-* unlock:
-	* self.tid := NULL
-* update (value):
-	* self.value := value 
-	* self.version := self.version + 1
-* query:
-	* return version,value,owner
+Transaction:
+- done
+- object data:
+--- vtolock
+--- vlocked
+- fun
 
-## Transaction object
-#### Data ()
-* tid
-* fun: values -> values
-* [ids]:
-	* versionToLock
-	* versionLocked
-	* valueLocked
-* done
-
-#### Data (initial)
-* 1022
-* fun: lambda values : e + 1 for e in values
-* [ids]
-	* NULL
-	* NULL
-	* NULL
-* done: false
-
-#### Data (locking - independently for each id)
-* both retrieved and updated atomically: rver, rown
-* both retrieved and updated atomically: vtolock, vlocked
-* retrieve both periodically, and do actions with respect to these rules:
-	* vlocked=rver,own=TID <- vlocked=NIL,own=TID
-	* vlocked=NIL,own=TID <- vlocked=NIL,vtolock=rver,own=NIL
-	* vlocked=NIL,vtolock=rver,own=NIL <- vlocked=NIL,vtolock<rver,own=NIL
-	* own=NIL <- vlocked=NIL,own!=NIL,own!=TID
-	* vlocked=NIL,vtolock=rver,own=NIL <- vlocked=NIL,vtolock=NIL
-
-* locking (for all values) and retrieving:
-	* updating vtolock:
-		* query rver,rown, if rown=NIL then cmpSet(rver)(vlocked=NIL && (vtolock=NIL || vtolock<rver) -> vtolock=rver)
-	* updating rown:
-		* read vtolock, if vtolock!=NIL then cmpSet(vtolock,TID)(rver=vtolock && rown=NIL -> rown=TID)
-	* updating vlocked:
-		* read rver,rown if rown=TID then cmpSet(rver)(vlocked=NIL -> vlocked=rver)
-	* updating/retrieving value:
-		* read vlocked,value if vlocked!=NIL and value=NIL then read rver,rown,rval cmpSet(vlocked=rver,value=NIL -> value=rval)
-
-* computing:
-	* read transaction, if all values != NIL
-		* outValues = fun(values)
-
-* updating values and releasing:
-	* read transaction, if all values != NIL and done == false -> retrieve rver[]; cmpSet(rver=vlocked -> rval=outValue,++rver,rown=NIL)
-	* read transaction, if all values != NIL and done == false, retrieve rown[]; if all rown!=TID then cmpSet(done=true)
+::add
+create TID with fun with all objects (vtolock=NIL,vlocked=NIL)
+::advanceVTolock
+with rver,rown=NIL cmpSet(rver)(vlocked=NIL,vtolock=NIL || vtolock<rver -> vtolock=rver)
+::lock
+with vtolock cmpSet(vtolock)(rown=NIL,rver=vtolock -> rown=TID)
+::update
+with all objects rown=TID all objects cmpSet(rown=TID -> newval=fun(values))[i]
+::release
+with all objects rown=TID and newval[i]!=NIL -> with vlocked cmpSet(rown=TID -> rver=vlocked+1,rval=rnewval,rown=NIL
+::delete
+if all objects vlocked!=NIL then if all objects rown!=NIL then remove TID
