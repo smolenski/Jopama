@@ -1,5 +1,5 @@
 # Jopama
-Scalable distributed database.
+Scalable transactional distributed database.
 
 # Internals
 There are two types of objects stored:
