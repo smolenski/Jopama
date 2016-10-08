@@ -22,7 +22,7 @@ Transaction:
 * ::add
     * create TID with fun with all objects (vtolock=NIL,vlocked=NIL)
 * ::advanceVTolock
-    * with rver,rown=NIL cmpSet(rver)(vlocked=NIL,vtolock=NIL || vtolock<rver -> vtolock=rver)
+    * with rver,rown=NIL cmpSet(rver)(vlocked=NIL,vtolock=NIL || vtolock < rver -> vtolock=rver)
 * ::lock
     * with vtolock cmpSet(vtolock)(rown=NIL,rver=vtolock -> rown=TID)
 * ::update
