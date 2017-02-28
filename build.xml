@@ -1,0 +1,70 @@
+<project name="Client1" default="main">
+
+    <property name="src.dir"     value="src"/>
+
+    <property name="build.dir"   value="build"/>
+    <property name="classes.dir" value="${build.dir}/classes"/>
+    <property name="jar.dir"     value="${build.dir}/jar"/>
+    <property name="report.dir"     value="report"/>
+
+    <property name="main-class"  value="pl.rodia.jopama.integration1.Integrator"/>
+
+    <path id="libraries">
+        <fileset dir="${basedir}/../../lib/" includes="**/*.jar"/>
+        <fileset dir="${basedir}/../../" includes="*.jar"/>
+        <fileset dir="${basedir}/lib/" includes="*.jar"/>
+    </path>
+	
+	<path id="application">
+		<path location="${jar.dir}/${ant.project.name}.jar"/>
+	</path>
+
+    <target name="clean">
+        <delete dir="${build.dir}"/>
+    	<delete dir="${report.dir}"/>
+    </target>
+
+    <target name="compile">
+        <mkdir dir="${classes.dir}"/>
+        <mkdir dir="${report.dir}"/>
+    	<javac srcdir="${src.dir}" destdir="${classes.dir}" classpathref="libraries" includeantruntime="true"/>
+    </target>
+
+    <target name="jar" depends="compile">
+        <mkdir dir="${jar.dir}"/>
+        <jar destfile="${jar.dir}/${ant.project.name}.jar" basedir="${classes.dir}">
+            <manifest>
+                <attribute name="Main-Class" value="${main-class}"/>
+            </manifest>
+        </jar>
+    </target>
+
+	<target name="junit" depends="jar">
+		<junit printsummary="yes" showoutput="true" timeout="2000">
+			<classpath>
+				<path refid="libraries"/>
+				<path refid="application"/>
+			</classpath>
+			<formatter type="xml" usefile="yes"/>
+			<batchtest fork="yes" todir="${report.dir}">
+				<fileset dir="${src.dir}">
+					<include name="**/*Test.java"/>
+				</fileset>
+			</batchtest>
+		</junit>
+	</target>
+	
+    <target name="run" depends="jar">
+        <java fork="true" classname="${main-class}">
+		<classpath>
+			<path refid="libraries"/>
+			<path refid="application"/>
+		</classpath>
+	</java>
+    </target>
+
+    <target name="clean-build" depends="clean,jar"/>
+
+    <target name="main" depends="clean,run"/>
+
+</project>
