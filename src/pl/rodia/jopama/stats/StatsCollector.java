@@ -2,6 +2,9 @@ package pl.rodia.jopama.stats;
 
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import pl.rodia.mpf.Task;
 import pl.rodia.mpf.TaskRunner;
 
@@ -46,7 +49,7 @@ public class StatsCollector
 						tick();
 					}
 				},
-				new Long(5000)
+				new Long(10000)
 		);
 	}
 
@@ -64,7 +67,7 @@ public class StatsCollector
 								StatsResult result
 						)
 						{
-							System.out.println(
+							logger.info(
 									result
 							);
 						}
@@ -81,4 +84,5 @@ public class StatsCollector
 	TaskRunner taskRunner;
 	Thread taskRunnerThread;
 	List<StatsAsyncSource> sources;
+	static final Logger logger = LogManager.getLogger();
 }

@@ -3,6 +3,8 @@ package pl.rodia.mpf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
 public class TasksRunnerTest
@@ -31,7 +33,7 @@ public class TasksRunnerTest
 	@Test
 	public void scheduledTaskShouldBeExecuted() throws InterruptedException
 	{
-		System.out.println(
+		logger.info(
 				"Running scheduledTaskShouldBeExecuted"
 		);
 		this.start();
@@ -48,7 +50,7 @@ public class TasksRunnerTest
 	@Test
 	public void scheduledTimedTaskShouldBeExecuted() throws InterruptedException
 	{
-		System.out.println(
+		logger.info(
 				"Running scheduledTimedTaskShouldBeExecuted"
 		);
 		this.start();
@@ -68,7 +70,7 @@ public class TasksRunnerTest
 	@Test
 	public void scheduledTasksShouldBeExecuted() throws InterruptedException
 	{
-		System.out.println(
+		logger.info(
 				"Running scheduledTasksShouldBeExecuted"
 		);
 		this.start();
@@ -136,7 +138,7 @@ public class TasksRunnerTest
 	@Test
 	public void scheduledTimedTaskShouldBeExecutedInPlannedTimeOrder() throws InterruptedException
 	{
-		System.out.println(
+		logger.info(
 				"Running scheduledTimedTaskShouldBeExecutedInPlannedTimeOrder"
 		);
 		this.start();
@@ -190,13 +192,13 @@ public class TasksRunnerTest
 
 		public synchronized void execute()
 		{
-			System.out.println(
+			logger.debug(
 					"Executing id: " + this.id
 			);
 			this.executed = true;
 			TasksRunnerTest.incSeq();
 			this.order = TasksRunnerTest.seq;
-			System.out.println(
+			logger.debug(
 					"Executing id: " + this.id + " order: " + this.order
 			);
 			this.notify();
@@ -236,4 +238,5 @@ public class TasksRunnerTest
 	static int seq;
 	TaskRunner taskRunner;
 	Thread taskRunnerThread;
+	static final Logger logger = LogManager.getLogger();
 }

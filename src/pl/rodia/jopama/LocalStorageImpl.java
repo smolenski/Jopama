@@ -20,7 +20,7 @@ public class LocalStorageImpl extends LocalStorage
 	public Transaction getTransaction(
 			Integer transactionId
 	)
-	{		
+	{
 		return this.transactions.get(
 				transactionId
 		);
@@ -36,24 +36,30 @@ public class LocalStorageImpl extends LocalStorage
 		);
 	}
 
-	public void putComponent(
+	public Boolean putComponent(
 			Integer componentId, Component component
 	)
 	{
+		assert component != null;
+		Component oldComponent = this.getComponent(componentId);
 		this.components.put(
 				componentId,
 				component
 		);
+		return !component.equals(oldComponent);
 	}
 
-	public void putTransaction(
+	public Boolean putTransaction(
 			Integer transactionId, Transaction transaction
 	)
 	{
+		assert transaction != null;
+		Transaction oldTransaction = this.getTransaction(transactionId);
 		this.transactions.put(
 				transactionId,
 				transaction
 		);
+		return !transaction.equals(oldTransaction);
 	}
 
 	Map<Integer, Transaction> transactions;

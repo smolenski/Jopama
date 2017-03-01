@@ -3,6 +3,9 @@ package pl.rodia.jopama;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import pl.rodia.jopama.data.Component;
 import pl.rodia.jopama.data.Transaction;
 import pl.rodia.jopama.data.UnifiedAction;
@@ -89,7 +92,7 @@ public class TransactionProcessorImpl extends TransactionProcessor
 					}
 				},
 				new Long(
-						2 * 1000
+						30 * 1000
 				)
 		);
 		this.processingScheduled = true;
@@ -118,31 +121,47 @@ public class TransactionProcessorImpl extends TransactionProcessor
 				change.componentChange != null
 			)
 			{
-				System.out.println(this.taskRunner.name + ":changeComponent" + " CURRENT: " + change.componentChange.currentVersion + " NEXT: " + change.componentChange.nextVersion);
+				logger.debug(
+						this.taskRunner.name + ":changeComponent, componentId: " + change.componentChange.componentId + " CURRENT: " + change.componentChange.currentVersion + " NEXT: "
+								+ change.componentChange.nextVersion
+				);
 				this.storageGateway.changeComponent(
 						change.componentChange,
-						this.createNewComponentVersionHandler(change.componentChange.transactionId, change.componentChange.componentId)
+						this.createNewComponentVersionHandler(
+								change.componentChange.transactionId,
+								change.componentChange.componentId
+						)
 				);
 			}
 			if (
 				change.transactionChange != null
 			)
 			{
-				System.out.println(this.taskRunner.name + ":changeTransaction" + " CURRENT: " + change.transactionChange.currentVersion + " NEXT: " + change.transactionChange.nextVersion);
+				logger.debug(
+						this.taskRunner.name + ":changeTransaction, transactionId: " + change.transactionChange.transactionId + " CURRENT: " + change.transactionChange.currentVersion + " NEXT: "
+								+ change.transactionChange.nextVersion
+				);
 				this.storageGateway.changeTransaction(
 						change.transactionChange,
-						this.createNewTransactionVersionHandler(change.transactionChange.transactionId)
+						this.createNewTransactionVersionHandler(
+								change.transactionChange.transactionId
+						)
 				);
 			}
 			if (
 				change.downloadRequest != null
 			)
 			{
-				System.out.println(this.taskRunner.name + ":downloadRequest" + " transactionId: " + change.downloadRequest.transactionId + " componentId: " + change.downloadRequest.componentId);
+				logger.debug(
+						this.taskRunner.name + ":downloadRequest" + " transactionId: " + change.downloadRequest.transactionId
+								+ " componentId: " + change.downloadRequest.componentId
+				);
 				assert change.downloadRequest.transactionId != null;
 				this.storageGateway.requestTransaction(
 						change.downloadRequest.transactionId,
-						this.createNewTransactionVersionHandler(change.downloadRequest.transactionId)
+						this.createNewTransactionVersionHandler(
+								change.downloadRequest.transactionId
+						)
 				);
 				if (
 					change.downloadRequest.componentId != null
@@ -150,41 +169,59 @@ public class TransactionProcessorImpl extends TransactionProcessor
 				{
 					this.storageGateway.requestComponent(
 							change.downloadRequest.componentId,
-							this.createNewComponentVersionHandler(change.downloadRequest.transactionId, change.downloadRequest.componentId)
+							this.createNewComponentVersionHandler(
+									change.downloadRequest.transactionId,
+									change.downloadRequest.componentId
+							)
 					);
 				}
 			}
 		}
 		else
 		{
-			System.out.println(this.taskRunner.name + ":getChange - null");
+			logger.debug(
+					this.taskRunner.name + ":getChange - null"
+			);
 		}
 	}
 
-	private NewComponentVersionFeedback createNewComponentVersionHandler(Integer transactionId, Integer componentId)
+	private NewComponentVersionFeedback createNewComponentVersionHandler(
+			Integer transactionId, Integer componentId
+	)
 	{
 		return new NewComponentVersionFeedback()
 		{
 			@Override
 			public void success(
 					Component component
-					)
+			)
 			{
-				storage.putComponent(componentId, component);
-				processTransaction(transactionId);
+				if (
+					storage.putComponent(
+							componentId,
+							component
+					)
+				)
+				{
+					processTransaction(
+							transactionId
+					);
+				}
 			}
-		
+
 			@Override
 			public void failure(
 					ErrorCode errorCode
-					)
+			)
 			{
 				assert errorCode != ErrorCode.NOT_EXISTS;
 			}
 		};
 	}
 
-	private NewTransactionVersionFeedback createNewTransactionVersionHandler(Integer transactionId)
+	private NewTransactionVersionFeedback createNewTransactionVersionHandler(
+			Integer transactionId
+	)
 	{
 		return new NewTransactionVersionFeedback()
 		{
@@ -193,13 +230,17 @@ public class TransactionProcessorImpl extends TransactionProcessor
 					Transaction transaction
 			)
 			{
-				storage.putTransaction(
-						transactionId,
-						transaction
-				);
-				processTransaction(
-						transactionId
-				);
+				if (
+					storage.putTransaction(
+							transactionId,
+							transaction
+					)
+				)
+				{
+					processTransaction(
+							transactionId
+					);
+				}
 			}
 
 			@Override
@@ -225,5 +266,5 @@ public class TransactionProcessorImpl extends TransactionProcessor
 	RemoteStorageGateway storageGateway;
 	Set<Integer> transactionIds;
 	boolean processingScheduled;
-
+	static final Logger logger = LogManager.getLogger();
 }

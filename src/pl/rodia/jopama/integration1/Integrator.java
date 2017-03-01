@@ -6,6 +6,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import pl.rodia.jopama.LocalStorage;
 import pl.rodia.jopama.LocalStorageImpl;
 import pl.rodia.jopama.RemoteStorageGatewayImpl;
@@ -145,10 +148,20 @@ public class Integrator
 		List<StatsAsyncSource> statsSources = new LinkedList<StatsAsyncSource>();
 		for (Integrator integrator : integrators)
 		{
-			StatsAsyncSource taskRunnerStatsSource = new StatsAsyncSource(integrator.taskRunner, integrator.taskRunner);
-			statsSources.add(taskRunnerStatsSource);
-			StatsAsyncSource remoteStorageGatewayStatsSource = new StatsAsyncSource(integrator.taskRunner, integrator.remoteStorageGateway);
-			statsSources.add(remoteStorageGatewayStatsSource);
+			StatsAsyncSource taskRunnerStatsSource = new StatsAsyncSource(
+					integrator.taskRunner,
+					integrator.taskRunner
+			);
+			statsSources.add(
+					taskRunnerStatsSource
+			);
+			StatsAsyncSource remoteStorageGatewayStatsSource = new StatsAsyncSource(
+					integrator.taskRunner,
+					integrator.remoteStorageGateway
+			);
+			statsSources.add(
+					remoteStorageGatewayStatsSource
+			);
 		}
 		StatsCollector statsCollector = new StatsCollector(
 				statsSources
@@ -161,7 +174,7 @@ public class Integrator
 					1001
 			);
 		}
-		
+
 		statsCollector.start();
 
 		for (Integrator integrator : integrators)
@@ -196,18 +209,18 @@ public class Integrator
 		{
 			e.printStackTrace();
 		}
-		
-		System.out.println(
+
+		logger.info(
 				inMemoryStorageGateway.components.get(
 						101
 				).value
 		);
-		System.out.println(
+		logger.info(
 				inMemoryStorageGateway.components.get(
 						102
 				).value
 		);
-		System.out.println(
+		logger.info(
 				inMemoryStorageGateway.components.get(
 						103
 				).value
@@ -308,4 +321,5 @@ public class Integrator
 	TransactionAnalyzer transactionAnalyzer;
 	TransactionProcessorImpl transactionProcessor;
 	Set<Integer> pendingTransactions;
+	static final Logger logger = LogManager.getLogger();
 }

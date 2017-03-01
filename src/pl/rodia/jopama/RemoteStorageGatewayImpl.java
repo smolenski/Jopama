@@ -1,5 +1,8 @@
 package pl.rodia.jopama;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import pl.rodia.jopama.data.Component;
 import pl.rodia.jopama.data.ComponentChange;
 import pl.rodia.jopama.data.Transaction;
@@ -174,8 +177,7 @@ public class RemoteStorageGatewayImpl extends RemoteStorageGateway implements St
 							transaction != null
 						)
 						{
-							System.out.println(
-									"Transaction updated, transactionId :" + transactionChange.transactionId + ", BASE: "
+							logger.debug(taskRunner.name + ":transaction updated, transactionId :" + transactionChange.transactionId + ", BASE: "
 											+ transactionChange.currentVersion + ", UPDATED: " + transactionChange.nextVersion
 							);
 							taskRunner.schedule(
@@ -288,8 +290,7 @@ public class RemoteStorageGatewayImpl extends RemoteStorageGateway implements St
 							Component component
 					)
 					{
-						System.out.println(
-								"Component updated, componentId :" + componentChange.componentId + ", BASE: "
+						logger.debug(taskRunner.name + ":component updated, componentId :" + componentChange.componentId + ", BASE: "
 										+ componentChange.currentVersion + ", UPDATED: " + componentChange.nextVersion
 						);
 						if (
@@ -396,5 +397,6 @@ public class RemoteStorageGatewayImpl extends RemoteStorageGateway implements St
 	TaskRunner taskRunner;
 	RemoteStorageGateway targetStorageGateway;
 	OperationStats operationsStats;
+	static final Logger logger = LogManager.getLogger();
 
 }

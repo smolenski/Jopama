@@ -6,6 +6,6 @@ import pl.rodia.jopama.data.Transaction;
 public abstract class LocalStorage {
 	abstract public Component getComponent(Integer componentId);
 	abstract public Transaction getTransaction(Integer transactionId);	
-	abstract public void putComponent(Integer componentId, Component component);
-	abstract public void putTransaction(Integer transactionId, Transaction transaction);
+	abstract public Boolean putComponent(Integer componentId, Component component);
+	abstract public Boolean putTransaction(Integer transactionId, Transaction transaction);
 }
