@@ -4,6 +4,9 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import pl.rodia.jopama.data.Component;
 import pl.rodia.jopama.data.ComponentChange;
 import pl.rodia.jopama.data.ComponentPhase;
@@ -53,6 +56,7 @@ public class TransactionAnalyzerImpl implements TransactionAnalyzer
 				component == null
 			)
 			{
+				logger.trace("TransactionAnalyzerImpl missing component downloading, transactionId: " + transactionId + " componentId: " + transactionComponentEntry.getKey());
 				return new UnifiedAction(
 						new UnifiedDownloadRequest(
 								transactionId,
@@ -216,7 +220,7 @@ public class TransactionAnalyzerImpl implements TransactionAnalyzer
 			);
 		}
 		else if (
-			transactionComponent.versionToLock == component.version
+			transactionComponent.versionToLock.equals(component.version)
 					&& component.owner == null
 		)
 		{
@@ -235,8 +239,8 @@ public class TransactionAnalyzerImpl implements TransactionAnalyzer
 			);
 		}
 		else if (
-			component.owner == transactionId
-					&& transactionComponent.versionToLock == component.version
+			component.owner.equals(transactionId)
+					&& transactionComponent.versionToLock.equals(component.version)
 		)
 		{
 			return new UnifiedAction(
@@ -251,6 +255,7 @@ public class TransactionAnalyzerImpl implements TransactionAnalyzer
 		}
 		else
 		{
+			logger.trace("TransactionAnalyzerImpl locking action impossible, downloading, transactionId: " + transactionId + " componentId: " + componentId);
 			return new UnifiedAction(
 					new UnifiedDownloadRequest(
 							transactionId,
@@ -276,7 +281,7 @@ public class TransactionAnalyzerImpl implements TransactionAnalyzer
 		assert component != null;
 		assert transactionComponent.componentPhase == ComponentPhase.NOT_UPDATED;
 		if (
-			component.owner != transactionId
+			!transactionId.equals(component.owner)
 		)
 		{
 			return new UnifiedAction(
@@ -310,6 +315,7 @@ public class TransactionAnalyzerImpl implements TransactionAnalyzer
 		}
 		else
 		{
+			logger.trace("TransactionAnalyzerImpl updating action impossible, downloading, transactionId: " + transactionId + " componentId: " + componentId);
 			return new UnifiedAction(
 					transactionId,
 					transaction,
@@ -367,7 +373,9 @@ public class TransactionAnalyzerImpl implements TransactionAnalyzer
 		assert component != null;
 		assert transactionComponent.componentPhase == ComponentPhase.NOT_RELEASED;
 		if (
-			component.owner == transactionId
+			transactionId.equals(component.owner)
+			&&
+			component.newValue != null
 		)
 		{
 			assert component.version == transactionComponent.versionToLock;
@@ -401,6 +409,7 @@ public class TransactionAnalyzerImpl implements TransactionAnalyzer
 		}
 		else
 		{
+			logger.trace("TransactionAnalyzerImpl releasing action impossible, downloading, transactionId: " + transactionId + " componentId: " + componentId);
 			return new UnifiedAction(
 					new UnifiedDownloadRequest(
 							transactionId,
@@ -411,4 +420,6 @@ public class TransactionAnalyzerImpl implements TransactionAnalyzer
 	}
 
 	LocalStorage proxyStorage;
+	static final Logger logger = LogManager.getLogger();
+
 }

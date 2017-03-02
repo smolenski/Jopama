@@ -92,7 +92,7 @@ public class TransactionProcessorImpl extends TransactionProcessor
 					}
 				},
 				new Long(
-						30 * 1000
+						10 * 1000
 				)
 		);
 		this.processingScheduled = true;
@@ -110,6 +110,7 @@ public class TransactionProcessorImpl extends TransactionProcessor
 		{
 			return;
 		}
+		logger.debug(this.taskRunner.name + ":geting change");
 		UnifiedAction change = this.transactionAnalyzer.getChange(
 				transactionId
 		);

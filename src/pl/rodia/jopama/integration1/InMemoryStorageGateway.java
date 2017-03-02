@@ -3,6 +3,9 @@ package pl.rodia.jopama.integration1;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import pl.rodia.jopama.data.Component;
 import pl.rodia.jopama.data.ComponentChange;
 import pl.rodia.jopama.data.Transaction;
@@ -63,11 +66,13 @@ public class InMemoryStorageGateway extends RemoteStorageGateway
 			{
 				if (transactionChange.nextVersion != null)
 				{
+					logger.info("InMemoryStorageGateway::changeTransaction SUCCESS");
 					this.transactions.put(transactionChange.transactionId, transactionChange.nextVersion);
 					feedback.success(transactionChange.nextVersion);
 				}
 				else
 				{
+					logger.info("InMemoryStorageGateway::changeTransaction (remove) SUCCESS");
 					this.transactions.remove(transactionChange.transactionId);
 					feedback.success(null);
 				}
@@ -95,11 +100,13 @@ public class InMemoryStorageGateway extends RemoteStorageGateway
 			{
 				if (componentChange.nextVersion != null)
 				{
+					logger.info("InMemoryStorageGateway::changeComponent SUCCESS");
 					this.components.put(componentChange.componentId, componentChange.nextVersion);
 					feedback.success(componentChange.nextVersion);
 				}
 				else
 				{
+					logger.info("InMemoryStorageGateway::changeComponent (remove) SUCCESS");
 					this.components.remove(componentChange.componentId);
 					feedback.success(null);
 				}
@@ -117,5 +124,6 @@ public class InMemoryStorageGateway extends RemoteStorageGateway
 
 	Map<Integer, Transaction> transactions;
 	Map<Integer, Component> components;
+	static final Logger logger = LogManager.getLogger();
 
 }

@@ -18,9 +18,6 @@
         <Logger name="pl.rodia.jopama" level="all">
             <AppenderRef ref="File"/>
         </Logger>
-        <Logger name="pl.rodia.jopama.gateway" level="all">
-            <AppenderRef ref="File"/>
-        </Logger>
         <Root level="all">
             <AppenderRef ref="Console"/>
         </Root>

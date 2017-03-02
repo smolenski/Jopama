@@ -59,6 +59,7 @@
 		<classpath>
 			<path refid="libraries"/>
 			<path refid="application"/>
+            <pathelement path="${basedir}"/>
 		</classpath>
 	</java>
     </target>

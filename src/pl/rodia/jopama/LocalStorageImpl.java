@@ -3,6 +3,9 @@ package pl.rodia.jopama;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import pl.rodia.jopama.data.Component;
 import pl.rodia.jopama.data.Transaction;
 
@@ -46,6 +49,7 @@ public class LocalStorageImpl extends LocalStorage
 				componentId,
 				component
 		);
+		logger.info("putComponent, updating(" + (!component.equals(oldComponent)) + ") componentId: " + componentId + " component: " + component);
 		return !component.equals(oldComponent);
 	}
 
@@ -59,9 +63,11 @@ public class LocalStorageImpl extends LocalStorage
 				transactionId,
 				transaction
 		);
+		logger.info("putTransaction, updating(" + (!transaction.equals(oldTransaction)) + ") transactionId: " + transactionId +" transaction: " + transaction);
 		return !transaction.equals(oldTransaction);
 	}
 
 	Map<Integer, Transaction> transactions;
 	Map<Integer, Component> components;
+	static final Logger logger = LogManager.getLogger();
 }
