@@ -26,7 +26,7 @@ public class TaskRunner implements Runnable, StatsSyncSource
 			super();
 			this.task = task;
 			this.taskId = taskId;
-			this.stackTrace = Thread.currentThread().getStackTrace();
+			this.stackTrace = null;
 		}
 
 		Task task;
@@ -52,36 +52,60 @@ public class TaskRunner implements Runnable, StatsSyncSource
 				this.name + "::tasksCounters"
 		);
 	}
-	
+
 	public void dumpScheduledTasksTraces()
 	{
-		logger.debug("WAITING STACK TRACES START");
+		logger.debug(
+				"WAITING STACK TRACES START"
+		);
 		for (ExtendedTask extendedTask : this.tasks)
 		{
-			logger.debug("STACK TRACE START");
-			for (StackTraceElement ste : extendedTask.stackTrace)
+			if (
+				extendedTask.stackTrace != null
+			)
 			{
-				System.out.println(
-						ste
+
+				logger.debug(
+						"STACK TRACE START"
 				);
-			}
-			logger.debug("STACK TRACE END");
-		}
-		for (Map.Entry<Long, List<ExtendedTask>> entry : this.timeTasks.entrySet())
-		{
-			for (ExtendedTask extendedTask : entry.getValue())
-			{
-				logger.debug("STACK TRACE START");
 				for (StackTraceElement ste : extendedTask.stackTrace)
 				{
 					System.out.println(
 							ste
 					);
 				}
-				logger.debug("STACK TRACE END");
+				logger.debug(
+						"STACK TRACE END"
+				);
+			}
+
+		}
+		for (Map.Entry<Long, List<ExtendedTask>> entry : this.timeTasks.entrySet())
+		{
+			for (ExtendedTask extendedTask : entry.getValue())
+			{
+				if (
+					extendedTask.stackTrace != null
+				)
+				{
+					logger.debug(
+							"STACK TRACE START"
+					);
+					for (StackTraceElement ste : extendedTask.stackTrace)
+					{
+						System.out.println(
+								ste
+						);
+					}
+					logger.debug(
+							"STACK TRACE END"
+					);
+				}
 			}
 		}
-		logger.debug("WAITING STACK TRACES START");
+		logger.debug(
+				"WAITING STACK TRACES START"
+		);
 	}
 
 	@Override
