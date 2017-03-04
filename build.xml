@@ -1,4 +1,4 @@
-<project name="Client1" default="main">
+<project name="Jopama" default="main">
 
     <property name="src.dir"     value="src"/>
 
