@@ -7,7 +7,7 @@
     <property name="jar.dir"     value="${build.dir}/jar"/>
     <property name="report.dir"     value="report"/>
 
-    <property name="main-class"  value="pl.rodia.jopama.integration1.Integrator"/>
+    <property name="main-class"  value="pl.rodia.jopama.integration1.RandomExchangesTest"/>
 
     <path id="libraries">
         <fileset dir="${basedir}/../../lib/" includes="**/*.jar"/>

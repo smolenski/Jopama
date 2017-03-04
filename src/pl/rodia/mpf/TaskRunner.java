@@ -104,7 +104,7 @@ public class TaskRunner implements Runnable, StatsSyncSource
 			}
 		}
 		logger.debug(
-				"WAITING STACK TRACES START"
+				"WAITING STACK TRACES END"
 		);
 	}
 
