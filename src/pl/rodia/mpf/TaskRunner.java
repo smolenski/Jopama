@@ -7,6 +7,9 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import pl.rodia.jopama.stats.AsyncOperationsCounters;
 import pl.rodia.jopama.stats.StatsResult;
 import pl.rodia.jopama.stats.StatsSyncSource;
@@ -23,10 +26,12 @@ public class TaskRunner implements Runnable, StatsSyncSource
 			super();
 			this.task = task;
 			this.taskId = taskId;
+			this.stackTrace = Thread.currentThread().getStackTrace();
 		}
 
 		Task task;
 		Integer taskId;
+		StackTraceElement[] stackTrace;
 	}
 
 	public TaskRunner(
@@ -35,7 +40,9 @@ public class TaskRunner implements Runnable, StatsSyncSource
 	{
 		super();
 		this.name = name;
-		this.nextTaskId = new Integer(0);
+		this.nextTaskId = new Integer(
+				0
+		);
 		this.finish = new Boolean(
 				false
 		);
@@ -44,6 +51,37 @@ public class TaskRunner implements Runnable, StatsSyncSource
 		this.tasksCounters = new AsyncOperationsCounters(
 				this.name + "::tasksCounters"
 		);
+	}
+	
+	public void dumpScheduledTasksTraces()
+	{
+		logger.debug("WAITING STACK TRACES START");
+		for (ExtendedTask extendedTask : this.tasks)
+		{
+			logger.debug("STACK TRACE START");
+			for (StackTraceElement ste : extendedTask.stackTrace)
+			{
+				System.out.println(
+						ste
+				);
+			}
+			logger.debug("STACK TRACE END");
+		}
+		for (Map.Entry<Long, List<ExtendedTask>> entry : this.timeTasks.entrySet())
+		{
+			for (ExtendedTask extendedTask : entry.getValue())
+			{
+				logger.debug("STACK TRACE START");
+				for (StackTraceElement ste : extendedTask.stackTrace)
+				{
+					System.out.println(
+							ste
+					);
+				}
+				logger.debug("STACK TRACE END");
+			}
+		}
+		logger.debug("WAITING STACK TRACES START");
 	}
 
 	@Override
@@ -57,6 +95,19 @@ public class TaskRunner implements Runnable, StatsSyncSource
 			) && this.tasks.size() == 0 && this.timeTasks.size() == 0)
 		)
 		{
+			if (
+				this.finish.equals(
+						new Boolean(
+								true
+						)
+				)
+			)
+			{
+				logger.debug(
+						"Should finish but cannot, numTasks:" + this.tasks.size() + " numTimeTasks: " + this.timeTasks.size()
+				);
+				this.dumpScheduledTasksTraces();
+			}
 			List<ExtendedTask> tasks = new ArrayList<ExtendedTask>();
 			synchronized (this)
 			{
@@ -140,7 +191,9 @@ public class TaskRunner implements Runnable, StatsSyncSource
 			Task task
 	)
 	{
-		Integer taskId = new Integer(++this.nextTaskId);
+		Integer taskId = new Integer(
+				++this.nextTaskId
+		);
 		ExtendedTask extendedTask = new ExtendedTask(
 				task,
 				taskId
@@ -164,7 +217,9 @@ public class TaskRunner implements Runnable, StatsSyncSource
 			Task task, Long executionDelayMillis
 	)
 	{
-		Integer taskId = new Integer(++this.nextTaskId);
+		Integer taskId = new Integer(
+				++this.nextTaskId
+		);
 		ExtendedTask extendedTask = new ExtendedTask(
 				task,
 				taskId
@@ -199,37 +254,65 @@ public class TaskRunner implements Runnable, StatsSyncSource
 		}
 		return taskId;
 	}
-	
-	synchronized public Boolean cancelTask(Integer taskId)
+
+	synchronized public Boolean cancelTask(
+			Integer taskId
+	)
 	{
 		for (int i = 0; i < this.tasks.size(); ++i)
 		{
-			ExtendedTask extendedTask = this.tasks.get(i);
-			if (extendedTask.taskId.equals(taskId))
+			ExtendedTask extendedTask = this.tasks.get(
+					i
+			);
+			if (
+				extendedTask.taskId.equals(
+						taskId
+				)
+			)
 			{
-				this.tasks.remove(i);
+				this.tasks.remove(
+						i
+				);
 				this.notifyAll();
-				return new Boolean(true);
+				return new Boolean(
+						true
+				);
 			}
 		}
 		for (Map.Entry<Long, List<ExtendedTask>> entry : this.timeTasks.entrySet())
 		{
 			for (int i = 0; i < entry.getValue().size(); ++i)
 			{
-				ExtendedTask extendedTask = entry.getValue().get(i);
-				if (extendedTask.taskId.equals(taskId))
+				ExtendedTask extendedTask = entry.getValue().get(
+						i
+				);
+				if (
+					extendedTask.taskId.equals(
+							taskId
+					)
+				)
 				{
-					entry.getValue().remove(i);
-					if (entry.getValue().size() == 0)
+					entry.getValue().remove(
+							i
+					);
+					if (
+						entry.getValue().size() == 0
+					)
 					{
-						this.timeTasks.remove(entry.getKey());
+						this.timeTasks.remove(
+								entry.getKey()
+						);
 					}
 					this.notifyAll();
-					return new Boolean(true);
+					return new Boolean(
+							true
+					);
 				}
 			}
 		}
-		return new Boolean(false);
+		return new Boolean(
+				false
+		);
 	}
 
 	@Override
@@ -244,4 +327,5 @@ public class TaskRunner implements Runnable, StatsSyncSource
 	List<ExtendedTask> tasks;
 	SortedMap<Long, List<ExtendedTask>> timeTasks;
 	AsyncOperationsCounters tasksCounters;
+	static final Logger logger = LogManager.getLogger();
 }

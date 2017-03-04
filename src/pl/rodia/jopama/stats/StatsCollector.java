@@ -14,6 +14,7 @@ public class StatsCollector
 			List<StatsAsyncSource> sources
 	)
 	{
+		this.scheduledPeriodicTaskId = null;
 		this.stopRequested = new Boolean(false);
 		this.taskRunner = new TaskRunner(
 				"StatsCollector"
@@ -32,6 +33,13 @@ public class StatsCollector
 
 	public void teardown() throws InterruptedException
 	{
+		if (this.scheduledPeriodicTaskId != null)
+		{
+			if (this.taskRunner.cancelTask(this.scheduledPeriodicTaskId))
+			{
+				this.scheduledPeriodicTaskId = null;
+			}
+		}
 		this.stopRequested = new Boolean(true);
 		this.taskRunner.finish();
 		this.taskRunnerThread.join();
@@ -39,7 +47,7 @@ public class StatsCollector
 
 	public void scheduleTick()
 	{
-		this.taskRunner.schedule(
+		this.scheduledPeriodicTaskId = this.taskRunner.schedule(
 				new Task()
 				{
 
@@ -55,6 +63,7 @@ public class StatsCollector
 
 	public void tick()
 	{
+		this.scheduledPeriodicTaskId = null;
 		for (StatsAsyncSource statsSource : this.sources)
 		{
 			statsSource.scheduleGetStats(
@@ -80,9 +89,11 @@ public class StatsCollector
 		}
 	}
 
+	Integer scheduledPeriodicTaskId;
 	Boolean stopRequested;
 	TaskRunner taskRunner;
 	Thread taskRunnerThread;
 	List<StatsAsyncSource> sources;
 	static final Logger logger = LogManager.getLogger();
+	
 }
