@@ -32,7 +32,7 @@ public class TransactionProcessorImpl extends TransactionProcessor
 		this.storage = storage;
 		this.storageGateway = storageGateway;
 		this.transactionIds = new HashSet<Integer>();
-		this.processingScheduled = false;
+		this.processingScheduled = new Boolean(false);
 		this.scheduleProcessing();
 	}
 
@@ -44,7 +44,7 @@ public class TransactionProcessorImpl extends TransactionProcessor
 				transactionId
 		);
 		if (
-			this.processingScheduled == false
+			this.processingScheduled.equals(new Boolean(false))
 		)
 		{
 			this.scheduleProcessing();
@@ -65,7 +65,7 @@ public class TransactionProcessorImpl extends TransactionProcessor
 
 	public void executeScheduledProcessing()
 	{
-		this.processingScheduled = false;
+		this.processingScheduled.equals(new Boolean(false));
 		for (Integer transactionId : this.transactionIds)
 		{
 			this.processTransaction(
@@ -95,7 +95,7 @@ public class TransactionProcessorImpl extends TransactionProcessor
 						10 * 1000
 				)
 		);
-		this.processingScheduled = true;
+		this.processingScheduled = new Boolean(true);
 	}
 
 	public void processTransaction(
@@ -266,6 +266,6 @@ public class TransactionProcessorImpl extends TransactionProcessor
 	LocalStorage storage;
 	RemoteStorageGateway storageGateway;
 	Set<Integer> transactionIds;
-	boolean processingScheduled;
+	Boolean processingScheduled;
 	static final Logger logger = LogManager.getLogger();
 }

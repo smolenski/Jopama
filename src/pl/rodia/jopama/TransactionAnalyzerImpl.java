@@ -378,7 +378,7 @@ public class TransactionAnalyzerImpl implements TransactionAnalyzer
 			component.newValue != null
 		)
 		{
-			assert component.version == transactionComponent.versionToLock;
+			assert component.version.equals(transactionComponent.versionToLock);
 			return new UnifiedAction(
 					new ComponentChange(
 							transactionId,

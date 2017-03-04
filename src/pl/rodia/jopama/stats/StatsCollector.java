@@ -14,7 +14,7 @@ public class StatsCollector
 			List<StatsAsyncSource> sources
 	)
 	{
-		this.stopRequested = false;
+		this.stopRequested = new Boolean(false);
 		this.taskRunner = new TaskRunner(
 				"StatsCollector"
 		);
@@ -32,7 +32,7 @@ public class StatsCollector
 
 	public void teardown() throws InterruptedException
 	{
-		this.stopRequested = true;
+		this.stopRequested = new Boolean(true);
 		this.taskRunner.finish();
 		this.taskRunnerThread.join();
 	}
@@ -74,7 +74,7 @@ public class StatsCollector
 					}
 			);
 		}
-		if (this.stopRequested == false)
+		if (this.stopRequested.equals(new Boolean(false)))
 		{
 			this.scheduleTick();
 		}

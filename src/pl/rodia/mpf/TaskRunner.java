@@ -19,7 +19,7 @@ public class TaskRunner implements Runnable, StatsSyncSource
 	{
 		super();
 		this.name = name;
-		this.finish = false;
+		this.finish = new Boolean(false);
 		this.tasks = new ArrayList<Task>();
 		this.timeTasks = new TreeMap<Long, List<Task>>();
 		this.tasksCounters = new AsyncOperationsCounters(
@@ -31,7 +31,7 @@ public class TaskRunner implements Runnable, StatsSyncSource
 	public void run()
 	{
 		while (
-			!(this.finish == true && this.tasks.size() == 0 && this.timeTasks.size() == 0)
+			!(this.finish.equals(new Boolean(true)) && this.tasks.size() == 0 && this.timeTasks.size() == 0)
 		)
 		{
 			List<Task> tasks = new ArrayList<Task>();
@@ -106,7 +106,7 @@ public class TaskRunner implements Runnable, StatsSyncSource
 	{
 		synchronized (this)
 		{
-			this.finish = true;
+			this.finish = new Boolean(true);
 			this.notify();
 		}
 	}
@@ -117,7 +117,7 @@ public class TaskRunner implements Runnable, StatsSyncSource
 	{
 		synchronized (this)
 		{
-			assert this.finish == false;
+			assert this.finish.equals(new Boolean(false));
 			this.tasks.add(
 					task
 			);
@@ -131,7 +131,7 @@ public class TaskRunner implements Runnable, StatsSyncSource
 	{
 		synchronized (this)
 		{
-			assert this.finish == false;
+			assert this.finish.equals(new Boolean(false));
 			Long executionMillis = new Long(
 					System.currentTimeMillis() + executionDelayMillis
 			);
