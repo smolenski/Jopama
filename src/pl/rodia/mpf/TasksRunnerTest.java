@@ -111,25 +111,25 @@ public class TasksRunnerTest
 		assertThat(
 				execChecker3.order,
 				is(
-						1
+						new Integer(1)
 				)
 		);
 		assertThat(
 				execChecker4.order,
 				is(
-						2
+						new Integer(2)
 				)
 		);
 		assertThat(
 				execChecker1.order,
 				is(
-						3
+						new Integer(3)
 				)
 		);
 		assertThat(
 				execChecker2.order,
 				is(
-						4
+						new Integer(4)
 				)
 		);
 		this.teardown();
@@ -165,16 +165,148 @@ public class TasksRunnerTest
 		assertThat(
 				execChecker2.order,
 				is(
-						1
+						new Integer(1)
 				)
 		);
 		assertThat(
 				execChecker1.order,
 				is(
-						2
+						new Integer(2)
 				)
 		);
 		this.teardown();
+	}
+	
+	@Test
+	public void canceledTaskShouldNotBeExecuted() throws InterruptedException
+	{
+		logger.info(
+				"Running canceledTaskShouldNotBeExecuted"
+		);
+		this.start();
+		Blocker blocker = new Blocker();
+		ExecChecker execChecker1 = new ExecChecker("Task1");
+		ExecChecker execChecker2 = new ExecChecker("Task2");
+		ExecChecker execChecker3 = new ExecChecker("Task3");
+		this.taskRunner.schedule(blocker);
+		this.taskRunner.schedule(execChecker1);
+		Integer scheduledId = this.taskRunner.schedule(execChecker2);
+		this.taskRunner.schedule(execChecker3);
+		assertThat(
+				this.taskRunner.cancelTask(scheduledId),
+				is(
+					new Boolean(true)
+				)
+		);
+		blocker.unblock();
+		execChecker1.waitUntilExecuted();
+		execChecker3.waitUntilExecuted();
+		assertThat(
+				execChecker1.order,
+				is(
+						new Integer(1)
+				)
+		);
+		assertThat(
+				execChecker3.order,
+				is(
+						new Integer(2)
+				)
+		);
+		assertThat(
+				execChecker2.order,
+				is(
+						new Integer(0)
+				)
+		);
+		this.teardown();
+	}
+
+	@Test
+	public void canceledTimeTaskShouldNotBeExecuted() throws InterruptedException
+	{
+		logger.info(
+				"Running canceledTimeTaskShouldNotBeExecuted"
+		);
+		this.start();
+		Blocker blocker = new Blocker();
+		ExecChecker execChecker1 = new ExecChecker("Task1");
+		ExecChecker execChecker2 = new ExecChecker("Task2");
+		ExecChecker execChecker3 = new ExecChecker("Task3");
+		this.taskRunner.schedule(blocker, new Long(50));
+		this.taskRunner.schedule(execChecker1, new Long(100));
+		Integer scheduledId = this.taskRunner.schedule(execChecker2, new Long(150));
+		this.taskRunner.schedule(execChecker3, new Long(200));
+		assertThat(
+				this.taskRunner.cancelTask(scheduledId),
+				is(
+					new Boolean(true)
+				)
+		);
+		blocker.unblock();
+		execChecker1.waitUntilExecuted();
+		execChecker3.waitUntilExecuted();
+		assertThat(
+				execChecker1.order,
+				is(
+						new Integer(1)
+				)
+		);
+		assertThat(
+				execChecker3.order,
+				is(
+						new Integer(2)
+				)
+		);
+		assertThat(
+				execChecker2.order,
+				is(
+						new Integer(0)
+				)
+		);
+		this.teardown();
+	}
+	
+	
+	class Blocker implements Task
+	{
+
+		public Blocker()
+		{
+			super();
+			this.finish = new Boolean(false);
+		}
+
+		@Override
+		public void execute()
+		{
+			synchronized (this)
+			{
+				while (this.finish.equals(new Boolean(false)))
+				{
+					try
+					{
+						this.wait();
+					}
+					catch (InterruptedException e)
+					{
+						e.printStackTrace();
+					}
+				}
+			}
+			
+		}
+		
+		public void unblock()
+		{
+			synchronized (this)
+			{
+				this.finish = new Boolean(true);
+				this.notifyAll();
+			}
+		}
+		
+		Boolean finish;
 	}
 
 	class ExecChecker implements Task

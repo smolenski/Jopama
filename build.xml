@@ -40,10 +40,11 @@
     </target>
 
 	<target name="junit" depends="jar">
-		<junit printsummary="yes" showoutput="true" timeout="2000">
+		<junit printsummary="yes" showoutput="true" timeout="10000">
 			<classpath>
 				<path refid="libraries"/>
 				<path refid="application"/>
+                <pathelement path="${basedir}"/>
 			</classpath>
 			<formatter type="xml" usefile="yes"/>
 			<batchtest fork="yes" todir="${report.dir}">
