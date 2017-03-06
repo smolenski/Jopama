@@ -239,7 +239,7 @@ public class TransactionAnalyzerImpl implements TransactionAnalyzer
 			);
 		}
 		else if (
-			component.owner.equals(transactionId)
+			transactionId.equals(component.owner)
 					&& transactionComponent.versionToLock.equals(component.version)
 		)
 		{

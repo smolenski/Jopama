@@ -116,7 +116,7 @@ public class TransactionProcessorImpl extends TransactionProcessor
 		{
 			return;
 		}
-		logger.debug(this.taskRunner.name + ":geting change");
+		logger.debug(this.taskRunner.name + ":getting change");
 		UnifiedAction change = this.transactionAnalyzer.getChange(
 				transactionId
 		);

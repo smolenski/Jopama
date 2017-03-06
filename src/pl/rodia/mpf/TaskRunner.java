@@ -27,6 +27,9 @@ public class TaskRunner implements Runnable, StatsSyncSource
 			this.task = task;
 			this.taskId = taskId;
 			this.stackTrace = null;
+			/*
+			 * this.stackTrace = Thread.currentThread().getStackTrace();
+			 */
 		}
 
 		Task task;
@@ -46,7 +49,7 @@ public class TaskRunner implements Runnable, StatsSyncSource
 		this.finish = new Boolean(
 				false
 		);
-		this.tasks = new ArrayList<ExtendedTask>();
+		this.regularTasks = new ArrayList<ExtendedTask>();
 		this.timeTasks = new TreeMap<Long, List<ExtendedTask>>();
 		this.tasksCounters = new AsyncOperationsCounters(
 				this.name + "::tasksCounters"
@@ -58,7 +61,7 @@ public class TaskRunner implements Runnable, StatsSyncSource
 		logger.debug(
 				"WAITING STACK TRACES START"
 		);
-		for (ExtendedTask extendedTask : this.tasks)
+		for (ExtendedTask extendedTask : this.regularTasks)
 		{
 			if (
 				extendedTask.stackTrace != null
@@ -112,37 +115,43 @@ public class TaskRunner implements Runnable, StatsSyncSource
 	public void run()
 	{
 		while (
-			!(this.finish.equals(
-					new Boolean(
-							true
-					)
-			) && this.tasks.size() == 0 && this.timeTasks.size() == 0)
+			true
 		)
 		{
-			if (
-				this.finish.equals(
-						new Boolean(
-								true
-						)
-				)
-			)
-			{
-				logger.debug(
-						"Should finish but cannot, numTasks:" + this.tasks.size() + " numTimeTasks: " + this.timeTasks.size()
-				);
-				this.dumpScheduledTasksTraces();
-			}
-			List<ExtendedTask> tasks = new ArrayList<ExtendedTask>();
+			List<ExtendedTask> tasksToExecute = new ArrayList<ExtendedTask>();
 			synchronized (this)
 			{
+				if (
+					this.finish.equals(
+							new Boolean(
+									true
+							)
+					) && this.regularTasks.size() == 0 && this.timeTasks.size() == 0
+				)
+				{
+					break;
+				}
+				if (
+					this.finish.equals(
+							new Boolean(
+									true
+							)
+					)
+				)
+				{
+					logger.debug(
+							"Should finish but cannot, numTasks:" + this.regularTasks.size() + " numTimeTasks: " + this.timeTasks.size()
+					);
+					this.dumpScheduledTasksTraces();
+				}
 				Boolean timeTaskPresent = this.timeTasks.size() > 0;
 				Boolean timeTaskPresentAndReady = timeTaskPresent && this.timeTasks.firstKey() <= System.currentTimeMillis();
-				Boolean taskPresent = this.tasks.size() > 0;
+				Boolean taskPresent = this.regularTasks.size() > 0;
 				if (
 					timeTaskPresentAndReady
 				)
 				{
-					tasks.addAll(
+					tasksToExecute.addAll(
 							this.timeTasks.remove(
 									this.timeTasks.firstKey()
 							)
@@ -152,14 +161,14 @@ public class TaskRunner implements Runnable, StatsSyncSource
 					taskPresent
 				)
 				{
-					tasks.add(
-							this.tasks.remove(
+					tasksToExecute.add(
+							this.regularTasks.remove(
 									0
 							)
 					);
 				}
 				if (
-					tasks.size() == 0
+					tasksToExecute.size() == 0
 				) // Waiting
 				{
 					if (
@@ -188,7 +197,7 @@ public class TaskRunner implements Runnable, StatsSyncSource
 					}
 				}
 			}
-			for (ExtendedTask task : tasks)
+			for (ExtendedTask task : tasksToExecute)
 			{
 				Long startTime = System.currentTimeMillis();
 				this.tasksCounters.onRequestStarted();
@@ -229,7 +238,7 @@ public class TaskRunner implements Runnable, StatsSyncSource
 							false
 					)
 			);
-			this.tasks.add(
+			this.regularTasks.add(
 					extendedTask
 			);
 			this.notify();
@@ -283,9 +292,9 @@ public class TaskRunner implements Runnable, StatsSyncSource
 			Integer taskId
 	)
 	{
-		for (int i = 0; i < this.tasks.size(); ++i)
+		for (int i = 0; i < this.regularTasks.size(); ++i)
 		{
-			ExtendedTask extendedTask = this.tasks.get(
+			ExtendedTask extendedTask = this.regularTasks.get(
 					i
 			);
 			if (
@@ -294,7 +303,7 @@ public class TaskRunner implements Runnable, StatsSyncSource
 				)
 			)
 			{
-				this.tasks.remove(
+				this.regularTasks.remove(
 						i
 				);
 				this.notifyAll();
@@ -348,7 +357,7 @@ public class TaskRunner implements Runnable, StatsSyncSource
 	public final String name;
 	Integer nextTaskId;
 	Boolean finish;
-	List<ExtendedTask> tasks;
+	List<ExtendedTask> regularTasks;
 	SortedMap<Long, List<ExtendedTask>> timeTasks;
 	AsyncOperationsCounters tasksCounters;
 	static final Logger logger = LogManager.getLogger();

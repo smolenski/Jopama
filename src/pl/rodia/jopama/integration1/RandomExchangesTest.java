@@ -292,12 +292,12 @@ public class RandomExchangesTest
 	static final Integer NUM_TRANSACTIONS = 10;
 	static final Integer TRANSACTION_REPEAT_COUNT = 3;
 */
-	static final Integer COMPONENT_ID_BASE = 100;
-	static final Integer TRANSACTION_ID_BASE = 1000;
+	static final Integer COMPONENT_ID_BASE = 10000;
+	static final Integer TRANSACTION_ID_BASE = 2000000;
 	static final Integer NUM_INTEGRATORS = 10;
 	static final Integer NUM_COMPONENTS = 100;
 	static final Integer NUM_COMPONENTS_IN_TRANSACTION = 10;
-	static final Integer NUM_TRANSACTIONS = 10;
+	static final Integer NUM_TRANSACTIONS = 30;
 	static final Integer TRANSACTION_REPEAT_COUNT = 2;
 
 	static final Logger logger = LogManager.getLogger();
