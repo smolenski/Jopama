@@ -1,4 +1,4 @@
-package pl.rodia.jopama;
+package pl.rodia.jopama.core;
 
 import java.util.Map;
 import java.util.SortedMap;

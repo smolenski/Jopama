@@ -1,4 +1,4 @@
-package pl.rodia.jopama;
+package pl.rodia.jopama.core;
 
 import pl.rodia.jopama.stats.AsyncOperationsCounters;
 import pl.rodia.jopama.stats.StatsResult;

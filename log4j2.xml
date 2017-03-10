@@ -16,23 +16,29 @@
         <File name="IntegrationFile" fileName="integration.log" bufferedIO="false">
        		<PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
         </File>
+        <File name="AllFile" fileName="all.log" bufferedIO="false">
+       		<PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+        </File>
     </Appenders>
     <Loggers>
         <Logger name="pl.rodia.jopama.stats" level="all" additivity="false">
             <AppenderRef ref="StatsFile"/>
         </Logger>
-        <Logger name="pl.rodia.jopama.integration1" level="all" additivity="false">
+        <Logger name="pl.rodia.jopama.integration1" level="all">
             <AppenderRef ref="IntegrationFile"/>
-            <AppenderRef ref="Console"/>
         </Logger>
-        <Logger name="pl.rodia.jopama" level="all" additivity="false">
+        <Logger name="pl.rodia.jopama.core" level="all">
             <AppenderRef ref="File"/>
         </Logger>
-        <Logger name="pl.rodia.mpf" level="all" additivity="false">
+        <Logger name="pl.rodia.jopama.gateway" level="all">
+            <AppenderRef ref="File"/>
+        </Logger>
+        <Logger name="pl.rodia.mpf" level="all">
             <AppenderRef ref="MpfFile"/>
         </Logger>
         <Root>
             <AppenderRef ref="Console"/>
+            <AppenderRef ref="AllFile"/>
         </Root>
     </Loggers>
 </Configuration>
