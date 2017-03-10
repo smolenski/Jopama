@@ -66,13 +66,13 @@ public class InMemoryStorageGateway extends RemoteStorageGateway
 			{
 				if (transactionChange.nextVersion != null)
 				{
-					logger.info("InMemoryStorageGateway::changeTransaction SUCCESS");
+					logger.debug("InMemoryStorageGateway::changeTransaction SUCCESS");
 					this.transactions.put(transactionChange.transactionId, transactionChange.nextVersion);
 					feedback.success(transactionChange.nextVersion);
 				}
 				else
 				{
-					logger.info("InMemoryStorageGateway::changeTransaction (remove) SUCCESS");
+					logger.debug("InMemoryStorageGateway::changeTransaction (remove) SUCCESS");
 					this.transactions.remove(transactionChange.transactionId);
 					feedback.success(null);
 				}
@@ -100,13 +100,13 @@ public class InMemoryStorageGateway extends RemoteStorageGateway
 			{
 				if (componentChange.nextVersion != null)
 				{
-					logger.info("InMemoryStorageGateway::changeComponent SUCCESS");
+					logger.debug("InMemoryStorageGateway::changeComponent SUCCESS");
 					this.components.put(componentChange.componentId, componentChange.nextVersion);
 					feedback.success(componentChange.nextVersion);
 				}
 				else
 				{
-					logger.info("InMemoryStorageGateway::changeComponent (remove) SUCCESS");
+					logger.debug("InMemoryStorageGateway::changeComponent (remove) SUCCESS");
 					this.components.remove(componentChange.componentId);
 					feedback.success(null);
 				}

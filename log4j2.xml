@@ -23,14 +23,15 @@
         </Logger>
         <Logger name="pl.rodia.jopama.integration1" level="all" additivity="false">
             <AppenderRef ref="IntegrationFile"/>
+            <AppenderRef ref="Console"/>
         </Logger>
-        <Logger name="pl.rodia.jopama" level="all">
+        <Logger name="pl.rodia.jopama" level="all" additivity="false">
             <AppenderRef ref="File"/>
         </Logger>
-        <Logger name="pl.rodia.mpf" level="all">
+        <Logger name="pl.rodia.mpf" level="all" additivity="false">
             <AppenderRef ref="MpfFile"/>
         </Logger>
-        <Root level="all">
+        <Root>
             <AppenderRef ref="Console"/>
         </Root>
     </Loggers>

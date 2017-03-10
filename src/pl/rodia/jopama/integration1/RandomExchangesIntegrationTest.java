@@ -5,9 +5,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.TreeMap;
+import java.util.concurrent.ExecutionException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.Test;
 
 import pl.rodia.jopama.data.Component;
 import pl.rodia.jopama.data.ComponentPhase;
@@ -18,12 +20,18 @@ import pl.rodia.jopama.data.TransactionPhase;
 import pl.rodia.jopama.stats.StatsAsyncSource;
 import pl.rodia.jopama.stats.StatsCollector;
 
-public class RandomExchangesTest
+public class RandomExchangesIntegrationTest
 {
-	public static void main(
-			String[] args
+	void performTest(
+		Integer NUM_INTEGRATORS,
+		Integer NUM_COMPONENTS,
+		Integer NUM_COMPONENTS_IN_TRANSACTION,
+		Integer NUM_TRANSACTIONS,
+		Integer TRANSACTION_REPEAT_COUNT
 	)
 	{
+		Integer COMPONENT_ID_BASE = new Integer(10000);
+		Integer TRANSACTION_ID_BASE = new Integer(2000000);
 		InMemoryStorageGateway inMemoryStorageGateway = new InMemoryStorageGateway();
 		List<Integrator> integrators = new LinkedList<Integrator>();
 		for (int i = 0; i < NUM_INTEGRATORS; ++i)
@@ -211,11 +219,15 @@ public class RandomExchangesTest
 		{
 			try
 			{
-				integrator.waitUntilTransactionProcessingFinished();
+				integrator.waitUntilAllTransactionsProcessed();
 			}
 			catch (InterruptedException e1)
 			{
 				e1.printStackTrace();
+			}
+			catch (ExecutionException e)
+			{
+				e.printStackTrace();
 			}
 		}
 
@@ -283,23 +295,18 @@ public class RandomExchangesTest
 		}
 
 	}
-/*
-	static final Integer COMPONENT_ID_BASE = 100;
-	static final Integer TRANSACTION_ID_BASE = 1000;
-	static final Integer NUM_INTEGRATORS = 10;
-	static final Integer NUM_COMPONENTS = 100;
-	static final Integer NUM_COMPONENTS_IN_TRANSACTION = 10;
-	static final Integer NUM_TRANSACTIONS = 10;
-	static final Integer TRANSACTION_REPEAT_COUNT = 3;
-*/
-	static final Integer COMPONENT_ID_BASE = 10000;
-	static final Integer TRANSACTION_ID_BASE = 2000000;
-	static final Integer NUM_INTEGRATORS = 10;
-	static final Integer NUM_COMPONENTS = 100;
-	static final Integer NUM_COMPONENTS_IN_TRANSACTION = 10;
-	static final Integer NUM_TRANSACTIONS = 30;
-	static final Integer TRANSACTION_REPEAT_COUNT = 2;
+	
+	@Test
+	public void conflictingAndNotConflictingTransactions()
+	{
+		this.performTest(
+			10,
+			100,
+			10,
+			30,
+			2
+		);
+	}
 
 	static final Logger logger = LogManager.getLogger();
-
 }

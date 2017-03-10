@@ -5,7 +5,9 @@
     <property name="build.dir"   value="build"/>
     <property name="classes.dir" value="${build.dir}/classes"/>
     <property name="jar.dir"     value="${build.dir}/jar"/>
-    <property name="report.dir"     value="report"/>
+    <property name="tests.dir"     value="tests"/>
+    <property name="tests.unit.dir"     value="tests/unit"/>
+    <property name="tests.integration.dir"     value="tests/integration"/>
 
     <property name="main-class"  value="pl.rodia.jopama.integration1.RandomExchangesTest"/>
 
@@ -21,12 +23,14 @@
 
     <target name="clean">
         <delete dir="${build.dir}"/>
-    	<delete dir="${report.dir}"/>
+    	<delete dir="${tests.dir}"/>
     </target>
 
     <target name="compile">
         <mkdir dir="${classes.dir}"/>
-        <mkdir dir="${report.dir}"/>
+        <mkdir dir="${tests.dir}"/>
+    	<mkdir dir="${tests.unit.dir}"/>
+    	<mkdir dir="${tests.integration.dir}"/>
     	<javac srcdir="${src.dir}" destdir="${classes.dir}" classpathref="libraries" includeantruntime="true"/>
     </target>
 
@@ -39,21 +43,39 @@
         </jar>
     </target>
 
-	<target name="junit" depends="jar">
-		<junit printsummary="yes" showoutput="true" timeout="10000">
+	<target name="unitTests" depends="jar">
+		<junit printsummary="yes" dir="${tests.unit.dir}" showoutput="true" timeout="20000">
 			<classpath>
 				<path refid="libraries"/>
 				<path refid="application"/>
                 <pathelement path="${basedir}"/>
 			</classpath>
 			<formatter type="xml" usefile="yes"/>
-			<batchtest fork="yes" todir="${report.dir}">
+			<batchtest fork="yes" todir="${tests.unit.dir}">
 				<fileset dir="${src.dir}">
-					<include name="**/*Test.java"/>
+					<include name="**/*UnitTests.java"/>
 				</fileset>
 			</batchtest>
 		</junit>
 	</target>
+
+	<target name="integrationTests" depends="jar">
+		<junit printsummary="yes" dir="${tests.integration.dir}" showoutput="true" timeout="300000">
+			<classpath>
+				<path refid="libraries"/>
+				<path refid="application"/>
+                <pathelement path="${basedir}"/>
+			</classpath>
+			<formatter type="xml" usefile="yes"/>
+			<batchtest fork="yes" todir="${tests.integration.dir}">
+				<fileset dir="${src.dir}">
+					<include name="**/*IntegrationTest.java"/>
+					<include name="**/*IntegrationTests.java"/>
+				</fileset>
+			</batchtest>
+		</junit>
+	</target>
+
 	
     <target name="run" depends="jar">
         <java fork="true" classname="${main-class}">

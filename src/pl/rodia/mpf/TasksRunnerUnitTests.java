@@ -7,10 +7,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
-public class TasksRunnerTest
+public class TasksRunnerUnitTests
 {
 
-	public TasksRunnerTest()
+	public TasksRunnerUnitTests()
 	{
 		this.taskRunner = new TaskRunner("TestTaskRunner");
 		this.taskRunnerThread = new Thread(
@@ -20,7 +20,7 @@ public class TasksRunnerTest
 
 	void start()
 	{
-		TasksRunnerTest.initSeq();
+		TasksRunnerUnitTests.initSeq();
 		this.taskRunnerThread.start();
 	}
 
@@ -328,8 +328,8 @@ public class TasksRunnerTest
 					"Executing id: " + this.id
 			);
 			this.executed = true;
-			TasksRunnerTest.incSeq();
-			this.order = TasksRunnerTest.seq;
+			TasksRunnerUnitTests.incSeq();
+			this.order = TasksRunnerUnitTests.seq;
 			logger.debug(
 					"Executing id: " + this.id + " order: " + this.order
 			);

@@ -1,11 +1,7 @@
 package pl.rodia.jopama.integration1;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -15,17 +11,9 @@ import pl.rodia.jopama.LocalStorageImpl;
 import pl.rodia.jopama.RemoteStorageGatewayImpl;
 import pl.rodia.jopama.TransactionAnalyzer;
 import pl.rodia.jopama.TransactionAnalyzerImpl;
+import pl.rodia.jopama.TransactionProcessor;
 import pl.rodia.jopama.TransactionProcessorImpl;
-import pl.rodia.jopama.data.Component;
-import pl.rodia.jopama.data.ComponentPhase;
-import pl.rodia.jopama.data.Increment;
-import pl.rodia.jopama.data.Transaction;
-import pl.rodia.jopama.data.TransactionComponent;
-import pl.rodia.jopama.data.TransactionPhase;
-import pl.rodia.jopama.gateway.ErrorCode;
-import pl.rodia.jopama.gateway.NewTransactionVersionFeedback;
-import pl.rodia.jopama.stats.StatsAsyncSource;
-import pl.rodia.jopama.stats.StatsCollector;
+import pl.rodia.jopama.gateway.RemoteStorageGateway;
 import pl.rodia.mpf.Task;
 import pl.rodia.mpf.TaskRunner;
 
@@ -58,7 +46,6 @@ public class Integrator
 				this.localStorage,
 				this.remoteStorageGateway
 		);
-		this.pendingTransactions = new HashSet<Integer>();
 	}
 
 	void start()
@@ -72,13 +59,10 @@ public class Integrator
 		this.taskRunnerThread.join();
 	}
 
-	synchronized public void addTransaction(
+	public void addTransaction(
 			Integer transactionId
 	)
 	{
-		this.pendingTransactions.add(
-				transactionId
-		);
 		this.taskRunner.schedule(
 				new Task()
 				{
@@ -94,72 +78,35 @@ public class Integrator
 		);
 	}
 
-	synchronized public void checkForRemovedTransactions()
-	{
-		Set<Integer> pt = new HashSet<Integer>();
-		for (Integer i : this.pendingTransactions)
-		{
-			pt.add(i);
-		}
-		for (Integer transactionId : pt)
-		{
-			this.inMemoryStorageGateway.requestTransaction(
-					transactionId,
-					new NewTransactionVersionFeedback()
-					{
-
-						@Override
-						public void success(
-								Transaction transaction
-						)
-						{
-						}
-
-						@Override
-						public void failure(
-								ErrorCode errorCode
-						)
-						{
-							if (
-								errorCode == ErrorCode.NOT_EXISTS
-							)
-							{
-								onTransactionRemoved(
-										transactionId
-								);
-							}
-						}
-					}
-			);
-		}
-	}
-
-	synchronized public void onTransactionRemoved(
-			Integer transactionId
-	)
-	{
-		this.pendingTransactions.remove(
-				transactionId
-		);
-		this.notify();
-	}
-
-	synchronized public void waitUntilTransactionProcessingFinished() throws InterruptedException
+	public void waitUntilAllTransactionsProcessed() throws InterruptedException, ExecutionException
 	{
 		while (
 			true
 		)
 		{
-			this.checkForRemovedTransactions();
+			CompletableFuture<Integer> numOparations = new CompletableFuture<Integer>();
+			this.taskRunner.schedule(
+					new Task()
+					{
+						@Override
+						public void execute()
+						{
+							numOparations.complete(
+									transactionProcessor.getNumTransactions()
+							);
+						}
+					}
+			);
 			if (
-				this.pendingTransactions.size() == 0
+				numOparations.get().equals(
+						new Integer(
+								0
+						)
+				)
 			)
 			{
 				break;
 			}
-			wait(
-					1000
-			);
 		}
 	}
 
@@ -169,7 +116,6 @@ public class Integrator
 	RemoteStorageGatewayImpl remoteStorageGateway;
 	LocalStorage localStorage;
 	TransactionAnalyzer transactionAnalyzer;
-	TransactionProcessorImpl transactionProcessor;
-	Set<Integer> pendingTransactions;
+	TransactionProcessor transactionProcessor;
 	static final Logger logger = LogManager.getLogger();
 }

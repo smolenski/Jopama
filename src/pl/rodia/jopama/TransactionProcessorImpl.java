@@ -69,6 +69,11 @@ public class TransactionProcessorImpl extends TransactionProcessor
 			}
 		}
 	}
+	
+	public Integer getNumTransactions()
+	{
+		return this.transactionIds.size();
+	}
 
 	public void executeScheduledProcessing()
 	{

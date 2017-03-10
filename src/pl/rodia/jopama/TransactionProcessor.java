@@ -2,8 +2,8 @@ package pl.rodia.jopama;
 
 public abstract class TransactionProcessor
 {
-
-	public abstract void processTransaction(
+	
+	public abstract void addTransaction(
 			Integer transactionId
 	);
 
@@ -11,4 +11,6 @@ public abstract class TransactionProcessor
 			Integer transactionId
 	);
 
+	public abstract Integer getNumTransactions();
+	
 }

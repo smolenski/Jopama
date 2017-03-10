@@ -3,9 +3,11 @@ package pl.rodia.jopama.integration1;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeMap;
+import java.util.concurrent.ExecutionException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.Test;
 
 import pl.rodia.jopama.data.Component;
 import pl.rodia.jopama.data.ComponentPhase;
@@ -16,11 +18,10 @@ import pl.rodia.jopama.data.TransactionPhase;
 import pl.rodia.jopama.stats.StatsAsyncSource;
 import pl.rodia.jopama.stats.StatsCollector;
 
-public class BasicTest
+public class BasicIntegrationTest
 {
-	public static void main(
-			String[] args
-	)
+	@Test
+	public void singleTransactionConcurrentlyProcessedByManyIntegratorsTest()
 	{
 		final int numIntegrators = 10;
 		InMemoryStorageGateway inMemoryStorageGateway = new InMemoryStorageGateway();
@@ -128,11 +129,15 @@ public class BasicTest
 		{
 			try
 			{
-				integrator.waitUntilTransactionProcessingFinished();
+				integrator.waitUntilAllTransactionsProcessed();
 			}
 			catch (InterruptedException e1)
 			{
 				e1.printStackTrace();
+			}
+			catch (ExecutionException e)
+			{
+				e.printStackTrace();
 			}
 		}
 
