@@ -126,7 +126,7 @@ public class TransactionProcessorImpl extends TransactionProcessor
 					}
 				},
 				new Long(
-						10 * 1000
+						3 * 1000
 				)
 		);
 	}

@@ -1,16 +1,17 @@
 package pl.rodia.jopama.integration1;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.Test;
 
 import pl.rodia.jopama.data.Component;
 import pl.rodia.jopama.data.ComponentPhase;
@@ -28,8 +29,10 @@ public class RandomExchangesIntegrationTest
 			Integer NUM_COMPONENTS,
 			Integer NUM_COMPONENTS_IN_TRANSACTION,
 			Integer NUM_TRANSACTIONS,
-			Integer TRANSACTION_REPEAT_COUNT
-	)
+			Integer TRANSACTION_REPEAT_COUNT,
+			Integer NUM_IN_FLIGHT_IN_INITIATOR,
+			Integer DURATION_SEC
+	) throws InterruptedException, ExecutionException
 	{
 		Integer COMPONENT_ID_BASE = new Integer(
 				10000
@@ -203,13 +206,19 @@ public class RandomExchangesIntegrationTest
 			Integer transactionId = new Integer(
 					TRANSACTION_ID_BASE + it
 			);
-			for (int ic = 0; ic < TRANSACTION_REPEAT_COUNT; ++ic)
+			Set<Integer> integratorIds = new HashSet<Integer>();
+			while (
+				integratorIds.size() < TRANSACTION_REPEAT_COUNT
+			)
 			{
-				Integer integratorId = new Integer(
+				integratorIds.add(
 						random.nextInt(
 								integratorTransactions.size()
 						)
 				);
+			}
+			for (Integer integratorId : integratorIds)
+			{
 				integratorTransactions.get(
 						integratorId
 				).add(
@@ -219,11 +228,21 @@ public class RandomExchangesIntegrationTest
 		}
 
 		List<Integrator> integrators = new LinkedList<Integrator>();
+		Long processingStartTimeMillis = System.currentTimeMillis();
 		for (int ii = 0; ii < NUM_INTEGRATORS; ++ii)
 		{
-			List<Integer> transactions = integratorTransactions.get(ii);
-			Integrator integrator = new Integrator("Integrator_" + ii, inMemoryStorageGateway, transactions, transactions.size());
-			integrators.add(integrator);
+			List<Integer> transactions = integratorTransactions.get(
+					ii
+			);
+			Integrator integrator = new Integrator(
+					"Integrator_" + ii,
+					inMemoryStorageGateway,
+					transactions,
+					NUM_IN_FLIGHT_IN_INITIATOR
+			);
+			integrators.add(
+					integrator
+			);
 			integrator.start();
 		}
 
@@ -249,32 +268,44 @@ public class RandomExchangesIntegrationTest
 		);
 
 		statsCollector.start();
-		
+
+		Thread.sleep(
+				DURATION_SEC * 1000
+		);
+
+		logger.info(
+				"Tearing down stats collector - prepareToFinish"
+		);
+		statsCollector.prepareToFinish();
+
 		for (Integrator integrator : integrators)
 		{
-			try
-			{
-				logger.info("Tearing down integrator: " + integrator.taskRunner.name);
-				integrator.teardown();
-			}
-			catch (InterruptedException e)
-			{
-				e.printStackTrace();
-			}
-			catch (ExecutionException e)
-			{
-				e.printStackTrace();
-			}
+			logger.info(
+					"Preparing to finish integrator: " + integrator.taskRunner.name
+			);
+			integrator.prepareToFinish();
 		}
+		for (Integrator integrator : integrators)
+		{
+			logger.info(
+					"Finishing integrator: " + integrator.taskRunner.name
+			);
+			integrator.finish();
+		}
+		Long processingDurationMillis = System.currentTimeMillis() - processingStartTimeMillis;
+		Long processingDurationSecs = processingDurationMillis / 1000;
 
-		try
+		logger.info(
+				"Tearing down stats collector - finish"
+		);
+		statsCollector.finish();
+
+		Integer numFinished = new Integer(
+				0
+		);
+		for (Integrator integrator : integrators)
 		{
-			logger.info("Tearing down stats collector");
-			statsCollector.teardown();
-		}
-		catch (InterruptedException e)
-		{
-			e.printStackTrace();
+			numFinished += integrator.paceMaker.getNumFinished();
 		}
 
 		TreeMap<Integer, Boolean> valueExists = new TreeMap<Integer, Boolean>();
@@ -321,18 +352,14 @@ public class RandomExchangesIntegrationTest
 			);
 		}
 
-	}
-
-	@Test
-	public void conflictingAndNotConflictingTransactions()
-	{
-		this.performTest(
-				10,
-				100,
-				10,
-				30,
-				2
+		logger.info(
+				"Performed: " + numFinished + " tra "
+						+ "in: " + processingDurationSecs + " sec "
+						+ "("
+						+ (new Double(numFinished ) / TRANSACTION_REPEAT_COUNT / processingDurationSecs) + " tra/sec"
+						+ ")"
 		);
+
 	}
 
 	static final Logger logger = LogManager.getLogger();

@@ -1,6 +1,8 @@
 package pl.rodia.jopama.stats;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -30,8 +32,24 @@ public class StatsCollector
 		this.taskRunnerThread.start();
 		this.scheduleTick();
 	}
+	
+	public void prepareToFinish() throws InterruptedException, ExecutionException
+	{
+		CompletableFuture<Boolean> done = new CompletableFuture<Boolean>();
+		this.taskRunner.schedule(new Task()
+		{
+			@Override
+			public void execute()
+			{
+				stopRequested = new Boolean(true);
+				done.complete(new Boolean(true));
+			}
+		});
+		Boolean result = done.get();
+		assert result.equals(new Boolean(true));
+	}
 
-	public void teardown() throws InterruptedException
+	public void finish() throws InterruptedException
 	{
 		if (this.scheduledPeriodicTaskId != null)
 		{
@@ -40,7 +58,6 @@ public class StatsCollector
 				this.scheduledPeriodicTaskId = null;
 			}
 		}
-		this.stopRequested = new Boolean(true);
 		this.taskRunner.finish();
 		this.taskRunnerThread.join();
 	}

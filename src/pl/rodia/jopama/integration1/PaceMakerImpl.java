@@ -26,8 +26,10 @@ public class PaceMakerImpl implements PaceMaker
 	)
 	{
 		super();
-		this.name = name;
 		this.finish = new Boolean(
+				false
+		);
+		this.finished = new Boolean(
 				false
 		);
 		this.taskRunner = new TaskRunner(
@@ -36,6 +38,8 @@ public class PaceMakerImpl implements PaceMaker
 		this.taskRunnerThread = new Thread(
 				this.taskRunner
 		);
+		this.numFinished = new Integer(0);
+		this.name = name;
 		this.waitingTransactions = new LinkedList<Integer>();
 		for (Integer transactionId : toDoTransactions)
 		{
@@ -72,6 +76,22 @@ public class PaceMakerImpl implements PaceMaker
 		this.taskRunner.finish();
 		this.taskRunnerThread.join();
 	}
+	
+	public void prepareToFinish() throws InterruptedException, ExecutionException
+	{
+		CompletableFuture<Boolean> done = new CompletableFuture<Boolean>();
+		this.taskRunner.schedule(new Task()
+		{
+			@Override
+			public void execute()
+			{
+				finish = new Boolean(true);
+				done.complete(new Boolean(true));
+			}
+		});
+		Boolean result = done.get();
+		assert result.equals(new Boolean(true));
+	}
 
 	public void finish() throws InterruptedException, ExecutionException
 	{
@@ -87,7 +107,6 @@ public class PaceMakerImpl implements PaceMaker
 						@Override
 						public void execute()
 						{
-							finish = new Boolean(true);
 							futureEmptyTransactions.complete(
 									new Boolean(
 											runningTransactions.isEmpty()
@@ -109,6 +128,7 @@ public class PaceMakerImpl implements PaceMaker
 			Thread.sleep(100);
 		}
 		this.teardown();
+		this.finished = new Boolean(true);
 	}
 
 	void schedule(
@@ -184,6 +204,7 @@ public class PaceMakerImpl implements PaceMaker
 		this.runningTransactions.remove(
 				transactionId
 		);
+		++this.numFinished;
 		if (
 			this.finish.equals(
 					new Boolean(
@@ -196,9 +217,18 @@ public class PaceMakerImpl implements PaceMaker
 		}
 	}
 
+	@Override
+	public Integer getNumFinished()
+	{
+		assert this.finished.equals(new Boolean(true));
+		return this.numFinished;
+	}
+	
 	Boolean finish;
+	Boolean finished;
 	TaskRunner taskRunner;
 	Thread taskRunnerThread;
+	Integer numFinished;
 	final String name;
 	List<Integer> waitingTransactions;
 	Set<Integer> runningTransactions;
@@ -206,4 +236,5 @@ public class PaceMakerImpl implements PaceMaker
 	TransactionProcessor transactionProcessor;
 	TaskRunner transactionTaskRunner;
 	static final Logger logger = LogManager.getLogger();
+
 }

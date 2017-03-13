@@ -21,7 +21,7 @@ import pl.rodia.jopama.stats.StatsCollector;
 public class BasicIntegrationTest
 {
 	@Test
-	public void singleTransactionConcurrentlyProcessedByManyIntegratorsTest()
+	public void singleTransactionConcurrentlyProcessedByManyIntegratorsTest() throws InterruptedException, ExecutionException
 	{
 		final int numIntegrators = 10;
 		InMemoryStorageGateway inMemoryStorageGateway = new InMemoryStorageGateway();
@@ -128,30 +128,18 @@ public class BasicIntegrationTest
 
 		statsCollector.start();
 
+		statsCollector.prepareToFinish();
+		
 		for (Integrator integrator : integrators)
 		{
-			try
-			{
-				integrator.teardown();
-			}
-			catch (InterruptedException e)
-			{
-				e.printStackTrace();
-			}
-			catch (ExecutionException e)
-			{
-				e.printStackTrace();
-			}
+				integrator.prepareToFinish();
 		}
-
-		try
+		for (Integrator integrator : integrators)
 		{
-			statsCollector.teardown();
+				integrator.finish();
 		}
-		catch (InterruptedException e)
-		{
-			e.printStackTrace();
-		}
+		
+		statsCollector.finish();
 
 		logger.info(
 				inMemoryStorageGateway.components.get(

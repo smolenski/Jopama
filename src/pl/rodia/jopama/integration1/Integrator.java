@@ -61,7 +61,12 @@ public class Integrator
 		this.paceMaker.start();
 	}
 
-	void teardown() throws InterruptedException, ExecutionException
+	void prepareToFinish() throws InterruptedException, ExecutionException
+	{
+		this.paceMaker.prepareToFinish();
+	}
+	
+	void finish() throws InterruptedException, ExecutionException
 	{
 		this.paceMaker.finish();
 		this.taskRunner.finish();

@@ -7,7 +7,9 @@
     <property name="jar.dir"     value="${build.dir}/jar"/>
     <property name="tests.dir"     value="tests"/>
     <property name="tests.unit.dir"     value="tests/unit"/>
-    <property name="tests.integration.dir"     value="tests/integration"/>
+    <property name="tests.integration.basic.dir"     value="tests/integration/basic"/>
+    <property name="tests.integration.nonConfPerf.dir"     value="tests/integration/nonConfPerf"/>
+    <property name="tests.integration.confPerf.dir"     value="tests/integration/confPerf"/>
 
     <property name="main-class"  value="pl.rodia.jopama.integration1.RandomExchangesTest"/>
 
@@ -30,7 +32,9 @@
         <mkdir dir="${classes.dir}"/>
         <mkdir dir="${tests.dir}"/>
     	<mkdir dir="${tests.unit.dir}"/>
-    	<mkdir dir="${tests.integration.dir}"/>
+    	<mkdir dir="${tests.integration.basic.dir}"/>
+    	<mkdir dir="${tests.integration.nonConfPerf.dir}"/>
+    	<mkdir dir="${tests.integration.confPerf.dir}"/>
     	<javac srcdir="${src.dir}" destdir="${classes.dir}" classpathref="libraries" includeantruntime="true" debug="true"/>
     </target>
 
@@ -59,27 +63,58 @@
 		</junit>
 	</target>
 
-	<target name="integrationTests" depends="jar">
-		<junit printsummary="yes" dir="${tests.integration.dir}" showoutput="true" timeout="300000">
+	<target name="basicIntegrationTest" depends="jar">
+		<junit printsummary="yes" dir="${tests.integration.basic.dir}" showoutput="true" timeout="100000">
 			<classpath>
 				<path refid="libraries"/>
 				<path refid="application"/>
                 <pathelement path="${basedir}"/>
 			</classpath>
 			<formatter type="xml" usefile="yes"/>
-			<batchtest fork="yes" todir="${tests.integration.dir}">
+			<batchtest fork="yes" todir="${tests.integration.basic.dir}">
 				<fileset dir="${src.dir}">
-					<include name="**/RandomExchangesIntegrationTest.java"/>
-<!--
-					<include name="**/*IntegrationTest.java"/>
-					<include name="**/*IntegrationTests.java"/>
--->
+					<include name="**/BasicIntegrationTest.java"/>
+				</fileset>
+			</batchtest>
+		</junit>
+	</target>
+
+	<target name="confPerfTest" depends="jar">
+		<junit printsummary="yes" dir="${tests.integration.confPerf.dir}" showoutput="true" timeout="100000">
+			<classpath>
+				<path refid="libraries"/>
+				<path refid="application"/>
+                <pathelement path="${basedir}"/>
+			</classpath>
+			<formatter type="xml" usefile="yes"/>
+			<batchtest fork="yes" todir="${tests.integration.confPerf.dir}">
+				<fileset dir="${src.dir}">
+					<include name="**/ConfPerfTest.java"/>
 				</fileset>
 			</batchtest>
 		</junit>
 	</target>
 
 	
+	<target name="nonConfPerfTest" depends="jar">
+		<junit printsummary="yes" dir="${tests.integration.nonConfPerf.dir}" showoutput="true" timeout="100000">
+			<classpath>
+				<path refid="libraries"/>
+				<path refid="application"/>
+                <pathelement path="${basedir}"/>
+			</classpath>
+			<formatter type="xml" usefile="yes"/>
+			<batchtest fork="yes" todir="${tests.integration.nonConfPerf.dir}">
+				<fileset dir="${src.dir}">
+					<include name="**/NonConfPerfTest.java"/>
+				</fileset>
+			</batchtest>
+		</junit>
+	</target>
+
+	<target name="integrationTests" depends="basicIntegrationTest,confPerfTest,nonConfPerfTest">
+	</target>
+		
     <target name="run" depends="jar">
         <java fork="true" classname="${main-class}">
 		<classpath>
