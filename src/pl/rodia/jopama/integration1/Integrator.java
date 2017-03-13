@@ -1,6 +1,6 @@
 package pl.rodia.jopama.integration1;
 
-import java.util.concurrent.CompletableFuture;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import org.apache.logging.log4j.LogManager;
@@ -13,8 +13,6 @@ import pl.rodia.jopama.core.TransactionAnalyzer;
 import pl.rodia.jopama.core.TransactionAnalyzerImpl;
 import pl.rodia.jopama.core.TransactionProcessor;
 import pl.rodia.jopama.core.TransactionProcessorImpl;
-import pl.rodia.jopama.gateway.RemoteStorageGateway;
-import pl.rodia.mpf.Task;
 import pl.rodia.mpf.TaskRunner;
 
 public class Integrator
@@ -22,7 +20,9 @@ public class Integrator
 
 	public Integrator(
 			String name,
-			InMemoryStorageGateway inMemoryStorageGateway
+			InMemoryStorageGateway inMemoryStorageGateway,
+			List<Integer> toDoTransactions,
+			Integer numRunningPace
 	)
 	{
 		this.taskRunner = new TaskRunner(
@@ -46,68 +46,26 @@ public class Integrator
 				this.localStorage,
 				this.remoteStorageGateway
 		);
+		this.paceMaker = new PaceMakerImpl(
+				name + ":PM",
+				toDoTransactions,
+				numRunningPace,
+				transactionProcessor,
+				taskRunner
+		);
 	}
 
 	void start()
 	{
 		this.taskRunnerThread.start();
+		this.paceMaker.start();
 	}
 
-	void teardown() throws InterruptedException
+	void teardown() throws InterruptedException, ExecutionException
 	{
+		this.paceMaker.finish();
 		this.taskRunner.finish();
 		this.taskRunnerThread.join();
-	}
-
-	public void addTransaction(
-			Integer transactionId
-	)
-	{
-		this.taskRunner.schedule(
-				new Task()
-				{
-
-					@Override
-					public void execute()
-					{
-						transactionProcessor.addTransaction(
-								transactionId
-						);
-					}
-				}
-		);
-	}
-
-	public void waitUntilAllTransactionsProcessed() throws InterruptedException, ExecutionException
-	{
-		while (
-			true
-		)
-		{
-			CompletableFuture<Integer> numOparations = new CompletableFuture<Integer>();
-			this.taskRunner.schedule(
-					new Task()
-					{
-						@Override
-						public void execute()
-						{
-							numOparations.complete(
-									transactionProcessor.getNumTransactions()
-							);
-						}
-					}
-			);
-			if (
-				numOparations.get().equals(
-						new Integer(
-								0
-						)
-				)
-			)
-			{
-				break;
-			}
-		}
 	}
 
 	TaskRunner taskRunner;
@@ -117,5 +75,6 @@ public class Integrator
 	LocalStorage localStorage;
 	TransactionAnalyzer transactionAnalyzer;
 	TransactionProcessor transactionProcessor;
+	PaceMaker paceMaker;
 	static final Logger logger = LogManager.getLogger();
 }

@@ -1,16 +1,13 @@
 package pl.rodia.jopama.core;
 
+import pl.rodia.mpf.Task;
+
 public abstract class TransactionProcessor
 {
 	
 	public abstract void addTransaction(
-			Integer transactionId
+			Integer transactionId,
+			Task transactionDone
 	);
 
-	public abstract void removeTransaction(
-			Integer transactionId
-	);
-
-	public abstract Integer getNumTransactions();
-	
 }

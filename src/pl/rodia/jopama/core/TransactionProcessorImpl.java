@@ -1,7 +1,7 @@
 package pl.rodia.jopama.core;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -31,17 +31,19 @@ public class TransactionProcessorImpl extends TransactionProcessor
 		this.transactionAnalyzer = transactionAnalyzer;
 		this.storage = storage;
 		this.storageGateway = storageGateway;
-		this.transactionIds = new HashSet<Integer>();
+		this.transactions = new HashMap<Integer, Task>();
 		this.scheduledProcessingTaskId = null;
 		this.scheduleProcessing();
 	}
 
 	public void addTransaction(
-			Integer transactionId
+			Integer transactionId,
+			Task transactionDone
 	)
 	{
-		this.transactionIds.add(
-				transactionId
+		this.transactions.put(
+				transactionId,
+				transactionDone
 		);
 		if (
 			this.scheduledProcessingTaskId == null
@@ -54,38 +56,55 @@ public class TransactionProcessorImpl extends TransactionProcessor
 		);
 	}
 
-	public void removeTransaction(
+	void removeTransaction(
 			Integer transactionId
 	)
 	{
-		this.transactionIds.remove(
+		Task task = this.transactions.remove(
 				transactionId
 		);
-		if (this.transactionIds.isEmpty())
+		if (
+			task != null
+		)
 		{
-			if (this.taskRunner.cancelTask(this.scheduledProcessingTaskId))
+			if (
+				this.transactions.isEmpty()
+			)
 			{
-				this.scheduledProcessingTaskId = null;
+				if (
+					this.taskRunner.cancelTask(
+							this.scheduledProcessingTaskId
+					).equals(
+							new Boolean(
+									true
+							)
+					)
+				)
+				{
+					logger.debug(
+							"executeScheduledProcessing - cancelled"
+					);
+					this.scheduledProcessingTaskId = null;
+				}
 			}
+			task.execute();
 		}
-	}
-	
-	public Integer getNumTransactions()
-	{
-		return this.transactionIds.size();
 	}
 
 	public void executeScheduledProcessing()
 	{
+		logger.debug(
+				"executeScheduledProcessing"
+		);
 		this.scheduledProcessingTaskId = null;
-		for (Integer transactionId : this.transactionIds)
+		for (Map.Entry<Integer, Task> entry : this.transactions.entrySet())
 		{
 			this.processTransaction(
-					transactionId
+					entry.getKey()
 			);
 		}
 		if (
-			this.transactionIds.isEmpty() == false
+			this.transactions.isEmpty() == false
 		)
 		{
 			this.scheduleProcessing();
@@ -94,6 +113,9 @@ public class TransactionProcessorImpl extends TransactionProcessor
 
 	public void scheduleProcessing()
 	{
+		logger.debug(
+				"executeScheduledProcessing - scheduling"
+		);
 		this.scheduledProcessingTaskId = this.taskRunner.schedule(
 				new Task()
 				{
@@ -114,14 +136,16 @@ public class TransactionProcessorImpl extends TransactionProcessor
 	)
 	{
 		if (
-			this.transactionIds.contains(
+			this.transactions.containsKey(
 					transactionId
 			) == false
 		)
 		{
 			return;
 		}
-		logger.debug(this.taskRunner.name + ":getting change");
+		logger.debug(
+				this.taskRunner.name + ":getting change"
+		);
 		UnifiedAction change = this.transactionAnalyzer.getChange(
 				transactionId
 		);
@@ -134,7 +158,8 @@ public class TransactionProcessorImpl extends TransactionProcessor
 			)
 			{
 				logger.debug(
-						this.taskRunner.name + ":changeComponent, componentId: " + change.componentChange.componentId + " CURRENT: " + change.componentChange.currentVersion + " NEXT: "
+						this.taskRunner.name + ":changeComponent, componentId: " + change.componentChange.componentId + " CURRENT: "
+								+ change.componentChange.currentVersion + " NEXT: "
 								+ change.componentChange.nextVersion
 				);
 				this.storageGateway.changeComponent(
@@ -150,7 +175,8 @@ public class TransactionProcessorImpl extends TransactionProcessor
 			)
 			{
 				logger.debug(
-						this.taskRunner.name + ":changeTransaction, transactionId: " + change.transactionChange.transactionId + " CURRENT: " + change.transactionChange.currentVersion + " NEXT: "
+						this.taskRunner.name + ":changeTransaction, transactionId: " + change.transactionChange.transactionId + " CURRENT: "
+								+ change.transactionChange.currentVersion + " NEXT: "
 								+ change.transactionChange.nextVersion
 				);
 				this.storageGateway.changeTransaction(
@@ -276,7 +302,7 @@ public class TransactionProcessorImpl extends TransactionProcessor
 	TransactionAnalyzer transactionAnalyzer;
 	LocalStorage storage;
 	RemoteStorageGateway storageGateway;
-	Set<Integer> transactionIds;
+	Map<Integer, Task> transactions;
 	Integer scheduledProcessingTaskId;
 	static final Logger logger = LogManager.getLogger();
 }

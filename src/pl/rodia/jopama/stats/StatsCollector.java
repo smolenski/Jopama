@@ -35,7 +35,7 @@ public class StatsCollector
 	{
 		if (this.scheduledPeriodicTaskId != null)
 		{
-			if (this.taskRunner.cancelTask(this.scheduledPeriodicTaskId))
+			if (this.taskRunner.cancelTask(this.scheduledPeriodicTaskId).equals(new Boolean(true)))
 			{
 				this.scheduledPeriodicTaskId = null;
 			}

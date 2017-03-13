@@ -1,5 +1,6 @@
 package pl.rodia.jopama.integration1;
 
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -23,26 +24,20 @@ import pl.rodia.jopama.stats.StatsCollector;
 public class RandomExchangesIntegrationTest
 {
 	void performTest(
-		Integer NUM_INTEGRATORS,
-		Integer NUM_COMPONENTS,
-		Integer NUM_COMPONENTS_IN_TRANSACTION,
-		Integer NUM_TRANSACTIONS,
-		Integer TRANSACTION_REPEAT_COUNT
+			Integer NUM_INTEGRATORS,
+			Integer NUM_COMPONENTS,
+			Integer NUM_COMPONENTS_IN_TRANSACTION,
+			Integer NUM_TRANSACTIONS,
+			Integer TRANSACTION_REPEAT_COUNT
 	)
 	{
-		Integer COMPONENT_ID_BASE = new Integer(10000);
-		Integer TRANSACTION_ID_BASE = new Integer(2000000);
+		Integer COMPONENT_ID_BASE = new Integer(
+				10000
+		);
+		Integer TRANSACTION_ID_BASE = new Integer(
+				2000000
+		);
 		InMemoryStorageGateway inMemoryStorageGateway = new InMemoryStorageGateway();
-		List<Integrator> integrators = new LinkedList<Integrator>();
-		for (int i = 0; i < NUM_INTEGRATORS; ++i)
-		{
-			integrators.add(
-					new Integrator(
-							"Integrator_" + i,
-							inMemoryStorageGateway
-					)
-			);
-		}
 		for (int i = 0; i < NUM_COMPONENTS; ++i)
 		{
 			inMemoryStorageGateway.components.put(
@@ -104,7 +99,9 @@ public class RandomExchangesIntegrationTest
 								)
 						);
 					}
-					if (result.size() <= 1)
+					if (
+						result.size() <= 1
+					)
 					{
 						return result;
 					}
@@ -126,33 +123,53 @@ public class RandomExchangesIntegrationTest
 						for (Map.Entry<Integer, Integer> entry : result.entrySet())
 						{
 							if (
-									vi == i
-								)
-								{
-									keyExchange1 = new Integer(entry.getKey());
-								}
-								if (
-									vi == indexToExchangeWith
-								)
-								{
-									keyExchange2 = new Integer(entry.getKey());
-								}
-								if (
-									keyExchange1 != null && keyExchange2 != null
-								)
-								{
-									break;
-								}
-								++vi;
-							
+								vi == i
+							)
+							{
+								keyExchange1 = new Integer(
+										entry.getKey()
+								);
+							}
+							if (
+								vi == indexToExchangeWith
+							)
+							{
+								keyExchange2 = new Integer(
+										entry.getKey()
+								);
+							}
+							if (
+								keyExchange1 != null && keyExchange2 != null
+							)
+							{
+								break;
+							}
+							++vi;
+
 						}
 						assert keyExchange1 != null;
 						assert keyExchange2 != null;
-						Integer valueExchange1 = new Integer(result.get(keyExchange1));
-						Integer valueExchange2 = new Integer(result.get(keyExchange2));
-						logger.debug("Exchanging: " + valueExchange1 + " <=> " + valueExchange2);
-						result.put(keyExchange1, valueExchange2);
-						result.put(keyExchange2, valueExchange1);
+						Integer valueExchange1 = new Integer(
+								result.get(
+										keyExchange1
+								)
+						);
+						Integer valueExchange2 = new Integer(
+								result.get(
+										keyExchange2
+								)
+						);
+						logger.debug(
+								"Exchanging: " + valueExchange1 + " <=> " + valueExchange2
+						);
+						result.put(
+								keyExchange1,
+								valueExchange2
+						);
+						result.put(
+								keyExchange2,
+								valueExchange1
+						);
 					}
 					return result;
 				}
@@ -170,6 +187,46 @@ public class RandomExchangesIntegrationTest
 		}
 
 		List<StatsAsyncSource> statsSources = new LinkedList<StatsAsyncSource>();
+
+		Map<Integer, List<Integer>> integratorTransactions = new HashMap<Integer, List<Integer>>();
+		for (int ii = 0; ii < NUM_INTEGRATORS; ++ii)
+		{
+			integratorTransactions.put(
+					new Integer(
+							ii
+					),
+					new LinkedList<Integer>()
+			);
+		}
+		for (int it = 0; it < NUM_TRANSACTIONS; ++it)
+		{
+			Integer transactionId = new Integer(
+					TRANSACTION_ID_BASE + it
+			);
+			for (int ic = 0; ic < TRANSACTION_REPEAT_COUNT; ++ic)
+			{
+				Integer integratorId = new Integer(
+						random.nextInt(
+								integratorTransactions.size()
+						)
+				);
+				integratorTransactions.get(
+						integratorId
+				).add(
+						transactionId
+				);
+			}
+		}
+
+		List<Integrator> integrators = new LinkedList<Integrator>();
+		for (int ii = 0; ii < NUM_INTEGRATORS; ++ii)
+		{
+			List<Integer> transactions = integratorTransactions.get(ii);
+			Integrator integrator = new Integrator("Integrator_" + ii, inMemoryStorageGateway, transactions, transactions.size());
+			integrators.add(integrator);
+			integrator.start();
+		}
+
 		for (Integrator integrator : integrators)
 		{
 			StatsAsyncSource taskRunnerStatsSource = new StatsAsyncSource(
@@ -191,39 +248,18 @@ public class RandomExchangesIntegrationTest
 				statsSources
 		);
 
-		for (Integrator integrator : integrators)
-		{
-			integrator.start();
-		}
-		for (int it = 0; it < NUM_TRANSACTIONS; ++it)
-		{
-			Integer transactionId = new Integer(
-					TRANSACTION_ID_BASE + it
-			);
-			for (int ic = 0; ic < TRANSACTION_REPEAT_COUNT; ++ic)
-			{
-				Integrator integrator = integrators.get(
-						random.nextInt(
-								integrators.size()
-						)
-				);
-				integrator.addTransaction(
-						transactionId
-				);
-			}
-		}
-
 		statsCollector.start();
-
+		
 		for (Integrator integrator : integrators)
 		{
 			try
 			{
-				integrator.waitUntilAllTransactionsProcessed();
+				logger.info("Tearing down integrator: " + integrator.taskRunner.name);
+				integrator.teardown();
 			}
-			catch (InterruptedException e1)
+			catch (InterruptedException e)
 			{
-				e1.printStackTrace();
+				e.printStackTrace();
 			}
 			catch (ExecutionException e)
 			{
@@ -231,20 +267,9 @@ public class RandomExchangesIntegrationTest
 			}
 		}
 
-		for (Integrator integrator : integrators)
-		{
-			try
-			{
-				integrator.teardown();
-			}
-			catch (InterruptedException e)
-			{
-				e.printStackTrace();
-			}
-		}
-
 		try
 		{
+			logger.info("Tearing down stats collector");
 			statsCollector.teardown();
 		}
 		catch (InterruptedException e)
@@ -270,7 +295,9 @@ public class RandomExchangesIntegrationTest
 			int value = inMemoryStorageGateway.components.get(
 					COMPONENT_ID_BASE + i
 			).value;
-			assert valueExists.get(value) != null;
+			assert valueExists.get(
+					value
+			) != null;
 			valueExists.put(
 					value,
 					new Boolean(
@@ -295,16 +322,16 @@ public class RandomExchangesIntegrationTest
 		}
 
 	}
-	
+
 	@Test
 	public void conflictingAndNotConflictingTransactions()
 	{
 		this.performTest(
-			10,
-			100,
-			10,
-			30,
-			2
+				10,
+				100,
+				10,
+				30,
+				2
 		);
 	}
 

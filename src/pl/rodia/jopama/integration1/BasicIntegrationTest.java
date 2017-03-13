@@ -25,16 +25,6 @@ public class BasicIntegrationTest
 	{
 		final int numIntegrators = 10;
 		InMemoryStorageGateway inMemoryStorageGateway = new InMemoryStorageGateway();
-		List<Integrator> integrators = new LinkedList<Integrator>();
-		for (int i = 0; i < numIntegrators; ++i)
-		{
-			integrators.add(
-					new Integrator(
-							"Integrator_" + i,
-							inMemoryStorageGateway
-					)
-			);
-		}
 		inMemoryStorageGateway.components.put(
 				101,
 				new Component(
@@ -93,6 +83,22 @@ public class BasicIntegrationTest
 				)
 		);
 
+		List<Integer> transactionIds = new LinkedList<Integer>();
+		transactionIds.add(1001);
+		
+		List<Integrator> integrators = new LinkedList<Integrator>();
+		for (int i = 0; i < numIntegrators; ++i)
+		{
+			integrators.add(
+					new Integrator(
+							"Integrator_" + i,
+							inMemoryStorageGateway,
+							transactionIds,
+							transactionIds.size()
+					)
+			);
+		}
+		
 		List<StatsAsyncSource> statsSources = new LinkedList<StatsAsyncSource>();
 		for (Integrator integrator : integrators)
 		{
@@ -118,9 +124,6 @@ public class BasicIntegrationTest
 		for (Integrator integrator : integrators)
 		{
 			integrator.start();
-			integrator.addTransaction(
-					1001
-			);
 		}
 
 		statsCollector.start();
@@ -129,25 +132,13 @@ public class BasicIntegrationTest
 		{
 			try
 			{
-				integrator.waitUntilAllTransactionsProcessed();
-			}
-			catch (InterruptedException e1)
-			{
-				e1.printStackTrace();
-			}
-			catch (ExecutionException e)
-			{
-				e.printStackTrace();
-			}
-		}
-
-		for (Integrator integrator : integrators)
-		{
-			try
-			{
 				integrator.teardown();
 			}
 			catch (InterruptedException e)
+			{
+				e.printStackTrace();
+			}
+			catch (ExecutionException e)
 			{
 				e.printStackTrace();
 			}

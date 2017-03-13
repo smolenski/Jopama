@@ -31,7 +31,7 @@
         <mkdir dir="${tests.dir}"/>
     	<mkdir dir="${tests.unit.dir}"/>
     	<mkdir dir="${tests.integration.dir}"/>
-    	<javac srcdir="${src.dir}" destdir="${classes.dir}" classpathref="libraries" includeantruntime="true"/>
+    	<javac srcdir="${src.dir}" destdir="${classes.dir}" classpathref="libraries" includeantruntime="true" debug="true"/>
     </target>
 
     <target name="jar" depends="compile">
@@ -69,8 +69,11 @@
 			<formatter type="xml" usefile="yes"/>
 			<batchtest fork="yes" todir="${tests.integration.dir}">
 				<fileset dir="${src.dir}">
+					<include name="**/RandomExchangesIntegrationTest.java"/>
+<!--
 					<include name="**/*IntegrationTest.java"/>
 					<include name="**/*IntegrationTests.java"/>
+-->
 				</fileset>
 			</batchtest>
 		</junit>
