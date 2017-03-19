@@ -1,4 +1,4 @@
-package pl.rodia.jopama.integration1;
+package pl.rodia.jopama.integration.inmemory;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;

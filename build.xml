@@ -11,7 +11,7 @@
     <property name="tests.integration.nonConfPerf.dir"     value="tests/integration/nonConfPerf"/>
     <property name="tests.integration.confPerf.dir"     value="tests/integration/confPerf"/>
 
-    <property name="main-class"  value="pl.rodia.jopama.integration1.RandomExchangesTest"/>
+    <property name="main-class"  value="pl.rodia.jopama.integration.inmemory.RandomExchangesTest"/>
 
     <path id="libraries">
         <fileset dir="${basedir}/../../lib/" includes="**/*.jar"/>

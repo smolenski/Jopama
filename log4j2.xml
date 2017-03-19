@@ -21,19 +21,19 @@
         </File>
     </Appenders>
     <Loggers>
-        <Logger name="pl.rodia.jopama.stats" level="all" additivity="false">
+        <Logger name="pl.rodia.jopama.stats" level="info" additivity="false">
             <AppenderRef ref="StatsFile"/>
         </Logger>
-        <Logger name="pl.rodia.jopama.integration1" level="all">
+        <Logger name="pl.rodia.jopama.integration" level="info">
             <AppenderRef ref="IntegrationFile"/>
         </Logger>
-        <Logger name="pl.rodia.jopama.core" level="all">
+        <Logger name="pl.rodia.jopama.core" level="info">
             <AppenderRef ref="File"/>
         </Logger>
-        <Logger name="pl.rodia.jopama.gateway" level="all">
+        <Logger name="pl.rodia.jopama.gateway" level="info">
             <AppenderRef ref="File"/>
         </Logger>
-        <Logger name="pl.rodia.mpf" level="all">
+        <Logger name="pl.rodia.mpf" level="info">
             <AppenderRef ref="MpfFile"/>
         </Logger>
         <Root>

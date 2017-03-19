@@ -1,18 +1,18 @@
-package pl.rodia.jopama.integration1;
+package pl.rodia.jopama.integration.inmemory;
 
 import java.util.concurrent.ExecutionException;
 
 import org.junit.Test;
 
-public class ConfPerfTest
+public class NonConfPerfTest
 {
 	@Test
-	public void conflictingTransactionsPerformance() throws InterruptedException, ExecutionException
+	public void nonConflictingTransactionsPerformance() throws InterruptedException, ExecutionException
 	{
 		RandomExchangesIntegrationTest exchangesTester = new RandomExchangesIntegrationTest();
 		exchangesTester.performTest(
 				10,
-				100,
+				10000,
 				10,
 				1000,
 				2,
