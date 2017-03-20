@@ -1,6 +1,8 @@
 package pl.rodia.jopama.integration.zookeeper;
 
-public class NamingScheme
+import pl.rodia.jopama.data.Transaction;
+
+public class ZooKeeperHelpers
 {
 	static String getComponentPath(Integer componentId)
 	{
@@ -9,5 +11,13 @@ public class NamingScheme
 	static String getTransactionPath(Integer transactionId)
 	{
 		return "/Transactions/" + transactionId.toString();
+	}
+	static byte [] serializeTransaction(Transaction transaction)
+	{
+		return null;
+	}
+	static Transaction deserializeTransaction(byte[] data)
+	{
+		return null;
 	}
 }

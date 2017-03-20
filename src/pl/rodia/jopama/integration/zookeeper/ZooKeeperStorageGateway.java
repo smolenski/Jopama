@@ -1,7 +1,7 @@
 package pl.rodia.jopama.integration.zookeeper;
 
-import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.AsyncCallback.DataCallback;
+import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.data.Stat;
 
 import pl.rodia.jopama.data.ComponentChange;
@@ -41,7 +41,7 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 		synchronized (this.zooKeeperProvider)
 		{
 			this.zooKeeperProvider.zooKeeper.getData(
-					NamingScheme.getTransactionPath(
+					ZooKeeperHelpers.getTransactionPath(
 							transactionId
 					),
 					null,
@@ -54,6 +54,10 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 						)
 						{
 							if (rc == KeeperException.Code.OK.intValue())
+							{
+								feedback.success(ZooKeeperHelpers.deserializeTransaction(data));
+							}
+							else if (rc == KeeperException.Code.NONODE.intValue())
 							{
 								feedback.success(null);
 							}
