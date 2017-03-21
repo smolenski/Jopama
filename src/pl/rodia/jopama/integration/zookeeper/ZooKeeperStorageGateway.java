@@ -1,11 +1,14 @@
 package pl.rodia.jopama.integration.zookeeper;
 
 import org.apache.zookeeper.AsyncCallback.DataCallback;
+import org.apache.zookeeper.AsyncCallback.StatCallback;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.ZooKeeper.States;
 import org.apache.zookeeper.data.Stat;
 
 import pl.rodia.jopama.data.ComponentChange;
 import pl.rodia.jopama.data.TransactionChange;
+import pl.rodia.jopama.gateway.ErrorCode;
 import pl.rodia.jopama.gateway.NewComponentVersionFeedback;
 import pl.rodia.jopama.gateway.NewTransactionVersionFeedback;
 import pl.rodia.jopama.gateway.RemoteStorageGateway;
@@ -40,11 +43,19 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 	{
 		synchronized (this.zooKeeperProvider)
 		{
+			if (
+				this.zooKeeperProvider != null
+						||
+						this.zooKeeperProvider.zooKeeper.getState() != States.CONNECTED
+			)
+			{
+				return;
+			}
 			this.zooKeeperProvider.zooKeeper.getData(
 					ZooKeeperHelpers.getTransactionPath(
 							transactionId
 					),
-					null,
+					false,
 					new DataCallback()
 					{
 
@@ -53,13 +64,24 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 								int rc, String path, Object ctx, byte[] data, Stat stat
 						)
 						{
-							if (rc == KeeperException.Code.OK.intValue())
+							if (
+								rc == KeeperException.Code.OK.intValue()
+							)
 							{
-								feedback.success(ZooKeeperHelpers.deserializeTransaction(data));
+								feedback.success(
+										ZooKeeperHelpers.deserializeTransaction(
+												data
+										)
+								// TODO provide version here
+								);
 							}
-							else if (rc == KeeperException.Code.NONODE.intValue())
+							else if (
+								rc == KeeperException.Code.NONODE.intValue()
+							)
 							{
-								feedback.success(null);
+								feedback.success(
+										null
+								);
 							}
 						}
 					},
@@ -73,8 +95,53 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 			Integer componentId, NewComponentVersionFeedback feedback
 	)
 	{
-		// TODO Auto-generated method stub
+		synchronized (this.zooKeeperProvider)
+		{
+			if (
+				this.zooKeeperProvider != null
+						||
+						this.zooKeeperProvider.zooKeeper.getState() != States.CONNECTED
+			)
+			{
+				return;
+			}
+			this.zooKeeperProvider.zooKeeper.getData(
+					ZooKeeperHelpers.getComponentPath(
+							componentId
+					),
+					false,
+					new DataCallback()
+					{
 
+						@Override
+						public void processResult(
+								int rc, String path, Object ctx, byte[] data, Stat stat
+						)
+						{
+							if (
+								rc == KeeperException.Code.OK.intValue()
+							)
+							{
+								feedback.success(
+										ZooKeeperHelpers.deserializeComponent(
+												data
+								// TODO provide version here
+										)
+								);
+							}
+							else if (
+								rc == KeeperException.Code.NONODE.intValue()
+							)
+							{
+								feedback.failure(
+										ErrorCode.NOT_EXISTS
+								);
+							}
+						}
+					},
+					null
+			);
+		}
 	}
 
 	@Override
@@ -82,8 +149,62 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 			TransactionChange transactionChange, NewTransactionVersionFeedback feedback
 	)
 	{
-		// TODO Auto-generated method stub
+		synchronized (this.zooKeeperProvider)
+		{
+			if (
+				this.zooKeeperProvider != null
+						||
+						this.zooKeeperProvider.zooKeeper.getState() != States.CONNECTED
+			)
+			{
+				return;
+			}
+			this.zooKeeperProvider.zooKeeper.setData(
+					ZooKeeperHelpers.getTransactionPath(
+							transactionChange.transactionId
+					),
+					ZooKeeperHelpers.serializeTransaction(
+							transactionChange.nextVersion
+					),
+					0, // TODO provide version here
+					new StatCallback()
+					{
 
+						@Override
+						public void processResult(
+								int rc, String path, Object ctx, Stat stat
+						)
+						{
+							if (
+									rc == KeeperException.Code.OK.intValue()
+								)
+								{
+									feedback.success(
+											transactionChange.nextVersion
+											 // TODO provide version here
+									);
+								}
+								else if (
+									rc == KeeperException.Code.NONODE.intValue()
+								)
+								{
+									feedback.failure(
+											ErrorCode.NOT_EXISTS
+									);
+								}
+								else if (
+									rc == KeeperException.Code.BADVERSION.intValue()
+								)
+								{
+									feedback.failure(
+											ErrorCode.BASE_VERSION_NOT_EQUAL
+									);
+								}
+						}
+					},
+					null
+			);
+		}
 	}
 
 	@Override
@@ -91,8 +212,62 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 			ComponentChange componentChange, NewComponentVersionFeedback feedback
 	)
 	{
-		// TODO Auto-generated method stub
+		synchronized (this.zooKeeperProvider)
+		{
+			if (
+				this.zooKeeperProvider != null
+						||
+						this.zooKeeperProvider.zooKeeper.getState() != States.CONNECTED
+			)
+			{
+				return;
+			}
+			this.zooKeeperProvider.zooKeeper.setData(
+					ZooKeeperHelpers.getComponentPath(
+							componentChange.transactionId
+					),
+					ZooKeeperHelpers.serializeComponent(
+							componentChange.nextVersion
+					),
+					0, // TODO provide version here
+					new StatCallback()
+					{
 
+						@Override
+						public void processResult(
+								int rc, String path, Object ctx, Stat stat
+						)
+						{
+							if (
+									rc == KeeperException.Code.OK.intValue()
+								)
+								{
+									feedback.success(
+											componentChange.nextVersion
+											 // TODO provide version here
+									);
+								}
+								else if (
+									rc == KeeperException.Code.NONODE.intValue()
+								)
+								{
+									feedback.failure(
+											ErrorCode.NOT_EXISTS
+									);
+								}
+								else if (
+									rc == KeeperException.Code.BADVERSION.intValue()
+								)
+								{
+									feedback.failure(
+											ErrorCode.BASE_VERSION_NOT_EQUAL
+									);
+								}
+						}
+					},
+					null
+			);
+		}
 	}
 
 	ZooKeeperProvider zooKeeperProvider;
