@@ -7,6 +7,8 @@ import org.apache.zookeeper.ZooKeeper.States;
 import org.apache.zookeeper.data.Stat;
 
 import pl.rodia.jopama.data.ComponentChange;
+import pl.rodia.jopama.data.ExtendedComponent;
+import pl.rodia.jopama.data.ExtendedTransaction;
 import pl.rodia.jopama.data.TransactionChange;
 import pl.rodia.jopama.gateway.ErrorCode;
 import pl.rodia.jopama.gateway.NewComponentVersionFeedback;
@@ -69,10 +71,12 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 							)
 							{
 								feedback.success(
-										ZooKeeperHelpers.deserializeTransaction(
-												data
+										new ExtendedTransaction(
+												ZooKeeperHelpers.deserializeTransaction(
+														data
+												),
+												stat.getVersion()
 										)
-								// TODO provide version here
 								);
 							}
 							else if (
@@ -123,9 +127,11 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 							)
 							{
 								feedback.success(
-										ZooKeeperHelpers.deserializeComponent(
-												data
-								// TODO provide version here
+										new ExtendedComponent(
+												ZooKeeperHelpers.deserializeComponent(
+														data
+												),
+												stat.getVersion()
 										)
 								);
 							}
@@ -166,7 +172,7 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 					ZooKeeperHelpers.serializeTransaction(
 							transactionChange.nextVersion
 					),
-					0, // TODO provide version here
+					transactionChange.currentVersion.externalVersion,
 					new StatCallback()
 					{
 
@@ -176,30 +182,33 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 						)
 						{
 							if (
-									rc == KeeperException.Code.OK.intValue()
-								)
-								{
-									feedback.success(
-											transactionChange.nextVersion
-											 // TODO provide version here
-									);
-								}
-								else if (
-									rc == KeeperException.Code.NONODE.intValue()
-								)
-								{
-									feedback.failure(
-											ErrorCode.NOT_EXISTS
-									);
-								}
-								else if (
-									rc == KeeperException.Code.BADVERSION.intValue()
-								)
-								{
-									feedback.failure(
-											ErrorCode.BASE_VERSION_NOT_EQUAL
-									);
-								}
+								rc == KeeperException.Code.OK.intValue()
+							)
+							{
+								assert stat.getVersion() == (transactionChange.currentVersion.externalVersion + 1);
+								feedback.success(
+										new ExtendedTransaction(
+												transactionChange.nextVersion,
+												stat.getVersion()
+										)
+								);
+							}
+							else if (
+								rc == KeeperException.Code.NONODE.intValue()
+							)
+							{
+								feedback.failure(
+										ErrorCode.NOT_EXISTS
+								);
+							}
+							else if (
+								rc == KeeperException.Code.BADVERSION.intValue()
+							)
+							{
+								feedback.failure(
+										ErrorCode.BASE_VERSION_NOT_EQUAL
+								);
+							}
 						}
 					},
 					null
@@ -229,7 +238,7 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 					ZooKeeperHelpers.serializeComponent(
 							componentChange.nextVersion
 					),
-					0, // TODO provide version here
+					componentChange.currentVersion.externalVersion,
 					new StatCallback()
 					{
 
@@ -239,30 +248,33 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 						)
 						{
 							if (
-									rc == KeeperException.Code.OK.intValue()
-								)
-								{
-									feedback.success(
-											componentChange.nextVersion
-											 // TODO provide version here
-									);
-								}
-								else if (
-									rc == KeeperException.Code.NONODE.intValue()
-								)
-								{
-									feedback.failure(
-											ErrorCode.NOT_EXISTS
-									);
-								}
-								else if (
-									rc == KeeperException.Code.BADVERSION.intValue()
-								)
-								{
-									feedback.failure(
-											ErrorCode.BASE_VERSION_NOT_EQUAL
-									);
-								}
+								rc == KeeperException.Code.OK.intValue()
+							)
+							{
+								assert stat.getVersion() == (componentChange.currentVersion.externalVersion.intValue() + 1);
+								feedback.success(
+										new ExtendedComponent(
+												componentChange.nextVersion,
+												stat.getVersion()
+										)
+								);
+							}
+							else if (
+								rc == KeeperException.Code.NONODE.intValue()
+							)
+							{
+								feedback.failure(
+										ErrorCode.NOT_EXISTS
+								);
+							}
+							else if (
+								rc == KeeperException.Code.BADVERSION.intValue()
+							)
+							{
+								feedback.failure(
+										ErrorCode.BASE_VERSION_NOT_EQUAL
+								);
+							}
 						}
 					},
 					null

@@ -34,11 +34,11 @@ public class UnifiedAction
 	}
 
 	public UnifiedAction(
-			Integer transactionId, Transaction transaction, Integer componentId, TransactionComponent nextTransactionComponent
+			Integer transactionId, ExtendedTransaction extendedTransaction, Integer componentId, TransactionComponent nextTransactionComponent
 	)
 	{
 		TreeMap<Integer, TransactionComponent> transactionComponentsNext = new TreeMap<Integer, TransactionComponent>(
-				transaction.transactionComponents
+				extendedTransaction.transaction.transactionComponents
 		);
 		transactionComponentsNext.put(
 				componentId,
@@ -46,25 +46,25 @@ public class UnifiedAction
 		);
 		this.transactionChange = new TransactionChange(
 				transactionId,
-				transaction,
+				extendedTransaction,
 				new Transaction(
-						transaction.transactionPhase,
+						extendedTransaction.transaction.transactionPhase,
 						transactionComponentsNext,
-						transaction.function
+						extendedTransaction.transaction.function
 				)
 		);
 	}
 
 	public UnifiedAction(
 			Integer transactionId,
-			Transaction transaction, TransactionPhase transactionPhase,
+			ExtendedTransaction extendedTransaction, TransactionPhase transactionPhase,
 			TransactionPhase transactionPhaseNext,
 			ComponentPhase componentPhase, ComponentPhase componentPhaseNext
 	)
 	{
-		assert transaction.transactionPhase == transactionPhase;
+		assert extendedTransaction.transaction.transactionPhase == transactionPhase;
 		TreeMap<Integer, TransactionComponent> transactionComponentsNext = new TreeMap<Integer, TransactionComponent>();
-		for (SortedMap.Entry<Integer, TransactionComponent> transactionComponentEntry : transaction.transactionComponents.entrySet())
+		for (SortedMap.Entry<Integer, TransactionComponent> transactionComponentEntry : extendedTransaction.transaction.transactionComponents.entrySet())
 		{
 			assert transactionComponentEntry.getValue().componentPhase == componentPhase;
 			Integer key = transactionComponentEntry.getKey();
@@ -73,11 +73,11 @@ public class UnifiedAction
 		}
 		this.transactionChange = new TransactionChange(
 				transactionId,
-				transaction,
+				extendedTransaction,
 				new Transaction(
 						transactionPhaseNext,
 						transactionComponentsNext,
-						transaction.function
+						extendedTransaction.transaction.function
 				)
 		);
 	}

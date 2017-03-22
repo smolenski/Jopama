@@ -10,6 +10,8 @@ import org.apache.logging.log4j.Logger;
 import pl.rodia.jopama.data.Component;
 import pl.rodia.jopama.data.ComponentChange;
 import pl.rodia.jopama.data.ComponentPhase;
+import pl.rodia.jopama.data.ExtendedComponent;
+import pl.rodia.jopama.data.ExtendedTransaction;
 import pl.rodia.jopama.data.Function;
 import pl.rodia.jopama.data.Transaction;
 import pl.rodia.jopama.data.TransactionChange;
@@ -34,11 +36,11 @@ public class TransactionAnalyzerImpl implements TransactionAnalyzer
 			Integer transactionId
 	)
 	{
-		Transaction transaction = this.proxyStorage.getTransaction(
+		ExtendedTransaction extendedTransaction = this.proxyStorage.getTransaction(
 				transactionId
 		);
 		if (
-			transaction == null
+			extendedTransaction == null
 		)
 		{
 			return new UnifiedAction(
@@ -47,16 +49,19 @@ public class TransactionAnalyzerImpl implements TransactionAnalyzer
 					)
 			);
 		}
-		for (SortedMap.Entry<Integer, TransactionComponent> transactionComponentEntry : transaction.transactionComponents.entrySet())
+		for (SortedMap.Entry<Integer, TransactionComponent> transactionComponentEntry : extendedTransaction.transaction.transactionComponents.entrySet())
 		{
-			Component component = this.proxyStorage.getComponent(
+			ExtendedComponent extendedComponent = this.proxyStorage.getComponent(
 					transactionComponentEntry.getKey()
 			);
 			if (
-				component == null
+				extendedComponent == null
 			)
 			{
-				logger.trace("TransactionAnalyzerImpl missing component downloading, transactionId: " + transactionId + " componentId: " + transactionComponentEntry.getKey());
+				logger.trace(
+						"TransactionAnalyzerImpl missing component downloading, transactionId: " + transactionId + " componentId: "
+								+ transactionComponentEntry.getKey()
+				);
 				return new UnifiedAction(
 						new UnifiedDownloadRequest(
 								transactionId,
@@ -66,12 +71,12 @@ public class TransactionAnalyzerImpl implements TransactionAnalyzer
 			}
 		}
 		Integer componentId;
-		switch (transaction.transactionPhase)
+		switch (extendedTransaction.transaction.transactionPhase)
 		{
 			case INITIAL:
 				return new UnifiedAction(
 						transactionId,
-						transaction,
+						extendedTransaction,
 						TransactionPhase.INITIAL,
 						TransactionPhase.LOCKING,
 						ComponentPhase.INITIAL,
@@ -79,7 +84,7 @@ public class TransactionAnalyzerImpl implements TransactionAnalyzer
 				);
 			case LOCKING:
 				componentId = this.getFirstComponentInPhase(
-						transaction,
+						extendedTransaction.transaction,
 						ComponentPhase.NOT_LOCKED
 				);
 				if (
@@ -88,7 +93,7 @@ public class TransactionAnalyzerImpl implements TransactionAnalyzer
 				{
 					return this.getComponentLockingAction(
 							transactionId,
-							transaction,
+							extendedTransaction,
 							componentId
 					);
 				}
@@ -96,7 +101,7 @@ public class TransactionAnalyzerImpl implements TransactionAnalyzer
 				{
 					return new UnifiedAction(
 							transactionId,
-							transaction,
+							extendedTransaction,
 							TransactionPhase.LOCKING,
 							TransactionPhase.UPDATING,
 							ComponentPhase.LOCKED,
@@ -105,7 +110,7 @@ public class TransactionAnalyzerImpl implements TransactionAnalyzer
 				}
 			case UPDATING:
 				componentId = this.getFirstComponentInPhase(
-						transaction,
+						extendedTransaction.transaction,
 						ComponentPhase.NOT_UPDATED
 				);
 				if (
@@ -114,7 +119,7 @@ public class TransactionAnalyzerImpl implements TransactionAnalyzer
 				{
 					return this.getComponentUpdatingAction(
 							transactionId,
-							transaction,
+							extendedTransaction,
 							componentId
 					);
 				}
@@ -122,7 +127,7 @@ public class TransactionAnalyzerImpl implements TransactionAnalyzer
 				{
 					return new UnifiedAction(
 							transactionId,
-							transaction,
+							extendedTransaction,
 							TransactionPhase.UPDATING,
 							TransactionPhase.RELEASING,
 							ComponentPhase.UPDATED,
@@ -131,7 +136,7 @@ public class TransactionAnalyzerImpl implements TransactionAnalyzer
 				}
 			case RELEASING:
 				componentId = this.getFirstComponentInPhase(
-						transaction,
+						extendedTransaction.transaction,
 						ComponentPhase.NOT_RELEASED
 				);
 				if (
@@ -140,7 +145,7 @@ public class TransactionAnalyzerImpl implements TransactionAnalyzer
 				{
 					return this.getComponentReleasingAction(
 							transactionId,
-							transaction,
+							extendedTransaction,
 							componentId
 					);
 				}
@@ -148,7 +153,7 @@ public class TransactionAnalyzerImpl implements TransactionAnalyzer
 				{
 					return new UnifiedAction(
 							transactionId,
-							transaction,
+							extendedTransaction,
 							TransactionPhase.RELEASING,
 							TransactionPhase.REMOVING,
 							ComponentPhase.RELEASED,
@@ -159,7 +164,7 @@ public class TransactionAnalyzerImpl implements TransactionAnalyzer
 				return new UnifiedAction(
 						new TransactionChange(
 								transactionId,
-								transaction,
+								extendedTransaction,
 								null
 						)
 				);
@@ -188,64 +193,71 @@ public class TransactionAnalyzerImpl implements TransactionAnalyzer
 
 	private UnifiedAction getComponentLockingAction(
 			Integer transactionId,
-			Transaction transaction,
+			ExtendedTransaction extendedTransaction,
 			Integer componentId
 	)
 	{
-		assert transaction != null;
+		assert extendedTransaction != null;
 		assert componentId != null;
-		TransactionComponent transactionComponent = transaction.transactionComponents.get(
+		TransactionComponent transactionComponent = extendedTransaction.transaction.transactionComponents.get(
 				componentId
 		);
 		assert transactionComponent != null;
-		Component component = proxyStorage.getComponent(
+		ExtendedComponent extendedComponent = proxyStorage.getComponent(
 				componentId
 		);
-		assert component != null;
+		assert extendedComponent != null;
 		assert transactionComponent.componentPhase == ComponentPhase.NOT_LOCKED;
 
 		if (
 			transactionComponent.versionToLock == null
-					|| transactionComponent.versionToLock < component.version
+					|| transactionComponent.versionToLock < extendedComponent.component.version
 		)
 		{
 			return new UnifiedAction(
 					transactionId,
-					transaction,
+					extendedTransaction,
 					componentId,
 					new TransactionComponent(
-							component.version,
+							extendedComponent.component.version,
 							transactionComponent.componentPhase
 					)
 			);
 		}
 		else if (
-			transactionComponent.versionToLock.equals(component.version)
-					&& component.owner == null
+			transactionComponent.versionToLock.equals(
+					extendedComponent.component.version
+			)
+					&&
+					extendedComponent.component.owner == null
 		)
 		{
 			return new UnifiedAction(
 					new ComponentChange(
 							transactionId,
 							componentId,
-							component,
+							extendedComponent,
 							new Component(
-									component.version,
+									extendedComponent.component.version,
 									transactionId,
-									component.value,
-									component.newValue
+									extendedComponent.component.value,
+									extendedComponent.component.newValue
 							)
 					)
 			);
 		}
 		else if (
-			transactionId.equals(component.owner)
-					&& transactionComponent.versionToLock.equals(component.version)
+			transactionId.equals(
+					extendedComponent.component.owner
+			)
+					&& transactionComponent.versionToLock.equals(
+							extendedComponent.component.version
+					)
 		)
 		{
 			return new UnifiedAction(
 					transactionId,
-					transaction,
+					extendedTransaction,
 					componentId,
 					new TransactionComponent(
 							transactionComponent.versionToLock,
@@ -255,7 +267,10 @@ public class TransactionAnalyzerImpl implements TransactionAnalyzer
 		}
 		else
 		{
-			logger.trace("TransactionAnalyzerImpl locking action impossible, downloading, transactionId: " + transactionId + " componentId: " + componentId);
+			logger.trace(
+					"TransactionAnalyzerImpl locking action impossible, downloading, transactionId: " + transactionId + " componentId: "
+							+ componentId
+			);
 			return new UnifiedAction(
 					new UnifiedDownloadRequest(
 							transactionId,
@@ -266,22 +281,24 @@ public class TransactionAnalyzerImpl implements TransactionAnalyzer
 	}
 
 	private UnifiedAction getComponentUpdatingAction(
-			Integer transactionId, Transaction transaction, Integer componentId
+			Integer transactionId, ExtendedTransaction extendedTransaction, Integer componentId
 	)
 	{
-		assert transaction != null;
+		assert extendedTransaction != null;
 		assert componentId != null;
-		TransactionComponent transactionComponent = transaction.transactionComponents.get(
+		TransactionComponent transactionComponent = extendedTransaction.transaction.transactionComponents.get(
 				componentId
 		);
 		assert transactionComponent != null;
-		Component component = proxyStorage.getComponent(
+		ExtendedComponent extendedComponent = proxyStorage.getComponent(
 				componentId
 		);
-		assert component != null;
+		assert extendedComponent != null;
 		assert transactionComponent.componentPhase == ComponentPhase.NOT_UPDATED;
 		if (
-			!transactionId.equals(component.owner)
+			!transactionId.equals(
+					extendedComponent.component.owner
+			)
 		)
 		{
 			return new UnifiedAction(
@@ -292,21 +309,21 @@ public class TransactionAnalyzerImpl implements TransactionAnalyzer
 			);
 		}
 		else if (
-			component.newValue == null
+			extendedComponent.component.newValue == null
 		)
 		{
 			return new UnifiedAction(
 					new ComponentChange(
 							transactionId,
 							componentId,
-							component,
+							extendedComponent,
 							new Component(
-									component.version,
-									component.owner,
-									component.value,
+									extendedComponent.component.version,
+									extendedComponent.component.owner,
+									extendedComponent.component.value,
 									this.getNewValueForComponent(
 											transactionId,
-											transaction,
+											extendedTransaction.transaction,
 											componentId
 									)
 							)
@@ -315,10 +332,13 @@ public class TransactionAnalyzerImpl implements TransactionAnalyzer
 		}
 		else
 		{
-			logger.trace("TransactionAnalyzerImpl updating action impossible, downloading, transactionId: " + transactionId + " componentId: " + componentId);
+			logger.trace(
+					"TransactionAnalyzerImpl updating action impossible, downloading, transactionId: " + transactionId + " componentId: "
+							+ componentId
+			);
 			return new UnifiedAction(
 					transactionId,
-					transaction,
+					extendedTransaction,
 					componentId,
 					new TransactionComponent(
 							transactionComponent.versionToLock,
@@ -338,13 +358,13 @@ public class TransactionAnalyzerImpl implements TransactionAnalyzer
 		{
 			ComponentPhase componentPhase = transactionComponentEntry.getValue().componentPhase;
 			assert componentPhase == ComponentPhase.NOT_UPDATED || componentPhase == ComponentPhase.UPDATED;
-			Component component = this.proxyStorage.getComponent(
+			ExtendedComponent extendedComponent = this.proxyStorage.getComponent(
 					transactionComponentEntry.getKey()
 			);
-			assert component != null;
+			assert extendedComponent != null;
 			functionArguments.put(
 					transactionComponentEntry.getKey(),
-					component.value
+					extendedComponent.component.value
 			);
 		}
 		Map<Integer, Integer> functionResult = function.execute(
@@ -358,48 +378,52 @@ public class TransactionAnalyzerImpl implements TransactionAnalyzer
 	}
 
 	private UnifiedAction getComponentReleasingAction(
-			Integer transactionId, Transaction transaction, Integer componentId
+			Integer transactionId, ExtendedTransaction extendedTransaction, Integer componentId
 	)
 	{
-		assert transaction != null;
+		assert extendedTransaction != null;
 		assert componentId != null;
-		TransactionComponent transactionComponent = transaction.transactionComponents.get(
+		TransactionComponent transactionComponent = extendedTransaction.transaction.transactionComponents.get(
 				componentId
 		);
 		assert transactionComponent != null;
-		Component component = proxyStorage.getComponent(
+		ExtendedComponent extendedComponent = proxyStorage.getComponent(
 				componentId
 		);
-		assert component != null;
+		assert extendedComponent != null;
 		assert transactionComponent.componentPhase == ComponentPhase.NOT_RELEASED;
 		if (
-			transactionId.equals(component.owner)
-			&&
-			component.newValue != null
+			transactionId.equals(
+					extendedComponent.component.owner
+			)
+					&&
+					extendedComponent.component.newValue != null
 		)
 		{
-			assert component.version.equals(transactionComponent.versionToLock);
+			assert extendedComponent.component.version.equals(
+					transactionComponent.versionToLock
+			);
 			return new UnifiedAction(
 					new ComponentChange(
 							transactionId,
 							componentId,
-							component,
+							extendedComponent,
 							new Component(
-									component.version + 1,
+									extendedComponent.component.version + 1,
 									null,
-									component.newValue,
+									extendedComponent.component.newValue,
 									null
 							)
 					)
 			);
 		}
 		else if (
-			component.version > transactionComponent.versionToLock
+			extendedComponent.component.version > transactionComponent.versionToLock
 		)
 		{
 			return new UnifiedAction(
 					transactionId,
-					transaction,
+					extendedTransaction,
 					componentId,
 					new TransactionComponent(
 							transactionComponent.versionToLock,
@@ -409,7 +433,10 @@ public class TransactionAnalyzerImpl implements TransactionAnalyzer
 		}
 		else
 		{
-			logger.trace("TransactionAnalyzerImpl releasing action impossible, downloading, transactionId: " + transactionId + " componentId: " + componentId);
+			logger.trace(
+					"TransactionAnalyzerImpl releasing action impossible, downloading, transactionId: " + transactionId + " componentId: "
+							+ componentId
+			);
 			return new UnifiedAction(
 					new UnifiedDownloadRequest(
 							transactionId,

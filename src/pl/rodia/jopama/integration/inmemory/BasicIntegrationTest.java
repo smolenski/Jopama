@@ -11,6 +11,8 @@ import org.junit.Test;
 
 import pl.rodia.jopama.data.Component;
 import pl.rodia.jopama.data.ComponentPhase;
+import pl.rodia.jopama.data.ExtendedComponent;
+import pl.rodia.jopama.data.ExtendedTransaction;
 import pl.rodia.jopama.data.Increment;
 import pl.rodia.jopama.data.Transaction;
 import pl.rodia.jopama.data.TransactionComponent;
@@ -27,29 +29,44 @@ public class BasicIntegrationTest
 		InMemoryStorageGateway inMemoryStorageGateway = new InMemoryStorageGateway();
 		inMemoryStorageGateway.components.put(
 				101,
-				new Component(
-						0,
-						null,
-						0,
-						null
+				new ExtendedComponent(
+						new Component(
+								0,
+								null,
+								0,
+								null
+						),
+						new Integer(
+								0
+						)
 				)
 		);
 		inMemoryStorageGateway.components.put(
 				102,
-				new Component(
-						0,
-						null,
-						0,
-						null
+				new ExtendedComponent(
+						new Component(
+								0,
+								null,
+								0,
+								null
+						),
+						new Integer(
+								0
+						)
 				)
 		);
 		inMemoryStorageGateway.components.put(
 				103,
-				new Component(
-						0,
-						null,
-						0,
-						null
+				new ExtendedComponent(
+						new Component(
+								0,
+								null,
+								0,
+								null
+						),
+						new Integer(
+								0
+						)
 				)
 		);
 		TreeMap<Integer, TransactionComponent> transactionComponents = new TreeMap<Integer, TransactionComponent>();
@@ -76,16 +93,23 @@ public class BasicIntegrationTest
 		);
 		inMemoryStorageGateway.transactions.put(
 				1001,
-				new Transaction(
-						TransactionPhase.INITIAL,
-						transactionComponents,
-						new Increment()
+				new ExtendedTransaction(
+						new Transaction(
+								TransactionPhase.INITIAL,
+								transactionComponents,
+								new Increment()
+						),
+						new Integer(
+								0
+						)
 				)
 		);
 
 		List<Integer> transactionIds = new LinkedList<Integer>();
-		transactionIds.add(1001);
-		
+		transactionIds.add(
+				1001
+		);
+
 		List<Integrator> integrators = new LinkedList<Integrator>();
 		for (int i = 0; i < numIntegrators; ++i)
 		{
@@ -98,7 +122,7 @@ public class BasicIntegrationTest
 					)
 			);
 		}
-		
+
 		List<StatsAsyncSource> statsSources = new LinkedList<StatsAsyncSource>();
 		for (Integrator integrator : integrators)
 		{
@@ -129,32 +153,35 @@ public class BasicIntegrationTest
 		statsCollector.start();
 
 		statsCollector.prepareToFinish();
-		
+
 		for (Integrator integrator : integrators)
 		{
-				integrator.prepareToFinish();
+			integrator.prepareToFinish();
 		}
 		for (Integrator integrator : integrators)
 		{
-				integrator.finish();
+			integrator.finish();
 		}
-		
+
 		statsCollector.finish();
 
-		logger.info(
-				inMemoryStorageGateway.components.get(
-						101
-				).value
+		ExtendedComponent component101 = inMemoryStorageGateway.components.get(
+				101
+		);
+		ExtendedComponent component102 = inMemoryStorageGateway.components.get(
+				102
+		);
+		ExtendedComponent component103 = inMemoryStorageGateway.components.get(
+				102
 		);
 		logger.info(
-				inMemoryStorageGateway.components.get(
-						102
-				).value
+				component101.component.value + " (version:" + component101.externalVersion + ")"
 		);
 		logger.info(
-				inMemoryStorageGateway.components.get(
-						103
-				).value
+				component102.component.value + " (version:" + component102.externalVersion + ")"
+		);
+		logger.info(
+				component103.component.value + " (version:" + component103.externalVersion + ")"
 		);
 	}
 

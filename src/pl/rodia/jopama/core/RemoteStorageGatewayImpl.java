@@ -3,9 +3,9 @@ package pl.rodia.jopama.core;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import pl.rodia.jopama.data.Component;
 import pl.rodia.jopama.data.ComponentChange;
-import pl.rodia.jopama.data.Transaction;
+import pl.rodia.jopama.data.ExtendedComponent;
+import pl.rodia.jopama.data.ExtendedTransaction;
 import pl.rodia.jopama.data.TransactionChange;
 import pl.rodia.jopama.gateway.ErrorCode;
 import pl.rodia.jopama.gateway.NewComponentVersionFeedback;
@@ -45,7 +45,7 @@ public class RemoteStorageGatewayImpl extends RemoteStorageGateway implements St
 				{
 					@Override
 					public void success(
-							Transaction transaction
+							ExtendedTransaction extendedTransaction
 					)
 					{
 						taskRunner.schedule(
@@ -60,7 +60,7 @@ public class RemoteStorageGatewayImpl extends RemoteStorageGateway implements St
 												finishTime - startTime
 										);
 										feedback.success(
-												transaction
+												extendedTransaction
 										);
 									}
 								}
@@ -108,7 +108,7 @@ public class RemoteStorageGatewayImpl extends RemoteStorageGateway implements St
 
 					@Override
 					public void success(
-							Component transaction
+							ExtendedComponent extendedComponent
 					)
 					{
 						taskRunner.schedule(
@@ -123,7 +123,7 @@ public class RemoteStorageGatewayImpl extends RemoteStorageGateway implements St
 												finishTime - startTime
 										);
 										feedback.success(
-												transaction
+												extendedComponent
 										);
 									}
 								}
@@ -170,14 +170,15 @@ public class RemoteStorageGatewayImpl extends RemoteStorageGateway implements St
 				{
 					@Override
 					public void success(
-							Transaction transaction
+							ExtendedTransaction extendedTransaction
 					)
 					{
 						if (
-							transaction != null
+							extendedTransaction != null
 						)
 						{
-							logger.debug(taskRunner.name + ":transaction updated, transactionId :" + transactionChange.transactionId + ", BASE: "
+							logger.debug(
+									taskRunner.name + ":transaction updated, transactionId :" + transactionChange.transactionId + ", BASE: "
 											+ transactionChange.currentVersion + ", UPDATED: " + transactionChange.nextVersion
 							);
 							taskRunner.schedule(
@@ -191,7 +192,7 @@ public class RemoteStorageGatewayImpl extends RemoteStorageGateway implements St
 													finishTime - startTime
 											);
 											feedback.success(
-													transaction
+													extendedTransaction
 											);
 										}
 									}
@@ -287,14 +288,15 @@ public class RemoteStorageGatewayImpl extends RemoteStorageGateway implements St
 
 					@Override
 					public void success(
-							Component component
+							ExtendedComponent extendedComponent
 					)
 					{
-						logger.debug(taskRunner.name + ":component updated, componentId :" + componentChange.componentId + ", BASE: "
+						logger.debug(
+								taskRunner.name + ":component updated, componentId :" + componentChange.componentId + ", BASE: "
 										+ componentChange.currentVersion + ", UPDATED: " + componentChange.nextVersion
 						);
 						if (
-							component != null
+							extendedComponent != null
 						)
 						{
 							taskRunner.schedule(
@@ -308,7 +310,7 @@ public class RemoteStorageGatewayImpl extends RemoteStorageGateway implements St
 													finishTime - startTime
 											);
 											feedback.success(
-													component
+													extendedComponent
 											);
 										}
 									}

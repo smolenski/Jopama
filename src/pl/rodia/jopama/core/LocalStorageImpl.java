@@ -6,21 +6,20 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import pl.rodia.jopama.data.Component;
-import pl.rodia.jopama.data.Transaction;
+import pl.rodia.jopama.data.ExtendedComponent;
+import pl.rodia.jopama.data.ExtendedTransaction;
 
 public class LocalStorageImpl extends LocalStorage
 {
 
-	public LocalStorageImpl(
-	)
+	public LocalStorageImpl()
 	{
-		this.transactions = new HashMap<Integer, Transaction>();
-		this.components = new HashMap<Integer, Component>();
+		this.transactions = new HashMap<Integer, ExtendedTransaction>();
+		this.components = new HashMap<Integer, ExtendedComponent>();
 	}
 
 	@Override
-	public Transaction getTransaction(
+	public ExtendedTransaction getTransaction(
 			Integer transactionId
 	)
 	{
@@ -30,7 +29,7 @@ public class LocalStorageImpl extends LocalStorage
 	}
 
 	@Override
-	public Component getComponent(
+	public ExtendedComponent getComponent(
 			Integer componentId
 	)
 	{
@@ -40,34 +39,50 @@ public class LocalStorageImpl extends LocalStorage
 	}
 
 	public Boolean putComponent(
-			Integer componentId, Component component
+			Integer componentId, ExtendedComponent extendedComponent
 	)
 	{
-		assert component != null;
-		Component oldComponent = this.getComponent(componentId);
+		assert extendedComponent != null;
+		ExtendedComponent oldExtendedComponent = this.getComponent(
+				componentId
+		);
 		this.components.put(
 				componentId,
-				component
+				extendedComponent
 		);
-		logger.info("putComponent, updating(" + (!component.equals(oldComponent)) + ") componentId: " + componentId + " component: " + component);
-		return !component.equals(oldComponent);
+		logger.info(
+				"putComponent, updating(" + (!extendedComponent.equals(
+						oldExtendedComponent
+				)) + ") componentId: " + componentId + " component: " + extendedComponent
+		);
+		return !extendedComponent.equals(
+				oldExtendedComponent
+		);
 	}
 
 	public Boolean putTransaction(
-			Integer transactionId, Transaction transaction
+			Integer transactionId, ExtendedTransaction extendedTransaction
 	)
 	{
-		assert transaction != null;
-		Transaction oldTransaction = this.getTransaction(transactionId);
+		assert extendedTransaction != null;
+		ExtendedTransaction oldExtendedTransaction = this.getTransaction(
+				transactionId
+		);
 		this.transactions.put(
 				transactionId,
-				transaction
+				extendedTransaction
 		);
-		logger.info("putTransaction, updating(" + (!transaction.equals(oldTransaction)) + ") transactionId: " + transactionId +" transaction: " + transaction);
-		return !transaction.equals(oldTransaction);
+		logger.info(
+				"putTransaction, updating(" + (!extendedTransaction.equals(
+						oldExtendedTransaction
+				)) + ") transactionId: " + transactionId + " transaction: " + extendedTransaction
+		);
+		return !extendedTransaction.equals(
+				oldExtendedTransaction
+		);
 	}
 
-	Map<Integer, Transaction> transactions;
-	Map<Integer, Component> components;
+	Map<Integer, ExtendedTransaction> transactions;
+	Map<Integer, ExtendedComponent> components;
 	static final Logger logger = LogManager.getLogger();
 }

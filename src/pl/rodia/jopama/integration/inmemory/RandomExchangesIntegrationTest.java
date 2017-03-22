@@ -15,6 +15,8 @@ import org.apache.logging.log4j.Logger;
 
 import pl.rodia.jopama.data.Component;
 import pl.rodia.jopama.data.ComponentPhase;
+import pl.rodia.jopama.data.ExtendedComponent;
+import pl.rodia.jopama.data.ExtendedTransaction;
 import pl.rodia.jopama.data.Function;
 import pl.rodia.jopama.data.Transaction;
 import pl.rodia.jopama.data.TransactionComponent;
@@ -45,11 +47,16 @@ public class RandomExchangesIntegrationTest
 		{
 			inMemoryStorageGateway.components.put(
 					COMPONENT_ID_BASE + i,
-					new Component(
-							0,
-							null,
-							COMPONENT_ID_BASE + i,
-							null
+					new ExtendedComponent(
+							new Component(
+									0,
+									null,
+									COMPONENT_ID_BASE + i,
+									null
+							),
+							new Integer(
+									0
+							)
 					)
 			);
 		}
@@ -181,10 +188,15 @@ public class RandomExchangesIntegrationTest
 					new Integer(
 							transactionId
 					),
-					new Transaction(
-							TransactionPhase.INITIAL,
-							transactionComponents,
-							randomExchangeFunction
+					new ExtendedTransaction(
+							new Transaction(
+									TransactionPhase.INITIAL,
+									transactionComponents,
+									randomExchangeFunction
+							),
+							new Integer(
+									0
+							)
 					)
 			);
 		}
@@ -325,7 +337,7 @@ public class RandomExchangesIntegrationTest
 		{
 			int value = inMemoryStorageGateway.components.get(
 					COMPONENT_ID_BASE + i
-			).value;
+			).component.value;
 			assert valueExists.get(
 					value
 			) != null;
@@ -356,7 +368,9 @@ public class RandomExchangesIntegrationTest
 				"Performed: " + numFinished + " tra "
 						+ "in: " + processingDurationSecs + " sec "
 						+ "("
-						+ (new Double(numFinished ) / TRANSACTION_REPEAT_COUNT / processingDurationSecs) + " tra/sec"
+						+ (new Double(
+								numFinished
+						) / TRANSACTION_REPEAT_COUNT / processingDurationSecs) + " tra/sec"
 						+ ")"
 		);
 

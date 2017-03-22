@@ -6,8 +6,8 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import pl.rodia.jopama.data.Component;
-import pl.rodia.jopama.data.Transaction;
+import pl.rodia.jopama.data.ExtendedComponent;
+import pl.rodia.jopama.data.ExtendedTransaction;
 import pl.rodia.jopama.data.UnifiedAction;
 import pl.rodia.jopama.gateway.ErrorCode;
 import pl.rodia.jopama.gateway.NewComponentVersionFeedback;
@@ -231,13 +231,13 @@ public class TransactionProcessorImpl extends TransactionProcessor
 		{
 			@Override
 			public void success(
-					Component component
+					ExtendedComponent extendedComponent
 			)
 			{
 				if (
 					storage.putComponent(
 							componentId,
-							component
+							extendedComponent
 					)
 				)
 				{
@@ -265,13 +265,13 @@ public class TransactionProcessorImpl extends TransactionProcessor
 		{
 			@Override
 			public void success(
-					Transaction transaction
+					ExtendedTransaction extendedTransaction
 			)
 			{
 				if (
 					storage.putTransaction(
 							transactionId,
-							transaction
+							extendedTransaction
 					)
 				)
 				{

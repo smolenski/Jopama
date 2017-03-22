@@ -6,9 +6,9 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import pl.rodia.jopama.data.Component;
 import pl.rodia.jopama.data.ComponentChange;
-import pl.rodia.jopama.data.Transaction;
+import pl.rodia.jopama.data.ExtendedComponent;
+import pl.rodia.jopama.data.ExtendedTransaction;
 import pl.rodia.jopama.data.TransactionChange;
 import pl.rodia.jopama.gateway.ErrorCode;
 import pl.rodia.jopama.gateway.NewComponentVersionFeedback;
@@ -20,8 +20,8 @@ public class InMemoryStorageGateway extends RemoteStorageGateway
 
 	public InMemoryStorageGateway()
 	{
-		this.transactions = new HashMap<Integer, Transaction>();
-		this.components = new HashMap<Integer, Component>();
+		this.transactions = new HashMap<Integer, ExtendedTransaction>();
+		this.components = new HashMap<Integer, ExtendedComponent>();
 	}
 
 	@Override
@@ -29,13 +29,23 @@ public class InMemoryStorageGateway extends RemoteStorageGateway
 			Integer transactionId, NewTransactionVersionFeedback feedback
 	)
 	{
-		if (this.transactions.containsKey(transactionId))
+		if (
+			this.transactions.containsKey(
+					transactionId
+			)
+		)
 		{
-			feedback.success(this.transactions.get(transactionId));
+			feedback.success(
+					this.transactions.get(
+							transactionId
+					)
+			);
 		}
 		else
 		{
-			feedback.failure(ErrorCode.NOT_EXISTS);
+			feedback.failure(
+					ErrorCode.NOT_EXISTS
+			);
 		}
 	}
 
@@ -44,13 +54,23 @@ public class InMemoryStorageGateway extends RemoteStorageGateway
 			Integer componentId, NewComponentVersionFeedback feedback
 	)
 	{
-		if (this.components.containsKey(componentId))
+		if (
+			this.components.containsKey(
+					componentId
+			)
+		)
 		{
-			feedback.success(this.components.get(componentId));
+			feedback.success(
+					this.components.get(
+							componentId
+					)
+			);
 		}
 		else
 		{
-			feedback.failure(ErrorCode.NOT_EXISTS);
+			feedback.failure(
+					ErrorCode.NOT_EXISTS
+			);
 		}
 	}
 
@@ -59,32 +79,68 @@ public class InMemoryStorageGateway extends RemoteStorageGateway
 			TransactionChange transactionChange, NewTransactionVersionFeedback feedback
 	)
 	{
-		if (this.transactions.containsKey(transactionChange.transactionId))
+		if (
+			this.transactions.containsKey(
+					transactionChange.transactionId
+			)
+		)
 		{
-			Transaction transaction = this.transactions.get(transactionChange.transactionId);
-			if (transactionChange.currentVersion.equals(transaction))
+			ExtendedTransaction extendedTransaction = this.transactions.get(
+					transactionChange.transactionId
+			);
+			if (
+				transactionChange.currentVersion.equals(
+						extendedTransaction
+				)
+			)
 			{
-				if (transactionChange.nextVersion != null)
+				assert transactionChange.currentVersion.externalVersion.equals(extendedTransaction.externalVersion);
+				if (
+					transactionChange.nextVersion != null
+				)
 				{
-					logger.debug("InMemoryStorageGateway::changeTransaction SUCCESS");
-					this.transactions.put(transactionChange.transactionId, transactionChange.nextVersion);
-					feedback.success(transactionChange.nextVersion);
+					logger.debug(
+							"InMemoryStorageGateway::changeTransaction SUCCESS"
+					);
+					ExtendedTransaction updatedExtendedTransaction = new ExtendedTransaction(
+							transactionChange.nextVersion,
+							new Integer(
+									transactionChange.currentVersion.externalVersion + 1
+							)
+					);
+					this.transactions.put(
+							transactionChange.transactionId,
+							updatedExtendedTransaction
+					);
+					feedback.success(
+							updatedExtendedTransaction
+					);
 				}
 				else
 				{
-					logger.debug("InMemoryStorageGateway::changeTransaction (remove) SUCCESS");
-					this.transactions.remove(transactionChange.transactionId);
-					feedback.success(null);
+					logger.debug(
+							"InMemoryStorageGateway::changeTransaction (remove) SUCCESS"
+					);
+					this.transactions.remove(
+							transactionChange.transactionId
+					);
+					feedback.success(
+							null
+					);
 				}
 			}
 			else
 			{
-				feedback.failure(ErrorCode.BASE_VERSION_NOT_EQUAL);				
+				feedback.failure(
+						ErrorCode.BASE_VERSION_NOT_EQUAL
+				);
 			}
 		}
 		else
 		{
-			feedback.failure(ErrorCode.NOT_EXISTS);
+			feedback.failure(
+					ErrorCode.NOT_EXISTS
+			);
 		}
 	}
 
@@ -93,37 +149,73 @@ public class InMemoryStorageGateway extends RemoteStorageGateway
 			ComponentChange componentChange, NewComponentVersionFeedback feedback
 	)
 	{
-		if (this.components.containsKey(componentChange.componentId))
+		if (
+			this.components.containsKey(
+					componentChange.componentId
+			)
+		)
 		{
-			Component component = this.components.get(componentChange.componentId);
-			if (componentChange.currentVersion.equals(component))
+			ExtendedComponent extendedComponent = this.components.get(
+					componentChange.componentId
+			);
+			if (
+				componentChange.currentVersion.equals(
+						extendedComponent
+				)
+			)
 			{
-				if (componentChange.nextVersion != null)
+				assert componentChange.currentVersion.externalVersion.equals(extendedComponent.externalVersion);
+				if (
+					componentChange.nextVersion != null
+				)
 				{
-					logger.debug("InMemoryStorageGateway::changeComponent SUCCESS");
-					this.components.put(componentChange.componentId, componentChange.nextVersion);
-					feedback.success(componentChange.nextVersion);
+					logger.debug(
+							"InMemoryStorageGateway::changeComponent SUCCESS"
+					);
+					ExtendedComponent updatedExtendedComponent = new ExtendedComponent(
+							componentChange.nextVersion,
+							new Integer(
+									componentChange.currentVersion.externalVersion + 1
+							)
+					);
+					this.components.put(
+							componentChange.componentId,
+							updatedExtendedComponent
+					);
+					feedback.success(
+							updatedExtendedComponent
+					);
 				}
 				else
 				{
-					logger.debug("InMemoryStorageGateway::changeComponent (remove) SUCCESS");
-					this.components.remove(componentChange.componentId);
-					feedback.success(null);
+					logger.debug(
+							"InMemoryStorageGateway::changeComponent (remove) SUCCESS"
+					);
+					this.components.remove(
+							componentChange.componentId
+					);
+					feedback.success(
+							null
+					);
 				}
 			}
 			else
 			{
-				feedback.failure(ErrorCode.BASE_VERSION_NOT_EQUAL);				
+				feedback.failure(
+						ErrorCode.BASE_VERSION_NOT_EQUAL
+				);
 			}
 		}
 		else
 		{
-			feedback.failure(ErrorCode.NOT_EXISTS);
+			feedback.failure(
+					ErrorCode.NOT_EXISTS
+			);
 		}
 	}
 
-	Map<Integer, Transaction> transactions;
-	Map<Integer, Component> components;
+	Map<Integer, ExtendedTransaction> transactions;
+	Map<Integer, ExtendedComponent> components;
 	static final Logger logger = LogManager.getLogger();
 
 }
