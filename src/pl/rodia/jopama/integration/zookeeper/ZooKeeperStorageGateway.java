@@ -46,7 +46,7 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 		synchronized (this.zooKeeperProvider)
 		{
 			if (
-				this.zooKeeperProvider != null
+				this.zooKeeperProvider == null
 						||
 						this.zooKeeperProvider.zooKeeper.getState() != States.CONNECTED
 			)
@@ -102,7 +102,7 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 		synchronized (this.zooKeeperProvider)
 		{
 			if (
-				this.zooKeeperProvider != null
+				this.zooKeeperProvider == null
 						||
 						this.zooKeeperProvider.zooKeeper.getState() != States.CONNECTED
 			)
@@ -158,7 +158,7 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 		synchronized (this.zooKeeperProvider)
 		{
 			if (
-				this.zooKeeperProvider != null
+				this.zooKeeperProvider == null
 						||
 						this.zooKeeperProvider.zooKeeper.getState() != States.CONNECTED
 			)
@@ -224,7 +224,7 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 		synchronized (this.zooKeeperProvider)
 		{
 			if (
-				this.zooKeeperProvider != null
+				this.zooKeeperProvider == null
 						||
 						this.zooKeeperProvider.zooKeeper.getState() != States.CONNECTED
 			)
