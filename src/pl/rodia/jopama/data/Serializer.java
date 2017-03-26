@@ -10,7 +10,7 @@ import java.io.ObjectOutputStream;
 
 public class Serializer
 {
-	private static byte[] serializeObject(
+	static byte[] serializeObject(
 			Object object
 	) throws IOException
 	{
@@ -28,7 +28,7 @@ public class Serializer
 		}
 	}
 
-	private static Object deserializeObject(
+	static Object deserializeObject(
 			byte[] data
 	) throws IOException, ClassNotFoundException
 	{

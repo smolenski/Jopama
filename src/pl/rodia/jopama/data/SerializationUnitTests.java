@@ -4,6 +4,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.TreeMap;
 
 import org.apache.logging.log4j.LogManager;
@@ -72,6 +73,41 @@ public class SerializationUnitTests
 				transactionOrig,
 				equalTo(
 						transactionCopy
+				)
+		);
+	}
+
+	@Test
+	public void serializedFunctionShouldWorkAsExpected() throws ClassNotFoundException, IOException
+	{
+		Function inc = new Increment();
+		Function resInc = (Function) Serializer.deserializeObject(
+				Serializer.serializeObject(
+						inc
+				)
+		);
+		Integer componentId = new Integer(
+				5
+		);
+		Integer origValue = new Integer(
+				101
+		);
+		Map<Integer, Integer> arguments = new TreeMap<Integer, Integer>();
+		arguments.put(
+				componentId,
+				origValue
+		);
+		Map<Integer, Integer> incResult = resInc.execute(
+				arguments
+		);
+		assertThat(
+				incResult.get(
+						componentId
+				),
+				equalTo(
+						new Integer(
+								origValue + 1
+						)
 				)
 		);
 	}
