@@ -1,11 +1,11 @@
 package pl.rodia.jopama.data;
 
+import java.io.Serializable;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-public class Transaction
+public class Transaction implements Serializable
 {
-
 	public Transaction(
 			TransactionPhase transactionPhase,
 			TreeMap<Integer, TransactionComponent> transactionComponents,
@@ -105,4 +105,5 @@ public class Transaction
 	public TransactionPhase transactionPhase;
 	public TreeMap<Integer, TransactionComponent> transactionComponents;
 	public final Function function;
+	private static final long serialVersionUID = 1331332497591376374L;
 }

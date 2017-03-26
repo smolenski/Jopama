@@ -14,4 +14,6 @@ public class Increment extends Function {
 		}
 		return result;
 	}
+	
+	private static final long serialVersionUID = -670456172404239220L;
 }

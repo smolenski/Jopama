@@ -1,6 +1,6 @@
 package pl.rodia.mpf;
 
-import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import org.apache.logging.log4j.LogManager;
@@ -12,7 +12,9 @@ public class TasksRunnerUnitTests
 
 	public TasksRunnerUnitTests()
 	{
-		this.taskRunner = new TaskRunner("TestTaskRunner");
+		this.taskRunner = new TaskRunner(
+				"TestTaskRunner"
+		);
 		this.taskRunnerThread = new Thread(
 				this.taskRunner
 		);
@@ -110,26 +112,34 @@ public class TasksRunnerUnitTests
 		execChecker4.waitUntilExecuted();
 		assertThat(
 				execChecker3.order,
-				is(
-						new Integer(1)
+				equalTo(
+						new Integer(
+								1
+						)
 				)
 		);
 		assertThat(
 				execChecker4.order,
-				is(
-						new Integer(2)
+				equalTo(
+						new Integer(
+								2
+						)
 				)
 		);
 		assertThat(
 				execChecker1.order,
-				is(
-						new Integer(3)
+				equalTo(
+						new Integer(
+								3
+						)
 				)
 		);
 		assertThat(
 				execChecker2.order,
-				is(
-						new Integer(4)
+				equalTo(
+						new Integer(
+								4
+						)
 				)
 		);
 		this.teardown();
@@ -164,19 +174,23 @@ public class TasksRunnerUnitTests
 		execChecker2.waitUntilExecuted();
 		assertThat(
 				execChecker2.order,
-				is(
-						new Integer(1)
+				equalTo(
+						new Integer(
+								1
+						)
 				)
 		);
 		assertThat(
 				execChecker1.order,
-				is(
-						new Integer(2)
+				equalTo(
+						new Integer(
+								2
+						)
 				)
 		);
 		this.teardown();
 	}
-	
+
 	@Test
 	public void canceledTaskShouldNotBeExecuted() throws InterruptedException
 	{
@@ -185,17 +199,35 @@ public class TasksRunnerUnitTests
 		);
 		this.start();
 		Blocker blocker = new Blocker();
-		ExecChecker execChecker1 = new ExecChecker("Task1");
-		ExecChecker execChecker2 = new ExecChecker("Task2");
-		ExecChecker execChecker3 = new ExecChecker("Task3");
-		this.taskRunner.schedule(blocker);
-		this.taskRunner.schedule(execChecker1);
-		Integer scheduledId = this.taskRunner.schedule(execChecker2);
-		this.taskRunner.schedule(execChecker3);
+		ExecChecker execChecker1 = new ExecChecker(
+				"Task1"
+		);
+		ExecChecker execChecker2 = new ExecChecker(
+				"Task2"
+		);
+		ExecChecker execChecker3 = new ExecChecker(
+				"Task3"
+		);
+		this.taskRunner.schedule(
+				blocker
+		);
+		this.taskRunner.schedule(
+				execChecker1
+		);
+		Integer scheduledId = this.taskRunner.schedule(
+				execChecker2
+		);
+		this.taskRunner.schedule(
+				execChecker3
+		);
 		assertThat(
-				this.taskRunner.cancelTask(scheduledId),
-				is(
-					new Boolean(true)
+				this.taskRunner.cancelTask(
+						scheduledId
+				),
+				equalTo(
+						new Boolean(
+								true
+						)
 				)
 		);
 		blocker.unblock();
@@ -203,20 +235,26 @@ public class TasksRunnerUnitTests
 		execChecker3.waitUntilExecuted();
 		assertThat(
 				execChecker1.order,
-				is(
-						new Integer(1)
+				equalTo(
+						new Integer(
+								1
+						)
 				)
 		);
 		assertThat(
 				execChecker3.order,
-				is(
-						new Integer(2)
+				equalTo(
+						new Integer(
+								2
+						)
 				)
 		);
 		assertThat(
 				execChecker2.order,
-				is(
-						new Integer(0)
+				equalTo(
+						new Integer(
+								0
+						)
 				)
 		);
 		this.teardown();
@@ -230,17 +268,47 @@ public class TasksRunnerUnitTests
 		);
 		this.start();
 		Blocker blocker = new Blocker();
-		ExecChecker execChecker1 = new ExecChecker("Task1");
-		ExecChecker execChecker2 = new ExecChecker("Task2");
-		ExecChecker execChecker3 = new ExecChecker("Task3");
-		this.taskRunner.schedule(blocker, new Long(50));
-		this.taskRunner.schedule(execChecker1, new Long(100));
-		Integer scheduledId = this.taskRunner.schedule(execChecker2, new Long(150));
-		this.taskRunner.schedule(execChecker3, new Long(200));
+		ExecChecker execChecker1 = new ExecChecker(
+				"Task1"
+		);
+		ExecChecker execChecker2 = new ExecChecker(
+				"Task2"
+		);
+		ExecChecker execChecker3 = new ExecChecker(
+				"Task3"
+		);
+		this.taskRunner.schedule(
+				blocker,
+				new Long(
+						50
+				)
+		);
+		this.taskRunner.schedule(
+				execChecker1,
+				new Long(
+						100
+				)
+		);
+		Integer scheduledId = this.taskRunner.schedule(
+				execChecker2,
+				new Long(
+						150
+				)
+		);
+		this.taskRunner.schedule(
+				execChecker3,
+				new Long(
+						200
+				)
+		);
 		assertThat(
-				this.taskRunner.cancelTask(scheduledId),
-				is(
-					new Boolean(true)
+				this.taskRunner.cancelTask(
+						scheduledId
+				),
+				equalTo(
+						new Boolean(
+								true
+						)
 				)
 		);
 		blocker.unblock();
@@ -248,33 +316,40 @@ public class TasksRunnerUnitTests
 		execChecker3.waitUntilExecuted();
 		assertThat(
 				execChecker1.order,
-				is(
-						new Integer(1)
+				equalTo(
+						new Integer(
+								1
+						)
 				)
 		);
 		assertThat(
 				execChecker3.order,
-				is(
-						new Integer(2)
+				equalTo(
+						new Integer(
+								2
+						)
 				)
 		);
 		assertThat(
 				execChecker2.order,
-				is(
-						new Integer(0)
+				equalTo(
+						new Integer(
+								0
+						)
 				)
 		);
 		this.teardown();
 	}
-	
-	
+
 	class Blocker implements Task
 	{
 
 		public Blocker()
 		{
 			super();
-			this.finish = new Boolean(false);
+			this.finish = new Boolean(
+					false
+			);
 		}
 
 		@Override
@@ -282,7 +357,13 @@ public class TasksRunnerUnitTests
 		{
 			synchronized (this)
 			{
-				while (this.finish.equals(new Boolean(false)))
+				while (
+					this.finish.equals(
+							new Boolean(
+									false
+							)
+					)
+				)
 				{
 					try
 					{
@@ -294,18 +375,20 @@ public class TasksRunnerUnitTests
 					}
 				}
 			}
-			
+
 		}
-		
+
 		public void unblock()
 		{
 			synchronized (this)
 			{
-				this.finish = new Boolean(true);
+				this.finish = new Boolean(
+						true
+				);
 				this.notifyAll();
 			}
 		}
-		
+
 		Boolean finish;
 	}
 

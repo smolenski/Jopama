@@ -1,8 +1,9 @@
 package pl.rodia.jopama.data;
 
-public class Component
-{
+import java.io.Serializable;
 
+public class Component implements Serializable
+{
 	public Component(
 			Integer version,
 			Integer owner,
@@ -142,4 +143,5 @@ public class Component
 	public Integer owner;
 	public Integer value;
 	public Integer newValue;
+	private static final long serialVersionUID = 3059455288161614021L;
 }

@@ -30,6 +30,9 @@
         <Logger name="pl.rodia.jopama.core" level="info">
             <AppenderRef ref="File"/>
         </Logger>
+        <Logger name="pl.rodia.jopama.data" level="debug">
+            <AppenderRef ref="File"/>
+        </Logger>
         <Logger name="pl.rodia.jopama.gateway" level="info">
             <AppenderRef ref="File"/>
         </Logger>
