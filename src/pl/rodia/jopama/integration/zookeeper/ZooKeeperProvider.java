@@ -1,17 +1,10 @@
 package pl.rodia.jopama.integration.zookeeper;
-import pl.rodia.jopama.data.ComponentChange;
-import pl.rodia.jopama.data.TransactionChange;
-import pl.rodia.jopama.gateway.NewComponentVersionFeedback;
-import pl.rodia.jopama.gateway.NewTransactionVersionFeedback;
-import pl.rodia.jopama.gateway.RemoteStorageGateway;
-
 
 import java.io.IOException;
 
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
-import org.apache.zookeeper.ZooKeeper.States;
 
 import pl.rodia.mpf.Task;
 import pl.rodia.mpf.TaskRunner;
@@ -150,7 +143,7 @@ public class ZooKeeperProvider implements Watcher
 			}
 		}
 	}
-	
+
 	String name;
 	String connectionString;
 	Boolean finish;

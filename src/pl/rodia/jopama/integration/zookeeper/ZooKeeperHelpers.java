@@ -18,14 +18,14 @@ public class ZooKeeperHelpers
 			Integer componentId
 	)
 	{
-		return "/Components/" + componentId.toString();
+		return String.format("/Components/%010d", componentId.intValue());
 	}
 
 	static String getTransactionPath(
 			Integer transactionId
 	)
 	{
-		return "/Transactions/" + transactionId.toString();
+		return String.format("/Transactions/%010d", transactionId.intValue());
 	}
 
 	static byte[] serializeTransaction(
