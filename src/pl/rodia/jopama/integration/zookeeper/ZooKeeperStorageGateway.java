@@ -19,23 +19,24 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 {
 
 	public ZooKeeperStorageGateway(
-			String name, String connectionString
+			String addresses,
+			Integer clusterSize
 	)
 	{
-		this.zooKeeperProvider = new ZooKeeperProvider(
-				name,
-				connectionString
+		this.zooKeeperMultiProvider = new ZooKeeperMultiProvider(
+				addresses,
+				clusterSize
 		);
 	}
 
 	public void start()
 	{
-		this.zooKeeperProvider.start();
+		this.zooKeeperMultiProvider.start();
 	}
 
 	public void finish() throws InterruptedException
 	{
-		this.zooKeeperProvider.finish();
+		this.zooKeeperMultiProvider.finish();
 	}
 
 	@Override
@@ -43,17 +44,18 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 			Integer transactionId, NewTransactionVersionFeedback feedback
 	)
 	{
-		synchronized (this.zooKeeperProvider)
+		ZooKeeperProvider zooKeeperProvider = this.zooKeeperMultiProvider.getResponsibleProvider(transactionId);
+		synchronized (zooKeeperProvider)
 		{
 			if (
-				this.zooKeeperProvider == null
+				zooKeeperProvider == null
 						||
-						this.zooKeeperProvider.zooKeeper.getState() != States.CONNECTED
+						zooKeeperProvider.zooKeeper.getState() != States.CONNECTED
 			)
 			{
 				return;
 			}
-			this.zooKeeperProvider.zooKeeper.getData(
+			zooKeeperProvider.zooKeeper.getData(
 					ZooKeeperHelpers.getTransactionPath(
 							transactionId
 					),
@@ -99,17 +101,18 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 			Integer componentId, NewComponentVersionFeedback feedback
 	)
 	{
-		synchronized (this.zooKeeperProvider)
+		ZooKeeperProvider zooKeeperProvider = this.zooKeeperMultiProvider.getResponsibleProvider(componentId);
+		synchronized (zooKeeperProvider)
 		{
 			if (
-				this.zooKeeperProvider == null
+				zooKeeperProvider == null
 						||
-						this.zooKeeperProvider.zooKeeper.getState() != States.CONNECTED
+						zooKeeperProvider.zooKeeper.getState() != States.CONNECTED
 			)
 			{
 				return;
 			}
-			this.zooKeeperProvider.zooKeeper.getData(
+			zooKeeperProvider.zooKeeper.getData(
 					ZooKeeperHelpers.getComponentPath(
 							componentId
 					),
@@ -155,17 +158,18 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 			TransactionChange transactionChange, NewTransactionVersionFeedback feedback
 	)
 	{
-		synchronized (this.zooKeeperProvider)
+		ZooKeeperProvider zooKeeperProvider = this.zooKeeperMultiProvider.getResponsibleProvider(transactionChange.transactionId);
+		synchronized (zooKeeperProvider)
 		{
 			if (
-				this.zooKeeperProvider == null
+				zooKeeperProvider == null
 						||
-						this.zooKeeperProvider.zooKeeper.getState() != States.CONNECTED
+						zooKeeperProvider.zooKeeper.getState() != States.CONNECTED
 			)
 			{
 				return;
 			}
-			this.zooKeeperProvider.zooKeeper.setData(
+			zooKeeperProvider.zooKeeper.setData(
 					ZooKeeperHelpers.getTransactionPath(
 							transactionChange.transactionId
 					),
@@ -221,17 +225,18 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 			ComponentChange componentChange, NewComponentVersionFeedback feedback
 	)
 	{
-		synchronized (this.zooKeeperProvider)
+		ZooKeeperProvider zooKeeperProvider = this.zooKeeperMultiProvider.getResponsibleProvider(componentChange.componentId);
+		synchronized (zooKeeperProvider)
 		{
 			if (
-				this.zooKeeperProvider == null
+				zooKeeperProvider == null
 						||
-						this.zooKeeperProvider.zooKeeper.getState() != States.CONNECTED
+						zooKeeperProvider.zooKeeper.getState() != States.CONNECTED
 			)
 			{
 				return;
 			}
-			this.zooKeeperProvider.zooKeeper.setData(
+			zooKeeperProvider.zooKeeper.setData(
 					ZooKeeperHelpers.getComponentPath(
 							componentChange.transactionId
 					),
@@ -282,6 +287,6 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 		}
 	}
 
-	ZooKeeperProvider zooKeeperProvider;
+	ZooKeeperMultiProvider zooKeeperMultiProvider;
 
 }
