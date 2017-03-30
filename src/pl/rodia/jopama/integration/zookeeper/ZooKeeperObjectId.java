@@ -103,15 +103,6 @@ public class ZooKeeperObjectId
 			return false;
 		return true;
 	}
-
-	@Test
-	public void checkConversion()
-	{
-		ZooKeeperObjectId objectId = new ZooKeeperObjectId(new Integer(11), ZooKeeperGroup.TRANSACTION, 5781);
-		Integer value = objectId.toInteger();
-		ZooKeeperObjectId objectIdFromIntegerRepresentation = new ZooKeeperObjectId(value);
-		assertThat(objectIdFromIntegerRepresentation, equalTo(objectId));
-	}
 	
 	Integer clusterId;
 	ZooKeeperGroup group;
