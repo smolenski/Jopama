@@ -14,18 +14,65 @@ import pl.rodia.jopama.data.Transaction;
 
 public class ZooKeeperHelpers
 {
-	static String getComponentPath(
-			Integer componentId
+	static String getBasePath(
+			ZooKeeperGroup group
 	)
 	{
-		return String.format("/Components/%010d", componentId.intValue());
+		switch (group)
+		{
+			case COMPONENT:
+				return "/Components/";
+			case TRANSACTION:
+				return "/Transactions/";
+			default:
+				assert false;
+				return null;
+		}
+	}
+
+	static String getPath(
+			ZooKeeperGroup group, Integer objectId
+	)
+	{
+		return String.format(
+				"%s%010d",
+				ZooKeeperHelpers.getBasePath(
+						group
+				),
+				objectId.intValue()
+		);
 	}
 
 	static String getTransactionPath(
-			Integer transactionId
+			Integer id
 	)
 	{
-		return String.format("/Transactions/%010d", transactionId.intValue());
+		ZooKeeperObjectId objectId = new ZooKeeperObjectId(
+				id
+		);
+		assert objectId.group.equals(
+				ZooKeeperGroup.TRANSACTION
+		);
+		return ZooKeeperHelpers.getPath(
+				objectId.group,
+				objectId.objectId
+		);
+	}
+
+	static String getComponentPath(
+			Integer id
+	)
+	{
+		ZooKeeperObjectId objectId = new ZooKeeperObjectId(
+				id
+		);
+		assert objectId.group.equals(
+				ZooKeeperGroup.COMPONENT
+		);
+		return ZooKeeperHelpers.getPath(
+				objectId.group,
+				objectId.objectId
+		);
 	}
 
 	static byte[] serializeTransaction(
@@ -40,7 +87,9 @@ public class ZooKeeperHelpers
 		}
 		catch (IOException e)
 		{
-			logger.error("serializeTransaction failed, transaction: " + transaction + " error: " + e);
+			logger.error(
+					"serializeTransaction failed, transaction: " + transaction + " error: " + e
+			);
 			assert false;
 			return null;
 		}
@@ -58,7 +107,9 @@ public class ZooKeeperHelpers
 		}
 		catch (ClassNotFoundException | IOException e)
 		{
-			logger.error("deserializeTransaction failed, error: " + e);
+			logger.error(
+					"deserializeTransaction failed, error: " + e
+			);
 			assert false;
 			return null;
 		}
@@ -76,7 +127,9 @@ public class ZooKeeperHelpers
 		}
 		catch (IOException e)
 		{
-			logger.error("serializeComponent failed, component: " + component + " error: " + e);
+			logger.error(
+					"serializeComponent failed, component: " + component + " error: " + e
+			);
 			assert false;
 			return null;
 		}
@@ -94,7 +147,9 @@ public class ZooKeeperHelpers
 		}
 		catch (ClassNotFoundException | IOException e)
 		{
-			logger.error("deserializeComponent failed, error: " + e);
+			logger.error(
+					"deserializeComponent failed, error: " + e
+			);
 			assert false;
 			return null;
 		}
@@ -139,6 +194,6 @@ public class ZooKeeperHelpers
 		}
 		return result;
 	}
-	
+
 	static final Logger logger = LogManager.getLogger();
 }

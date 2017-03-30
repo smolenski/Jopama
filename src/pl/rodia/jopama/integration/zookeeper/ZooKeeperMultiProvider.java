@@ -52,6 +52,11 @@ public class ZooKeeperMultiProvider
 				id % this.zooKeeperProvideers.size()
 		);
 	}
+	
+	Integer getNumClusters()
+	{
+		return this.zooKeeperProvideers.size();
+	}
 
 	final List<ZooKeeperProvider> zooKeeperProvideers;
 }

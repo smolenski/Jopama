@@ -44,7 +44,9 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 			Integer transactionId, NewTransactionVersionFeedback feedback
 	)
 	{
-		ZooKeeperProvider zooKeeperProvider = this.zooKeeperMultiProvider.getResponsibleProvider(transactionId);
+		ZooKeeperProvider zooKeeperProvider = this.zooKeeperMultiProvider.getResponsibleProvider(
+				transactionId
+		);
 		synchronized (zooKeeperProvider)
 		{
 			if (
@@ -101,7 +103,9 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 			Integer componentId, NewComponentVersionFeedback feedback
 	)
 	{
-		ZooKeeperProvider zooKeeperProvider = this.zooKeeperMultiProvider.getResponsibleProvider(componentId);
+		ZooKeeperProvider zooKeeperProvider = this.zooKeeperMultiProvider.getResponsibleProvider(
+				componentId
+		);
 		synchronized (zooKeeperProvider)
 		{
 			if (
@@ -158,7 +162,9 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 			TransactionChange transactionChange, NewTransactionVersionFeedback feedback
 	)
 	{
-		ZooKeeperProvider zooKeeperProvider = this.zooKeeperMultiProvider.getResponsibleProvider(transactionChange.transactionId);
+		ZooKeeperProvider zooKeeperProvider = this.zooKeeperMultiProvider.getResponsibleProvider(
+				transactionChange.transactionId
+		);
 		synchronized (zooKeeperProvider)
 		{
 			if (
@@ -225,7 +231,9 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 			ComponentChange componentChange, NewComponentVersionFeedback feedback
 	)
 	{
-		ZooKeeperProvider zooKeeperProvider = this.zooKeeperMultiProvider.getResponsibleProvider(componentChange.componentId);
+		ZooKeeperProvider zooKeeperProvider = this.zooKeeperMultiProvider.getResponsibleProvider(
+				componentChange.componentId
+		);
 		synchronized (zooKeeperProvider)
 		{
 			if (

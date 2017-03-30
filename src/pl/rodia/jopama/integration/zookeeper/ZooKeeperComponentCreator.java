@@ -12,9 +12,11 @@ public class ZooKeeperComponentCreator
 			String[] args
 	) throws InterruptedException, OperationTimeoutException
 	{
-		logger.debug("args.length: " + args.length);
+		logger.debug(
+				"args.length: " + args.length
+		);
 		if (
-			args.length != 2
+			args.length != 3
 		)
 		{
 			throw new IllegalArgumentException(
@@ -23,19 +25,41 @@ public class ZooKeeperComponentCreator
 		}
 
 		ZooKeeperCreator zooKeeperCreator = new ZooKeeperCreator(
-				"ZooKeeperCreator",
-				args[0]
+				args[0],
+				Integer.parseInt(
+						args[1]
+				)
 		);
 		zooKeeperCreator.start();
 		Integer num = Integer.parseInt(
-				args[1]
+				args[2]
 		);
-		Component component = new Component(new Integer(0), null, new Integer(0), null);
+		Component component = new Component(
+				new Integer(
+						0
+				),
+				null,
+				new Integer(
+						0
+				),
+				null
+		);
 		for (int i = 0; i < num; ++i)
-		{	
-			logger.info("Creating component: " + i);
-			Integer componentId = new Integer(i);
-			if (zooKeeperCreator.createObject(ZooKeeperHelpers.getComponentPath(componentId), ZooKeeperHelpers.serializeComponent(component)).equals(new Boolean(false)))
+		{
+			logger.info(
+					"Creating component: " + i
+			);
+			if (
+				zooKeeperCreator.createObject(
+						new Integer(
+								i % zooKeeperCreator.zooKeeperMultiProvider.getNumClusters()
+						),
+						ZooKeeperGroup.COMPONENT,
+						ZooKeeperHelpers.serializeComponent(
+								component
+						)
+				) == null
+			)
 			{
 				throw new OperationTimeoutException();
 			}

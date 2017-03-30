@@ -10,61 +10,60 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper.States;
 import org.apache.zookeeper.data.ACL;
+import org.apache.zookeeper.data.Stat;
 
 public class ZooKeeperCreator
 {
 
 	public ZooKeeperCreator(
-			String name, String connectionString
+			String addresses,
+			Integer clusterSize
 	)
 	{
-		this.zooKeeperProvider = new ZooKeeperProvider(
-				name,
-				connectionString
+		this.zooKeeperMultiProvider = new ZooKeeperMultiProvider(
+			addresses,
+			clusterSize
 		);
 	}
 
 	public void start()
 	{
-		this.zooKeeperProvider.start();
+		this.zooKeeperMultiProvider.start();
 	}
 
 	public void stop() throws InterruptedException
 	{
-		this.zooKeeperProvider.finish();
+		this.zooKeeperMultiProvider.finish();
 	}
 
-	private Boolean tryToCreateObject(
-			String path, byte[] data
+	private String tryToCreateObject(
+			Integer clusterId, ZooKeeperGroup group, byte[] data
 	)
 	{
-		synchronized (this.zooKeeperProvider)
+		ZooKeeperProvider zooKeeperProvider = this.zooKeeperMultiProvider.getResponsibleProvider(clusterId);
+		synchronized (zooKeeperProvider)
 		{
 			if (
-				this.zooKeeperProvider.zooKeeper == null
+				zooKeeperProvider.zooKeeper == null
 						||
-						this.zooKeeperProvider.zooKeeper.getState() != States.CONNECTED
+						zooKeeperProvider.zooKeeper.getState() != States.CONNECTED
 			)
 			{
-				return new Boolean(
-						false
-				);
+				return null;
 			}
 			else
 			{
 				try
 				{
 					logger.debug("zooKeeper.create calling");
-					this.zooKeeperProvider.zooKeeper.create(
-							path,
+					String result = zooKeeperProvider.zooKeeper.create(
+							ZooKeeperHelpers.getBasePath(group),
 							data,
 							Ids.OPEN_ACL_UNSAFE,
-							CreateMode.PERSISTENT
+							CreateMode.PERSISTENT_SEQUENTIAL
 					);
-					logger.debug("zooKeeper.create finished success");
-					return new Boolean(
-							true
-					);
+					logger.debug("zooKeeper.create finished success (path: " + result + ")");
+					return result;
 				}
 				catch (KeeperException | InterruptedException e)
 				{
@@ -72,22 +71,21 @@ public class ZooKeeperCreator
 					logger.error(
 							"zooKeeper.create failed: " + e
 					);
-					return new Boolean(
-							false
-					);
+					return null;
 				}
 			}
 		}
 	}
 	
-	public Boolean createObject(String path, byte [] data)
+	public String createObject(Integer clusterId, ZooKeeperGroup group, byte [] data)
 	{
 		for (int i = 0; i < ZooKeeperCreator.NUM_TRIES.intValue(); ++i)
 		{
 			logger.debug("zooKeeper.create (try: " + i + ")");
-			if (this.tryToCreateObject(path, data).equals(new Boolean(true)))
+			String path = this.tryToCreateObject(clusterId, group, data);
+			if (path != null)
 			{
-				return new Boolean(true);
+				return path;
 			}
 			try
 			{
@@ -98,10 +96,10 @@ public class ZooKeeperCreator
 				logger.debug("Sleeping");
 			}
 		}
-		return new Boolean(false);
+		return null;
 	}
 	
 	static Integer NUM_TRIES = 3;
-	ZooKeeperProvider zooKeeperProvider;
+	ZooKeeperMultiProvider zooKeeperMultiProvider;
 	static final Logger logger = LogManager.getLogger();
 }

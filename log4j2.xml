@@ -30,7 +30,7 @@
         <Logger name="pl.rodia.jopama.integration.inmemory" level="info">
             <AppenderRef ref="IntegrationFile"/>
         </Logger>
-        <Logger name="pl.rodia.jopama.integration.zookeeper" level="info">
+        <Logger name="pl.rodia.jopama.integration.zookeeper" level="debug">
             <AppenderRef ref="IntegrationFile"/>
         </Logger>
         <Logger name="pl.rodia.jopama.core" level="info">
