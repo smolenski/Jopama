@@ -10,8 +10,8 @@ public class ZooKeeperObjectIdUnitTests
 	@Test
 	public void checkConversion()
 	{
-		ZooKeeperObjectId objectId = new ZooKeeperObjectId(new Integer(11), ZooKeeperGroup.TRANSACTION, 5781);
-		Integer value = objectId.toInteger();
+		ZooKeeperObjectId objectId = new ZooKeeperObjectId(new Integer(11), ZooKeeperGroup.TRANSACTION, new Long(5781));
+		Long value = objectId.toLong();
 		ZooKeeperObjectId objectIdFromIntegerRepresentation = new ZooKeeperObjectId(value);
 		assertThat(objectIdFromIntegerRepresentation, equalTo(objectId));
 	}

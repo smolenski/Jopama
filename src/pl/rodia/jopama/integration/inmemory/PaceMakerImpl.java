@@ -11,6 +11,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import pl.rodia.jopama.core.TransactionProcessor;
+import pl.rodia.jopama.data.ObjectId;
 import pl.rodia.mpf.Task;
 import pl.rodia.mpf.TaskRunner;
 
@@ -19,7 +20,7 @@ public class PaceMakerImpl implements PaceMaker
 
 	public PaceMakerImpl(
 			String name,
-			List<Integer> toDoTransactions,
+			List<ObjectId> toDoTransactions,
 			Integer numRunningPace,
 			TransactionProcessor transactionProcessor,
 			TaskRunner transactionTaskRunner
@@ -40,14 +41,14 @@ public class PaceMakerImpl implements PaceMaker
 		);
 		this.numFinished = new Integer(0);
 		this.name = name;
-		this.waitingTransactions = new LinkedList<Integer>();
-		for (Integer transactionId : toDoTransactions)
+		this.waitingTransactions = new LinkedList<ObjectId>();
+		for (ObjectId transactionId : toDoTransactions)
 		{
 			this.waitingTransactions.add(
 					transactionId
 			);
 		}
-		this.runningTransactions = new HashSet<Integer>();
+		this.runningTransactions = new HashSet<ObjectId>();
 		this.numRunningPace = numRunningPace;
 		this.transactionProcessor = transactionProcessor;
 		this.transactionTaskRunner = transactionTaskRunner;
@@ -132,7 +133,7 @@ public class PaceMakerImpl implements PaceMaker
 	}
 
 	void schedule(
-			Integer transactionId
+			ObjectId transactionId
 	)
 	{
 		logger.debug(
@@ -179,7 +180,7 @@ public class PaceMakerImpl implements PaceMaker
 			this.waitingTransactions.size() > 0 && this.runningTransactions.size() < this.numRunningPace
 		)
 		{
-			Integer transactionId = this.waitingTransactions.remove(
+			ObjectId transactionId = this.waitingTransactions.remove(
 					0
 			);
 			this.runningTransactions.add(
@@ -192,7 +193,7 @@ public class PaceMakerImpl implements PaceMaker
 	}
 
 	void onTransactionDone(
-			Integer transactionId
+			ObjectId transactionId
 	)
 	{
 		logger.debug(
@@ -230,8 +231,8 @@ public class PaceMakerImpl implements PaceMaker
 	Thread taskRunnerThread;
 	Integer numFinished;
 	final String name;
-	List<Integer> waitingTransactions;
-	Set<Integer> runningTransactions;
+	List<ObjectId> waitingTransactions;
+	Set<ObjectId> runningTransactions;
 	final Integer numRunningPace;
 	TransactionProcessor transactionProcessor;
 	TaskRunner transactionTaskRunner;

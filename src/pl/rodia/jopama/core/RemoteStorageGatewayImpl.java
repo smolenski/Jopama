@@ -6,6 +6,7 @@ import org.apache.logging.log4j.Logger;
 import pl.rodia.jopama.data.ComponentChange;
 import pl.rodia.jopama.data.ExtendedComponent;
 import pl.rodia.jopama.data.ExtendedTransaction;
+import pl.rodia.jopama.data.ObjectId;
 import pl.rodia.jopama.data.TransactionChange;
 import pl.rodia.jopama.gateway.ErrorCode;
 import pl.rodia.jopama.gateway.NewComponentVersionFeedback;
@@ -34,7 +35,7 @@ public class RemoteStorageGatewayImpl extends RemoteStorageGateway implements St
 
 	@Override
 	public void requestTransaction(
-			Integer transactionId, NewTransactionVersionFeedback feedback
+			ObjectId transactionId, NewTransactionVersionFeedback feedback
 	)
 	{
 		Long startTime = System.currentTimeMillis();
@@ -96,7 +97,7 @@ public class RemoteStorageGatewayImpl extends RemoteStorageGateway implements St
 
 	@Override
 	public void requestComponent(
-			Integer componentId, NewComponentVersionFeedback feedback
+			ObjectId componentId, NewComponentVersionFeedback feedback
 	)
 	{
 		Long startTime = System.currentTimeMillis();

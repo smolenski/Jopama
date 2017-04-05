@@ -34,10 +34,10 @@ public class UnifiedAction
 	}
 
 	public UnifiedAction(
-			Integer transactionId, ExtendedTransaction extendedTransaction, Integer componentId, TransactionComponent nextTransactionComponent
+			ObjectId transactionId, ExtendedTransaction extendedTransaction, ObjectId componentId, TransactionComponent nextTransactionComponent
 	)
 	{
-		TreeMap<Integer, TransactionComponent> transactionComponentsNext = new TreeMap<Integer, TransactionComponent>(
+		TreeMap<ObjectId, TransactionComponent> transactionComponentsNext = new TreeMap<ObjectId, TransactionComponent>(
 				extendedTransaction.transaction.transactionComponents
 		);
 		transactionComponentsNext.put(
@@ -56,18 +56,18 @@ public class UnifiedAction
 	}
 
 	public UnifiedAction(
-			Integer transactionId,
+			ObjectId transactionId,
 			ExtendedTransaction extendedTransaction, TransactionPhase transactionPhase,
 			TransactionPhase transactionPhaseNext,
 			ComponentPhase componentPhase, ComponentPhase componentPhaseNext
 	)
 	{
 		assert extendedTransaction.transaction.transactionPhase == transactionPhase;
-		TreeMap<Integer, TransactionComponent> transactionComponentsNext = new TreeMap<Integer, TransactionComponent>();
-		for (SortedMap.Entry<Integer, TransactionComponent> transactionComponentEntry : extendedTransaction.transaction.transactionComponents.entrySet())
+		TreeMap<ObjectId, TransactionComponent> transactionComponentsNext = new TreeMap<ObjectId, TransactionComponent>();
+		for (SortedMap.Entry<ObjectId, TransactionComponent> transactionComponentEntry : extendedTransaction.transaction.transactionComponents.entrySet())
 		{
 			assert transactionComponentEntry.getValue().componentPhase == componentPhase;
-			Integer key = transactionComponentEntry.getKey();
+			ObjectId key = transactionComponentEntry.getKey();
 			TransactionComponent value = new TransactionComponent(transactionComponentEntry.getValue().versionToLock, componentPhaseNext);
 			transactionComponentsNext.put(key, value);
 		}

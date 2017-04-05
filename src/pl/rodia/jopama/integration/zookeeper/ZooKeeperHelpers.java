@@ -31,7 +31,7 @@ public class ZooKeeperHelpers
 	}
 
 	static String getPath(
-			ZooKeeperGroup group, Integer objectId
+			ZooKeeperGroup group, Long objectId
 	)
 	{
 		return String.format(
@@ -44,12 +44,9 @@ public class ZooKeeperHelpers
 	}
 
 	static String getTransactionPath(
-			Integer id
+			ZooKeeperObjectId objectId
 	)
 	{
-		ZooKeeperObjectId objectId = new ZooKeeperObjectId(
-				id
-		);
 		assert objectId.group.equals(
 				ZooKeeperGroup.TRANSACTION
 		);
@@ -60,12 +57,9 @@ public class ZooKeeperHelpers
 	}
 
 	static String getComponentPath(
-			Integer id
+			ZooKeeperObjectId objectId
 	)
 	{
-		ZooKeeperObjectId objectId = new ZooKeeperObjectId(
-				id
-		);
 		assert objectId.group.equals(
 				ZooKeeperGroup.COMPONENT
 		);

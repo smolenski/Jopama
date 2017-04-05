@@ -18,6 +18,8 @@ import pl.rodia.jopama.data.ComponentPhase;
 import pl.rodia.jopama.data.ExtendedComponent;
 import pl.rodia.jopama.data.ExtendedTransaction;
 import pl.rodia.jopama.data.Function;
+import pl.rodia.jopama.data.ObjectId;
+import pl.rodia.jopama.data.SimpleObjectId;
 import pl.rodia.jopama.data.Transaction;
 import pl.rodia.jopama.data.TransactionComponent;
 import pl.rodia.jopama.data.TransactionPhase;
@@ -46,7 +48,7 @@ public class RandomExchangesIntegrationTest
 		for (int i = 0; i < NUM_COMPONENTS; ++i)
 		{
 			inMemoryStorageGateway.components.put(
-					COMPONENT_ID_BASE + i,
+					new SimpleObjectId(COMPONENT_ID_BASE + i),
 					new ExtendedComponent(
 							new Component(
 									0,
@@ -71,15 +73,17 @@ public class RandomExchangesIntegrationTest
 		);
 		for (int it = 0; it < NUM_TRANSACTIONS; ++it)
 		{
-			Integer transactionId = new Integer(
+			ObjectId transactionId = new SimpleObjectId(
 					TRANSACTION_ID_BASE + it
 			);
-			TreeMap<Integer, TransactionComponent> transactionComponents = new TreeMap<Integer, TransactionComponent>();
+			TreeMap<ObjectId, TransactionComponent> transactionComponents = new TreeMap<ObjectId, TransactionComponent>();
 			for (int ic = 0; ic < NUM_COMPONENTS_IN_TRANSACTION; ++ic)
 			{
 				transactionComponents.put(
-						COMPONENT_ID_BASE + random.nextInt(
-								NUM_COMPONENTS
+						new SimpleObjectId(
+								COMPONENT_ID_BASE + random.nextInt(
+										NUM_COMPONENTS
+								)
 						),
 						new TransactionComponent(
 								null,
@@ -90,20 +94,18 @@ public class RandomExchangesIntegrationTest
 			Function randomExchangeFunction = new Function()
 			{
 				@Override
-				public Map<Integer, Integer> execute(
-						Map<Integer, Integer> oldValues
+				public Map<ObjectId, Integer> execute(
+						Map<ObjectId, Integer> oldValues
 				)
 				{
 					Random random = new Random(
-							seed + transactionId
+							seed + transactionId.toLong()
 					);
-					Map<Integer, Integer> result = new TreeMap<Integer, Integer>();
-					for (Map.Entry<Integer, Integer> entry : oldValues.entrySet())
+					Map<ObjectId, Integer> result = new TreeMap<ObjectId, Integer>();
+					for (Map.Entry<ObjectId, Integer> entry : oldValues.entrySet())
 					{
 						result.put(
-								new Integer(
-										entry.getKey()
-								),
+								entry.getKey(),
 								new Integer(
 										entry.getValue()
 								)
@@ -127,26 +129,22 @@ public class RandomExchangesIntegrationTest
 							++indexToExchangeWith;
 						}
 						assert indexToExchangeWith != i;
-						Integer keyExchange1 = null;
-						Integer keyExchange2 = null;
+						ObjectId keyExchange1 = null;
+						ObjectId keyExchange2 = null;
 						int vi = 0;
-						for (Map.Entry<Integer, Integer> entry : result.entrySet())
+						for (Map.Entry<ObjectId, Integer> entry : result.entrySet())
 						{
 							if (
 								vi == i
 							)
 							{
-								keyExchange1 = new Integer(
-										entry.getKey()
-								);
+								keyExchange1 = entry.getKey();
 							}
 							if (
 								vi == indexToExchangeWith
 							)
 							{
-								keyExchange2 = new Integer(
-										entry.getKey()
-								);
+								keyExchange2 = entry.getKey();
 							}
 							if (
 								keyExchange1 != null && keyExchange2 != null
@@ -185,9 +183,7 @@ public class RandomExchangesIntegrationTest
 				}
 			};
 			inMemoryStorageGateway.transactions.put(
-					new Integer(
-							transactionId
-					),
+					transactionId,
 					new ExtendedTransaction(
 							new Transaction(
 									TransactionPhase.INITIAL,
@@ -203,19 +199,19 @@ public class RandomExchangesIntegrationTest
 
 		List<StatsAsyncSource> statsSources = new LinkedList<StatsAsyncSource>();
 
-		Map<Integer, List<Integer>> integratorTransactions = new HashMap<Integer, List<Integer>>();
+		Map<Integer, List<ObjectId>> integratorTransactions = new HashMap<Integer, List<ObjectId>>();
 		for (int ii = 0; ii < NUM_INTEGRATORS; ++ii)
 		{
 			integratorTransactions.put(
 					new Integer(
 							ii
 					),
-					new LinkedList<Integer>()
+					new LinkedList<ObjectId>()
 			);
 		}
 		for (int it = 0; it < NUM_TRANSACTIONS; ++it)
 		{
-			Integer transactionId = new Integer(
+			ObjectId transactionId = new SimpleObjectId(
 					TRANSACTION_ID_BASE + it
 			);
 			Set<Integer> integratorIds = new HashSet<Integer>();
@@ -243,7 +239,7 @@ public class RandomExchangesIntegrationTest
 		Long processingStartTimeMillis = System.currentTimeMillis();
 		for (int ii = 0; ii < NUM_INTEGRATORS; ++ii)
 		{
-			List<Integer> transactions = integratorTransactions.get(
+			List<ObjectId> transactions = integratorTransactions.get(
 					ii
 			);
 			Integrator integrator = new Integrator(
@@ -336,7 +332,7 @@ public class RandomExchangesIntegrationTest
 		for (int i = 0; i < NUM_COMPONENTS; ++i)
 		{
 			int value = inMemoryStorageGateway.components.get(
-					COMPONENT_ID_BASE + i
+					new SimpleObjectId(COMPONENT_ID_BASE + i)
 			).component.value;
 			assert valueExists.get(
 					value

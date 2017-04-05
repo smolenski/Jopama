@@ -2,7 +2,7 @@ package pl.rodia.jopama.data;
 
 public class ComponentChange {
 
-	public ComponentChange(Integer transactionId, Integer componentId, ExtendedComponent currentVersion, Component newVersion) {
+	public ComponentChange(ObjectId transactionId, ObjectId componentId, ExtendedComponent currentVersion, Component newVersion) {
 		super();
 		this.transactionId = transactionId;
 		this.componentId = componentId;
@@ -10,8 +10,8 @@ public class ComponentChange {
 		this.nextVersion = newVersion;
 	}
 
-	public Integer transactionId;
-	public Integer componentId;
+	public ObjectId transactionId;
+	public ObjectId componentId;
 	public ExtendedComponent currentVersion;
 	public Component nextVersion;
 }

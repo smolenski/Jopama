@@ -14,6 +14,8 @@ import pl.rodia.jopama.data.ComponentPhase;
 import pl.rodia.jopama.data.ExtendedComponent;
 import pl.rodia.jopama.data.ExtendedTransaction;
 import pl.rodia.jopama.data.Increment;
+import pl.rodia.jopama.data.ObjectId;
+import pl.rodia.jopama.data.SimpleObjectId;
 import pl.rodia.jopama.data.Transaction;
 import pl.rodia.jopama.data.TransactionComponent;
 import pl.rodia.jopama.data.TransactionPhase;
@@ -28,7 +30,9 @@ public class BasicIntegrationTest
 		final int numIntegrators = 10;
 		InMemoryStorageGateway inMemoryStorageGateway = new InMemoryStorageGateway();
 		inMemoryStorageGateway.components.put(
-				101,
+				new SimpleObjectId(
+						101
+				),
 				new ExtendedComponent(
 						new Component(
 								0,
@@ -42,7 +46,9 @@ public class BasicIntegrationTest
 				)
 		);
 		inMemoryStorageGateway.components.put(
-				102,
+				new SimpleObjectId(
+						102
+				),
 				new ExtendedComponent(
 						new Component(
 								0,
@@ -56,7 +62,9 @@ public class BasicIntegrationTest
 				)
 		);
 		inMemoryStorageGateway.components.put(
-				103,
+				new SimpleObjectId(
+						103
+				),
 				new ExtendedComponent(
 						new Component(
 								0,
@@ -69,30 +77,38 @@ public class BasicIntegrationTest
 						)
 				)
 		);
-		TreeMap<Integer, TransactionComponent> transactionComponents = new TreeMap<Integer, TransactionComponent>();
+		TreeMap<ObjectId, TransactionComponent> transactionComponents = new TreeMap<ObjectId, TransactionComponent>();
 		transactionComponents.put(
-				101,
+				new SimpleObjectId(
+						101
+				),
 				new TransactionComponent(
 						null,
 						ComponentPhase.INITIAL
 				)
 		);
 		transactionComponents.put(
-				102,
+				new SimpleObjectId(
+						102
+				),
 				new TransactionComponent(
 						null,
 						ComponentPhase.INITIAL
 				)
 		);
 		transactionComponents.put(
-				103,
+				new SimpleObjectId(
+						103
+				),
 				new TransactionComponent(
 						null,
 						ComponentPhase.INITIAL
 				)
 		);
 		inMemoryStorageGateway.transactions.put(
-				1001,
+				new SimpleObjectId(
+						1001
+				),
 				new ExtendedTransaction(
 						new Transaction(
 								TransactionPhase.INITIAL,
@@ -105,9 +121,11 @@ public class BasicIntegrationTest
 				)
 		);
 
-		List<Integer> transactionIds = new LinkedList<Integer>();
+		List<ObjectId> transactionIds = new LinkedList<ObjectId>();
 		transactionIds.add(
-				1001
+				new SimpleObjectId(
+						1001
+				)
 		);
 
 		List<Integrator> integrators = new LinkedList<Integrator>();
@@ -166,13 +184,19 @@ public class BasicIntegrationTest
 		statsCollector.finish();
 
 		ExtendedComponent component101 = inMemoryStorageGateway.components.get(
-				101
+				new SimpleObjectId(
+						101
+				)
 		);
 		ExtendedComponent component102 = inMemoryStorageGateway.components.get(
-				102
+				new SimpleObjectId(
+						102
+				)
 		);
 		ExtendedComponent component103 = inMemoryStorageGateway.components.get(
-				102
+				new SimpleObjectId(
+						102
+				)
 		);
 		logger.info(
 				component101.component.value + " (version:" + component101.externalVersion + ")"

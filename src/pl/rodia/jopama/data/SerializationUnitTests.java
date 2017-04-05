@@ -21,7 +21,7 @@ public class SerializationUnitTests
 				new Integer(
 						50
 				),
-				new Integer(
+				new SimpleObjectId(
 						9
 				),
 				new Integer(
@@ -47,9 +47,9 @@ public class SerializationUnitTests
 	@Test
 	public void serializationAndDeserializationShouldPreserveTransactionEquality() throws ClassNotFoundException, IOException
 	{
-		TreeMap<Integer, TransactionComponent> transactionComponents = new TreeMap<Integer, TransactionComponent>();
+		TreeMap<ObjectId, TransactionComponent> transactionComponents = new TreeMap<ObjectId, TransactionComponent>();
 		transactionComponents.put(
-				new Integer(
+				new SimpleObjectId(
 						101
 				),
 				new TransactionComponent(
@@ -86,18 +86,18 @@ public class SerializationUnitTests
 						inc
 				)
 		);
-		Integer componentId = new Integer(
+		ObjectId componentId = new SimpleObjectId(
 				5
 		);
 		Integer origValue = new Integer(
 				101
 		);
-		Map<Integer, Integer> arguments = new TreeMap<Integer, Integer>();
+		Map<ObjectId, Integer> arguments = new TreeMap<ObjectId, Integer>();
 		arguments.put(
 				componentId,
 				origValue
 		);
-		Map<Integer, Integer> incResult = resInc.execute(
+		Map<ObjectId, Integer> incResult = resInc.execute(
 				arguments
 		);
 		assertThat(

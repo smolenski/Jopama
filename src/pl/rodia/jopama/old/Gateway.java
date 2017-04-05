@@ -1,18 +1,19 @@
 package pl.rodia.jopama.old;
 
 import pl.rodia.jopama.data.ComponentChange;
+import pl.rodia.jopama.data.ObjectId;
 import pl.rodia.jopama.data.TransactionChange;
 
 public abstract class Gateway
 {
 
 	public abstract void requestTransaction(
-			Integer transactionId
+			ObjectId transactionId
 	);
 
 	public abstract void requestComponent(
-			Integer transactionId,
-			Integer componentId
+			ObjectId transactionId,
+			ObjectId componentId
 	);
 
 	public abstract void changeTransaction(

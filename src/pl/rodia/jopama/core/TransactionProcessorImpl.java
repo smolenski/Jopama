@@ -8,6 +8,7 @@ import org.apache.logging.log4j.Logger;
 
 import pl.rodia.jopama.data.ExtendedComponent;
 import pl.rodia.jopama.data.ExtendedTransaction;
+import pl.rodia.jopama.data.ObjectId;
 import pl.rodia.jopama.data.UnifiedAction;
 import pl.rodia.jopama.gateway.ErrorCode;
 import pl.rodia.jopama.gateway.NewComponentVersionFeedback;
@@ -31,13 +32,13 @@ public class TransactionProcessorImpl extends TransactionProcessor
 		this.transactionAnalyzer = transactionAnalyzer;
 		this.storage = storage;
 		this.storageGateway = storageGateway;
-		this.transactions = new HashMap<Integer, Task>();
+		this.transactions = new HashMap<ObjectId, Task>();
 		this.scheduledProcessingTaskId = null;
 		this.scheduleProcessing();
 	}
 
 	public void addTransaction(
-			Integer transactionId,
+			ObjectId transactionId,
 			Task transactionDone
 	)
 	{
@@ -57,7 +58,7 @@ public class TransactionProcessorImpl extends TransactionProcessor
 	}
 
 	void removeTransaction(
-			Integer transactionId
+			ObjectId transactionId
 	)
 	{
 		Task task = this.transactions.remove(
@@ -97,7 +98,7 @@ public class TransactionProcessorImpl extends TransactionProcessor
 				"executeScheduledProcessing"
 		);
 		this.scheduledProcessingTaskId = null;
-		for (Map.Entry<Integer, Task> entry : this.transactions.entrySet())
+		for (Map.Entry<ObjectId, Task> entry : this.transactions.entrySet())
 		{
 			this.processTransaction(
 					entry.getKey()
@@ -132,7 +133,7 @@ public class TransactionProcessorImpl extends TransactionProcessor
 	}
 
 	public void processTransaction(
-			Integer transactionId
+			ObjectId transactionId
 	)
 	{
 		if (
@@ -224,7 +225,7 @@ public class TransactionProcessorImpl extends TransactionProcessor
 	}
 
 	private NewComponentVersionFeedback createNewComponentVersionHandler(
-			Integer transactionId, Integer componentId
+			ObjectId transactionId, ObjectId componentId
 	)
 	{
 		return new NewComponentVersionFeedback()
@@ -258,7 +259,7 @@ public class TransactionProcessorImpl extends TransactionProcessor
 	}
 
 	private NewTransactionVersionFeedback createNewTransactionVersionHandler(
-			Integer transactionId
+			ObjectId transactionId
 	)
 	{
 		return new NewTransactionVersionFeedback()
@@ -302,7 +303,7 @@ public class TransactionProcessorImpl extends TransactionProcessor
 	TransactionAnalyzer transactionAnalyzer;
 	LocalStorage storage;
 	RemoteStorageGateway storageGateway;
-	Map<Integer, Task> transactions;
+	Map<ObjectId, Task> transactions;
 	Integer scheduledProcessingTaskId;
 	static final Logger logger = LogManager.getLogger();
 }

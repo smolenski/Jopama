@@ -3,7 +3,7 @@ package pl.rodia.jopama.data;
 public class UnifiedDownloadRequest
 {
 	public UnifiedDownloadRequest(
-			Integer transactionId
+			ObjectId transactionId
 	)
 	{
 		this.transactionId = transactionId;
@@ -11,13 +11,13 @@ public class UnifiedDownloadRequest
 	}
 	
 	public UnifiedDownloadRequest(
-			Integer transactionId, Integer componentId
+			ObjectId transactionId, ObjectId componentId
 	)
 	{
 		this.transactionId = transactionId;
 		this.componentId = componentId;
 	}
 
-	public Integer transactionId;
-	public Integer componentId;
+	public ObjectId transactionId;
+	public ObjectId componentId;
 }

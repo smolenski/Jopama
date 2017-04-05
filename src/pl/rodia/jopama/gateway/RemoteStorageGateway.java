@@ -1,18 +1,19 @@
 package pl.rodia.jopama.gateway;
 
 import pl.rodia.jopama.data.ComponentChange;
+import pl.rodia.jopama.data.ObjectId;
 import pl.rodia.jopama.data.TransactionChange;
 
 public abstract class RemoteStorageGateway
 {
 
 	abstract public void requestTransaction(
-			Integer transactionId,
+			ObjectId transactionId,
 			NewTransactionVersionFeedback feedback
 	);
 
 	abstract public void requestComponent(
-			Integer componentId,
+			ObjectId componentId,
 			NewComponentVersionFeedback feedback
 	);
 

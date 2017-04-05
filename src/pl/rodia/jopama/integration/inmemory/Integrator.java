@@ -13,6 +13,7 @@ import pl.rodia.jopama.core.TransactionAnalyzer;
 import pl.rodia.jopama.core.TransactionAnalyzerImpl;
 import pl.rodia.jopama.core.TransactionProcessor;
 import pl.rodia.jopama.core.TransactionProcessorImpl;
+import pl.rodia.jopama.data.ObjectId;
 import pl.rodia.mpf.TaskRunner;
 
 public class Integrator
@@ -21,7 +22,7 @@ public class Integrator
 	public Integrator(
 			String name,
 			InMemoryStorageGateway inMemoryStorageGateway,
-			List<Integer> toDoTransactions,
+			List<ObjectId> toDoTransactions,
 			Integer numRunningPace
 	)
 	{

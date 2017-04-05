@@ -8,19 +8,20 @@ import org.apache.logging.log4j.Logger;
 
 import pl.rodia.jopama.data.ExtendedComponent;
 import pl.rodia.jopama.data.ExtendedTransaction;
+import pl.rodia.jopama.data.ObjectId;
 
 public class LocalStorageImpl extends LocalStorage
 {
 
 	public LocalStorageImpl()
 	{
-		this.transactions = new HashMap<Integer, ExtendedTransaction>();
-		this.components = new HashMap<Integer, ExtendedComponent>();
+		this.transactions = new HashMap<ObjectId, ExtendedTransaction>();
+		this.components = new HashMap<ObjectId, ExtendedComponent>();
 	}
 
 	@Override
 	public ExtendedTransaction getTransaction(
-			Integer transactionId
+			ObjectId transactionId
 	)
 	{
 		return this.transactions.get(
@@ -30,7 +31,7 @@ public class LocalStorageImpl extends LocalStorage
 
 	@Override
 	public ExtendedComponent getComponent(
-			Integer componentId
+			ObjectId componentId
 	)
 	{
 		return this.components.get(
@@ -39,7 +40,7 @@ public class LocalStorageImpl extends LocalStorage
 	}
 
 	public Boolean putComponent(
-			Integer componentId, ExtendedComponent extendedComponent
+			ObjectId componentId, ExtendedComponent extendedComponent
 	)
 	{
 		assert extendedComponent != null;
@@ -61,7 +62,7 @@ public class LocalStorageImpl extends LocalStorage
 	}
 
 	public Boolean putTransaction(
-			Integer transactionId, ExtendedTransaction extendedTransaction
+			ObjectId transactionId, ExtendedTransaction extendedTransaction
 	)
 	{
 		assert extendedTransaction != null;
@@ -82,7 +83,7 @@ public class LocalStorageImpl extends LocalStorage
 		);
 	}
 
-	Map<Integer, ExtendedTransaction> transactions;
-	Map<Integer, ExtendedComponent> components;
+	Map<ObjectId, ExtendedTransaction> transactions;
+	Map<ObjectId, ExtendedComponent> components;
 	static final Logger logger = LogManager.getLogger();
 }

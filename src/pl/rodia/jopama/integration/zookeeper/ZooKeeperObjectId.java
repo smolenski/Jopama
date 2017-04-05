@@ -1,14 +1,13 @@
 package pl.rodia.jopama.integration.zookeeper;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.MatcherAssert.assertThat;
+import java.io.Serializable;
 
-import org.junit.Test;
+import pl.rodia.jopama.data.ObjectId;
 
-public class ZooKeeperObjectId
+public class ZooKeeperObjectId extends ObjectId implements Serializable
 {
 	public ZooKeeperObjectId(
-			Integer clusterId, ZooKeeperGroup groupId, Integer objectId
+			Integer clusterId, ZooKeeperGroup groupId, Long objectId
 	)
 	{
 		super();
@@ -18,24 +17,26 @@ public class ZooKeeperObjectId
 	}
 	
 	public ZooKeeperObjectId(
-			Integer id
+			Long id
 	)
 	{
-		assert (id >> 28) == ZooKeeperObjectId.magicValue;
-		id = new Integer((id << 4) >> 4);
-		this.clusterId = id >> 22;
-		id = new Integer((id << 10) >> 10);
-		this.group = ZooKeeperGroup.values()[(id >> 20)];
-		id = new Integer((id << 12) >> 12);
+		assert (id >> 60) == ZooKeeperObjectId.magicValue;
+		id = new Long((id << 4) >> 4);
+		this.clusterId = new Long(id >> 45).intValue();
+		id = new Long((id << 19) >> 19);
+		System.out.println("group: " + (id >> 40));
+		this.group = ZooKeeperGroup.values()[new Long(id >> 40).intValue()];
+		id = new Long((id << 24) >> 24);
 		this.objectId = id;
 	}
 	
-	public Integer toInteger()
+	@Override
+	public Long toLong()
 	{
-		assert (this.clusterId.intValue() >> 6) == 0;
-		assert (this.group.ordinal() >> 2) == 0;
-		assert (this.objectId.intValue() >> 20) == 0;
-		return new Integer((ZooKeeperObjectId.magicValue << 28) | this.clusterId.intValue() << 22) | (this.group.ordinal() << 20) | (this.objectId.intValue());
+		assert (this.clusterId >> 15) == 0;
+		assert (this.group.ordinal() >> 5) == 0;
+		assert (this.objectId >> 40) == 0;
+		return new Long((new Long(ZooKeeperObjectId.magicValue) << 60) | (new Long(this.clusterId) << 45) | (new Long(this.group.ordinal()) << 40) | this.objectId);
 	}
 	
 	@Override
@@ -104,8 +105,15 @@ public class ZooKeeperObjectId
 		return true;
 	}
 	
+	@Override
+	public String toString()
+	{
+		return "(clusterId: " + this.clusterId + " group: " + this.group.name() + "objectId: " + this.objectId + ")";
+	}
+
 	Integer clusterId;
 	ZooKeeperGroup group;
-	Integer objectId;
+	Long objectId;
 	static final Integer magicValue = 9;
+	private static final long serialVersionUID = -1667024543558371506L;
 }

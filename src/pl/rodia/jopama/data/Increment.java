@@ -6,9 +6,9 @@ import java.util.Map;
 public class Increment extends Function {
 
 	@Override
-	public Map<Integer, Integer> execute(Map<Integer, Integer> oldValues) {
-		Map<Integer, Integer> result = new HashMap<Integer, Integer>();
-		for (Map.Entry<Integer, Integer> entry : oldValues.entrySet())
+	public Map<ObjectId, Integer> execute(Map<ObjectId, Integer> oldValues) {
+		Map<ObjectId, Integer> result = new HashMap<ObjectId, Integer>();
+		for (Map.Entry<ObjectId, Integer> entry : oldValues.entrySet())
 		{
 			result.put(entry.getKey(), entry.getValue() + 1);
 		}

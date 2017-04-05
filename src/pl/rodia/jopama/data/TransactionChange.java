@@ -2,14 +2,14 @@ package pl.rodia.jopama.data;
 
 public class TransactionChange {
 
-	public TransactionChange(Integer transactionId, ExtendedTransaction currentVersion, Transaction newVersion) {
+	public TransactionChange(ObjectId transactionId, ExtendedTransaction currentVersion, Transaction newVersion) {
 		super();
 		this.transactionId = transactionId;
 		this.currentVersion = currentVersion;
 		this.nextVersion = newVersion;
 	}
 
-	public Integer transactionId;
+	public ObjectId transactionId;
 	public ExtendedTransaction currentVersion;
 	public Transaction nextVersion;
 }

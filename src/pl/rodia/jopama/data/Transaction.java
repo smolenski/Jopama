@@ -8,7 +8,7 @@ public class Transaction implements Serializable
 {
 	public Transaction(
 			TransactionPhase transactionPhase,
-			TreeMap<Integer, TransactionComponent> transactionComponents,
+			TreeMap<ObjectId, TransactionComponent> transactionComponents,
 			Function function
 	)
 	{
@@ -90,7 +90,7 @@ public class Transaction implements Serializable
 		result.append(
 				", transactionComponents: {"
 		);
-		for (SortedMap.Entry<Integer, TransactionComponent> transactionComponentEntry : this.transactionComponents.entrySet())
+		for (SortedMap.Entry<ObjectId, TransactionComponent> transactionComponentEntry : this.transactionComponents.entrySet())
 		{
 			result.append(
 					transactionComponentEntry.getKey() + " -> " + transactionComponentEntry.getValue()
@@ -103,7 +103,7 @@ public class Transaction implements Serializable
 	}
 
 	public TransactionPhase transactionPhase;
-	public TreeMap<Integer, TransactionComponent> transactionComponents;
+	public TreeMap<ObjectId, TransactionComponent> transactionComponents;
 	public final Function function;
 	private static final long serialVersionUID = 1331332497591376374L;
 }

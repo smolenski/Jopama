@@ -9,6 +9,7 @@ import org.apache.logging.log4j.Logger;
 import pl.rodia.jopama.data.ComponentChange;
 import pl.rodia.jopama.data.ExtendedComponent;
 import pl.rodia.jopama.data.ExtendedTransaction;
+import pl.rodia.jopama.data.ObjectId;
 import pl.rodia.jopama.data.TransactionChange;
 import pl.rodia.jopama.gateway.ErrorCode;
 import pl.rodia.jopama.gateway.NewComponentVersionFeedback;
@@ -20,13 +21,13 @@ public class InMemoryStorageGateway extends RemoteStorageGateway
 
 	public InMemoryStorageGateway()
 	{
-		this.transactions = new HashMap<Integer, ExtendedTransaction>();
-		this.components = new HashMap<Integer, ExtendedComponent>();
+		this.transactions = new HashMap<ObjectId, ExtendedTransaction>();
+		this.components = new HashMap<ObjectId, ExtendedComponent>();
 	}
 
 	@Override
 	synchronized public void requestTransaction(
-			Integer transactionId, NewTransactionVersionFeedback feedback
+			ObjectId transactionId, NewTransactionVersionFeedback feedback
 	)
 	{
 		if (
@@ -51,7 +52,7 @@ public class InMemoryStorageGateway extends RemoteStorageGateway
 
 	@Override
 	synchronized public void requestComponent(
-			Integer componentId, NewComponentVersionFeedback feedback
+			ObjectId componentId, NewComponentVersionFeedback feedback
 	)
 	{
 		if (
@@ -214,8 +215,8 @@ public class InMemoryStorageGateway extends RemoteStorageGateway
 		}
 	}
 
-	Map<Integer, ExtendedTransaction> transactions;
-	Map<Integer, ExtendedComponent> components;
+	Map<ObjectId, ExtendedTransaction> transactions;
+	Map<ObjectId, ExtendedComponent> components;
 	static final Logger logger = LogManager.getLogger();
 
 }

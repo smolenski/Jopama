@@ -13,6 +13,7 @@ import pl.rodia.jopama.data.ComponentPhase;
 import pl.rodia.jopama.data.ExtendedComponent;
 import pl.rodia.jopama.data.ExtendedTransaction;
 import pl.rodia.jopama.data.Function;
+import pl.rodia.jopama.data.ObjectId;
 import pl.rodia.jopama.data.Transaction;
 import pl.rodia.jopama.data.TransactionChange;
 import pl.rodia.jopama.data.TransactionComponent;
@@ -33,7 +34,7 @@ public class TransactionAnalyzerImpl implements TransactionAnalyzer
 
 	@Override
 	public UnifiedAction getChange(
-			Integer transactionId
+			ObjectId transactionId
 	)
 	{
 		ExtendedTransaction extendedTransaction = this.proxyStorage.getTransaction(
@@ -49,7 +50,7 @@ public class TransactionAnalyzerImpl implements TransactionAnalyzer
 					)
 			);
 		}
-		for (SortedMap.Entry<Integer, TransactionComponent> transactionComponentEntry : extendedTransaction.transaction.transactionComponents.entrySet())
+		for (SortedMap.Entry<ObjectId, TransactionComponent> transactionComponentEntry : extendedTransaction.transaction.transactionComponents.entrySet())
 		{
 			ExtendedComponent extendedComponent = this.proxyStorage.getComponent(
 					transactionComponentEntry.getKey()
@@ -70,7 +71,7 @@ public class TransactionAnalyzerImpl implements TransactionAnalyzer
 				);
 			}
 		}
-		Integer componentId;
+		ObjectId componentId;
 		switch (extendedTransaction.transaction.transactionPhase)
 		{
 			case INITIAL:
@@ -174,12 +175,12 @@ public class TransactionAnalyzerImpl implements TransactionAnalyzer
 		}
 	}
 
-	private Integer getFirstComponentInPhase(
+	private ObjectId getFirstComponentInPhase(
 			Transaction transaction,
 			ComponentPhase desiredPhase
 	)
 	{
-		for (SortedMap.Entry<Integer, TransactionComponent> transactionComponentEntry : transaction.transactionComponents.entrySet())
+		for (SortedMap.Entry<ObjectId, TransactionComponent> transactionComponentEntry : transaction.transactionComponents.entrySet())
 		{
 			if (
 				transactionComponentEntry.getValue().componentPhase == desiredPhase
@@ -192,9 +193,9 @@ public class TransactionAnalyzerImpl implements TransactionAnalyzer
 	}
 
 	private UnifiedAction getComponentLockingAction(
-			Integer transactionId,
+			ObjectId transactionId,
 			ExtendedTransaction extendedTransaction,
-			Integer componentId
+			ObjectId componentId
 	)
 	{
 		assert extendedTransaction != null;
@@ -281,7 +282,7 @@ public class TransactionAnalyzerImpl implements TransactionAnalyzer
 	}
 
 	private UnifiedAction getComponentUpdatingAction(
-			Integer transactionId, ExtendedTransaction extendedTransaction, Integer componentId
+			ObjectId transactionId, ExtendedTransaction extendedTransaction, ObjectId componentId
 	)
 	{
 		assert extendedTransaction != null;
@@ -349,12 +350,12 @@ public class TransactionAnalyzerImpl implements TransactionAnalyzer
 	}
 
 	private Integer getNewValueForComponent(
-			Integer transactionId, Transaction transaction, Integer componentId
+			ObjectId transactionId, Transaction transaction, ObjectId componentId
 	)
 	{
 		Function function = transaction.function;
-		Map<Integer, Integer> functionArguments = new TreeMap<Integer, Integer>();
-		for (SortedMap.Entry<Integer, TransactionComponent> transactionComponentEntry : transaction.transactionComponents.entrySet())
+		Map<ObjectId, Integer> functionArguments = new TreeMap<ObjectId, Integer>();
+		for (SortedMap.Entry<ObjectId, TransactionComponent> transactionComponentEntry : transaction.transactionComponents.entrySet())
 		{
 			ComponentPhase componentPhase = transactionComponentEntry.getValue().componentPhase;
 			assert componentPhase == ComponentPhase.NOT_UPDATED || componentPhase == ComponentPhase.UPDATED;
@@ -367,7 +368,7 @@ public class TransactionAnalyzerImpl implements TransactionAnalyzer
 					extendedComponent.component.value
 			);
 		}
-		Map<Integer, Integer> functionResult = function.execute(
+		Map<ObjectId, Integer> functionResult = function.execute(
 				functionArguments
 		);
 		Integer result = functionResult.get(
@@ -378,7 +379,7 @@ public class TransactionAnalyzerImpl implements TransactionAnalyzer
 	}
 
 	private UnifiedAction getComponentReleasingAction(
-			Integer transactionId, ExtendedTransaction extendedTransaction, Integer componentId
+			ObjectId transactionId, ExtendedTransaction extendedTransaction, ObjectId componentId
 	)
 	{
 		assert extendedTransaction != null;

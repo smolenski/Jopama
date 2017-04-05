@@ -9,6 +9,7 @@ import org.apache.zookeeper.data.Stat;
 import pl.rodia.jopama.data.ComponentChange;
 import pl.rodia.jopama.data.ExtendedComponent;
 import pl.rodia.jopama.data.ExtendedTransaction;
+import pl.rodia.jopama.data.ObjectId;
 import pl.rodia.jopama.data.TransactionChange;
 import pl.rodia.jopama.gateway.ErrorCode;
 import pl.rodia.jopama.gateway.NewComponentVersionFeedback;
@@ -41,11 +42,12 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 
 	@Override
 	public void requestTransaction(
-			Integer transactionId, NewTransactionVersionFeedback feedback
+			ObjectId transactionId, NewTransactionVersionFeedback feedback
 	)
 	{
+		ZooKeeperObjectId objectId = (ZooKeeperObjectId) transactionId;
 		ZooKeeperProvider zooKeeperProvider = this.zooKeeperMultiProvider.getResponsibleProvider(
-				transactionId
+				objectId.clusterId
 		);
 		synchronized (zooKeeperProvider)
 		{
@@ -59,7 +61,7 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 			}
 			zooKeeperProvider.zooKeeper.getData(
 					ZooKeeperHelpers.getTransactionPath(
-							transactionId
+							objectId
 					),
 					false,
 					new DataCallback()
@@ -100,11 +102,12 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 
 	@Override
 	public void requestComponent(
-			Integer componentId, NewComponentVersionFeedback feedback
+			ObjectId componentId, NewComponentVersionFeedback feedback
 	)
 	{
+		ZooKeeperObjectId objectId = (ZooKeeperObjectId) componentId;
 		ZooKeeperProvider zooKeeperProvider = this.zooKeeperMultiProvider.getResponsibleProvider(
-				componentId
+				objectId.clusterId
 		);
 		synchronized (zooKeeperProvider)
 		{
@@ -118,7 +121,7 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 			}
 			zooKeeperProvider.zooKeeper.getData(
 					ZooKeeperHelpers.getComponentPath(
-							componentId
+							objectId
 					),
 					false,
 					new DataCallback()
@@ -162,8 +165,9 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 			TransactionChange transactionChange, NewTransactionVersionFeedback feedback
 	)
 	{
+		ZooKeeperObjectId objectId = (ZooKeeperObjectId) transactionChange.transactionId;
 		ZooKeeperProvider zooKeeperProvider = this.zooKeeperMultiProvider.getResponsibleProvider(
-				transactionChange.transactionId
+				objectId.clusterId
 		);
 		synchronized (zooKeeperProvider)
 		{
@@ -177,7 +181,7 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 			}
 			zooKeeperProvider.zooKeeper.setData(
 					ZooKeeperHelpers.getTransactionPath(
-							transactionChange.transactionId
+							objectId
 					),
 					ZooKeeperHelpers.serializeTransaction(
 							transactionChange.nextVersion
@@ -231,8 +235,9 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 			ComponentChange componentChange, NewComponentVersionFeedback feedback
 	)
 	{
+		ZooKeeperObjectId objectId = (ZooKeeperObjectId) componentChange.componentId;
 		ZooKeeperProvider zooKeeperProvider = this.zooKeeperMultiProvider.getResponsibleProvider(
-				componentChange.componentId
+				objectId.clusterId
 		);
 		synchronized (zooKeeperProvider)
 		{
@@ -246,7 +251,7 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 			}
 			zooKeeperProvider.zooKeeper.setData(
 					ZooKeeperHelpers.getComponentPath(
-							componentChange.transactionId
+							objectId
 					),
 					ZooKeeperHelpers.serializeComponent(
 							componentChange.nextVersion
