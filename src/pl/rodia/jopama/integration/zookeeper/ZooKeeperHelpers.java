@@ -14,45 +14,30 @@ import pl.rodia.jopama.data.Transaction;
 
 public class ZooKeeperHelpers
 {
-	static String getBasePath(
-			ZooKeeperGroup group
-	)
-	{
-		switch (group)
-		{
-			case COMPONENT:
-				return "/Components/";
-			case TRANSACTION:
-				return "/Transactions/";
-			default:
-				assert false;
-				return null;
-		}
-	}
-
 	static String getPath(
-			ZooKeeperGroup group, Long objectId
+			ZooKeeperObjectId objectId
 	)
 	{
-		return String.format(
-				"%s%010d",
-				ZooKeeperHelpers.getBasePath(
-						group
-				),
-				objectId.intValue()
-		);
+		return "/" + objectId.uniqueName;
+	}
+	
+	static ZooKeeperObjectId getIdFromPath(String path)
+	{
+		String [] components = path.split("/");
+		if (components.length != 2 || components[0].equals("") == false)
+		{
+			throw new IllegalArgumentException("path: " + path + " splitted: " + Arrays.toString(components));
+		}
+		String fileName = components[1];
+		return new ZooKeeperObjectId(fileName);
 	}
 
 	static String getTransactionPath(
 			ZooKeeperObjectId objectId
 	)
 	{
-		assert objectId.group.equals(
-				ZooKeeperGroup.TRANSACTION
-		);
 		return ZooKeeperHelpers.getPath(
-				objectId.group,
-				objectId.objectId
+				objectId
 		);
 	}
 
@@ -60,12 +45,8 @@ public class ZooKeeperHelpers
 			ZooKeeperObjectId objectId
 	)
 	{
-		assert objectId.group.equals(
-				ZooKeeperGroup.COMPONENT
-		);
 		return ZooKeeperHelpers.getPath(
-				objectId.group,
-				objectId.objectId
+				objectId
 		);
 	}
 

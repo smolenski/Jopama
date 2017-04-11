@@ -1,16 +1,11 @@
 package pl.rodia.jopama.integration.zookeeper;
 
-import java.util.LinkedList;
-import java.util.List;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper.States;
-import org.apache.zookeeper.data.ACL;
-import org.apache.zookeeper.data.Stat;
 
 public class ZooKeeperCreator
 {
@@ -21,8 +16,8 @@ public class ZooKeeperCreator
 	)
 	{
 		this.zooKeeperMultiProvider = new ZooKeeperMultiProvider(
-			addresses,
-			clusterSize
+				addresses,
+				clusterSize
 		);
 	}
 
@@ -36,11 +31,15 @@ public class ZooKeeperCreator
 		this.zooKeeperMultiProvider.finish();
 	}
 
-	private String tryToCreateObject(
-			Integer clusterId, ZooKeeperGroup group, byte[] data
+	private ZooKeeperObjectId tryToCreateObject(
+			ZooKeeperObjectId objectId, byte[] data
 	)
 	{
-		ZooKeeperProvider zooKeeperProvider = this.zooKeeperMultiProvider.getResponsibleProvider(clusterId);
+		ZooKeeperProvider zooKeeperProvider = this.zooKeeperMultiProvider.getResponsibleProvider(
+				objectId.getClusterId(
+						this.zooKeeperMultiProvider.getNumClusters()
+				)
+		);
 		synchronized (zooKeeperProvider)
 		{
 			if (
@@ -55,19 +54,29 @@ public class ZooKeeperCreator
 			{
 				try
 				{
-					logger.debug("zooKeeper.create calling");
+					logger.debug(
+							"zooKeeper.create calling"
+					);
 					String result = zooKeeperProvider.zooKeeper.create(
-							ZooKeeperHelpers.getBasePath(group),
+							ZooKeeperHelpers.getPath(
+									objectId
+							),
 							data,
 							Ids.OPEN_ACL_UNSAFE,
-							CreateMode.PERSISTENT_SEQUENTIAL
+							CreateMode.PERSISTENT
 					);
-					logger.debug("zooKeeper.create finished success (path: " + result + ")");
-					return result;
+					logger.debug(
+							"zooKeeper.create finished success (path: " + result + ")"
+					);
+					return ZooKeeperHelpers.getIdFromPath(
+							result
+					);
 				}
 				catch (KeeperException | InterruptedException e)
 				{
-					logger.debug("zooKeeper.create finished failure");
+					logger.debug(
+							"zooKeeper.create finished failure"
+					);
 					logger.error(
 							"zooKeeper.create failed: " + e
 					);
@@ -76,29 +85,42 @@ public class ZooKeeperCreator
 			}
 		}
 	}
-	
-	public String createObject(Integer clusterId, ZooKeeperGroup group, byte [] data)
+
+	public ZooKeeperObjectId createObject(
+			ZooKeeperObjectId objectId, byte[] data
+	)
 	{
 		for (int i = 0; i < ZooKeeperCreator.NUM_TRIES.intValue(); ++i)
 		{
-			logger.debug("zooKeeper.create (try: " + i + ")");
-			String path = this.tryToCreateObject(clusterId, group, data);
-			if (path != null)
+			logger.debug(
+					"zooKeeper.create (try: " + i + ")"
+			);
+			ZooKeeperObjectId path = this.tryToCreateObject(
+					objectId,
+					data
+			);
+			if (
+				path != null
+			)
 			{
 				return path;
 			}
 			try
 			{
-				Thread.sleep(1000);
+				Thread.sleep(
+						1000
+				);
 			}
 			catch (InterruptedException e)
 			{
-				logger.debug("Sleeping");
+				logger.debug(
+						"Sleeping"
+				);
 			}
 		}
 		return null;
 	}
-	
+
 	static Integer NUM_TRIES = 3;
 	ZooKeeperMultiProvider zooKeeperMultiProvider;
 	static final Logger logger = LogManager.getLogger();

@@ -47,7 +47,7 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 	{
 		ZooKeeperObjectId objectId = (ZooKeeperObjectId) transactionId;
 		ZooKeeperProvider zooKeeperProvider = this.zooKeeperMultiProvider.getResponsibleProvider(
-				objectId.clusterId
+				objectId.getClusterId(this.zooKeeperMultiProvider.getNumClusters())
 		);
 		synchronized (zooKeeperProvider)
 		{
@@ -107,7 +107,7 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 	{
 		ZooKeeperObjectId objectId = (ZooKeeperObjectId) componentId;
 		ZooKeeperProvider zooKeeperProvider = this.zooKeeperMultiProvider.getResponsibleProvider(
-				objectId.clusterId
+				objectId.getClusterId(this.zooKeeperMultiProvider.getNumClusters())
 		);
 		synchronized (zooKeeperProvider)
 		{
@@ -167,7 +167,7 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 	{
 		ZooKeeperObjectId objectId = (ZooKeeperObjectId) transactionChange.transactionId;
 		ZooKeeperProvider zooKeeperProvider = this.zooKeeperMultiProvider.getResponsibleProvider(
-				objectId.clusterId
+				objectId.getClusterId(this.zooKeeperMultiProvider.getNumClusters())
 		);
 		synchronized (zooKeeperProvider)
 		{
@@ -237,7 +237,7 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 	{
 		ZooKeeperObjectId objectId = (ZooKeeperObjectId) componentChange.componentId;
 		ZooKeeperProvider zooKeeperProvider = this.zooKeeperMultiProvider.getResponsibleProvider(
-				objectId.clusterId
+				objectId.getClusterId(this.zooKeeperMultiProvider.getNumClusters())
 		);
 		synchronized (zooKeeperProvider)
 		{

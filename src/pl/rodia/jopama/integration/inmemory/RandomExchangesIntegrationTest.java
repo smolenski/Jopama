@@ -48,7 +48,9 @@ public class RandomExchangesIntegrationTest
 		for (int i = 0; i < NUM_COMPONENTS; ++i)
 		{
 			inMemoryStorageGateway.components.put(
-					new SimpleObjectId(COMPONENT_ID_BASE + i),
+					new SimpleObjectId(
+							COMPONENT_ID_BASE + i
+					),
 					new ExtendedComponent(
 							new Component(
 									0,
@@ -73,7 +75,7 @@ public class RandomExchangesIntegrationTest
 		);
 		for (int it = 0; it < NUM_TRANSACTIONS; ++it)
 		{
-			ObjectId transactionId = new SimpleObjectId(
+			SimpleObjectId transactionId = new SimpleObjectId(
 					TRANSACTION_ID_BASE + it
 			);
 			TreeMap<ObjectId, TransactionComponent> transactionComponents = new TreeMap<ObjectId, TransactionComponent>();
@@ -99,7 +101,7 @@ public class RandomExchangesIntegrationTest
 				)
 				{
 					Random random = new Random(
-							seed + transactionId.toLong()
+							seed + transactionId.id
 					);
 					Map<ObjectId, Integer> result = new TreeMap<ObjectId, Integer>();
 					for (Map.Entry<ObjectId, Integer> entry : oldValues.entrySet())
@@ -181,6 +183,7 @@ public class RandomExchangesIntegrationTest
 					}
 					return result;
 				}
+				private static final long serialVersionUID = -6910284440716455093L;
 			};
 			inMemoryStorageGateway.transactions.put(
 					transactionId,
@@ -332,7 +335,9 @@ public class RandomExchangesIntegrationTest
 		for (int i = 0; i < NUM_COMPONENTS; ++i)
 		{
 			int value = inMemoryStorageGateway.components.get(
-					new SimpleObjectId(COMPONENT_ID_BASE + i)
+					new SimpleObjectId(
+							COMPONENT_ID_BASE + i
+					)
 			).component.value;
 			assert valueExists.get(
 					value

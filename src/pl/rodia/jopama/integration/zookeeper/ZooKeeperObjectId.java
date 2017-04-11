@@ -7,46 +7,19 @@ import pl.rodia.jopama.data.ObjectId;
 public class ZooKeeperObjectId extends ObjectId implements Serializable
 {
 	public ZooKeeperObjectId(
-			Integer clusterId, ZooKeeperGroup groupId, Long objectId
+			String uniqueName
 	)
 	{
 		super();
-		this.clusterId = clusterId;
-		this.group = groupId;
-		this.objectId = objectId;
+		this.uniqueName = uniqueName;
 	}
-	
-	public ZooKeeperObjectId(
-			Long id
-	)
-	{
-		assert (id >> 60) == ZooKeeperObjectId.magicValue;
-		id = new Long((id << 4) >> 4);
-		this.clusterId = new Long(id >> 45).intValue();
-		id = new Long((id << 19) >> 19);
-		System.out.println("group: " + (id >> 40));
-		this.group = ZooKeeperGroup.values()[new Long(id >> 40).intValue()];
-		id = new Long((id << 24) >> 24);
-		this.objectId = id;
-	}
-	
-	@Override
-	public Long toLong()
-	{
-		assert (this.clusterId >> 15) == 0;
-		assert (this.group.ordinal() >> 5) == 0;
-		assert (this.objectId >> 40) == 0;
-		return new Long((new Long(ZooKeeperObjectId.magicValue) << 60) | (new Long(this.clusterId) << 45) | (new Long(this.group.ordinal()) << 40) | this.objectId);
-	}
-	
+
 	@Override
 	public int hashCode()
 	{
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((clusterId == null) ? 0 : clusterId.hashCode());
-		result = prime * result + ((group == null) ? 0 : group.hashCode());
-		result = prime * result + ((objectId == null) ? 0 : objectId.hashCode());
+		result = prime * result + ((this.uniqueName == null) ? 0 : this.uniqueName.hashCode());
 		return result;
 	}
 
@@ -69,51 +42,65 @@ public class ZooKeeperObjectId extends ObjectId implements Serializable
 			return false;
 		ZooKeeperObjectId other = (ZooKeeperObjectId) obj;
 		if (
-			clusterId == null
+			this.uniqueName == null
 		)
 		{
 			if (
-				other.clusterId != null
+				other.uniqueName != null
 			)
 				return false;
 		}
 		else if (
-			!clusterId.equals(
-					other.clusterId
-			)
-		)
-			return false;
-		if (
-			group != other.group
-		)
-			return false;
-		if (
-			objectId == null
-		)
-		{
-			if (
-				other.objectId != null
-			)
-				return false;
-		}
-		else if (
-			!objectId.equals(
-					other.objectId
+			!this.uniqueName.equals(
+					other.uniqueName
 			)
 		)
 			return false;
 		return true;
 	}
-	
+
 	@Override
 	public String toString()
 	{
-		return "(clusterId: " + this.clusterId + " group: " + this.group.name() + "objectId: " + this.objectId + ")";
+		return "uniqueName: " + this.uniqueName;
 	}
 
-	Integer clusterId;
-	ZooKeeperGroup group;
-	Long objectId;
-	static final Integer magicValue = 9;
+	@Override
+	public int compareTo(
+			ObjectId obj
+	)
+	{
+		if (
+			this == obj
+		)
+		{
+			return 0;
+		}
+		if (
+			obj == null
+		)
+		{
+			return 1;
+		}
+		if (
+			getClass() != obj.getClass()
+		)
+		{
+			throw new IllegalStateException(
+					"Comparison between different classes of objectIds is not supported"
+			);
+		}
+		ZooKeeperObjectId other = (ZooKeeperObjectId) obj;
+		return this.uniqueName.compareTo(
+				other.uniqueName
+		);
+	}
+	
+	public Integer getClusterId(Integer numClusters)
+	{
+		return new Integer(Math.floorMod(this.hashCode(), numClusters));
+	}
+	
+	String uniqueName;
 	private static final long serialVersionUID = -1667024543558371506L;
 }

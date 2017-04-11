@@ -9,9 +9,11 @@ public class SimpleObjectId extends ObjectId implements Serializable
 	)
 	{
 		super();
-		this.id = new Integer(id);
+		this.id = new Integer(
+				id
+		);
 	}
-	
+
 	public SimpleObjectId(
 			Integer id
 	)
@@ -66,17 +68,42 @@ public class SimpleObjectId extends ObjectId implements Serializable
 	}
 
 	@Override
-	public Long toLong()
-	{
-		return new Long(this.id);
-	}
-	
-	@Override
 	public String toString()
 	{
 		return this.id.toString();
 	}
-	
+
+	@Override
+	public int compareTo(
+			ObjectId obj
+	)
+	{
+		if (
+			this == obj
+		)
+		{
+			return 0;
+		}
+		if (
+			obj == null
+		)
+		{
+			return 1;
+		}
+		if (
+			getClass() != obj.getClass()
+		)
+		{
+			throw new IllegalStateException(
+					"Comparison between different classes of objectIds is not supported"
+			);
+		}
+		SimpleObjectId other = (SimpleObjectId) obj;
+		return this.id.compareTo(
+				other.id
+		);
+	}
+
 	public Integer id;
 	private static final long serialVersionUID = -1406438078333659301L;
 

@@ -1,5 +1,7 @@
 package pl.rodia.jopama.integration.zookeeper;
 
+import java.util.Random;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.zookeeper.KeeperException.OperationTimeoutException;
@@ -31,7 +33,7 @@ public class ZooKeeperComponentCreator
 				)
 		);
 		zooKeeperCreator.start();
-		Integer num = Integer.parseInt(
+		Integer numComponents = Integer.parseInt(
 				args[2]
 		);
 		Component component = new Component(
@@ -44,25 +46,33 @@ public class ZooKeeperComponentCreator
 				),
 				null
 		);
-		for (int i = 0; i < num; ++i)
+		Long time = System.currentTimeMillis();
+		Random random = new Random(time);
+		Integer base = random.nextInt();
+		if (base < 0)
+		{
+			base = -base;
+		}
+		for (int i = 0; i < numComponents; ++i)
 		{
 			logger.info(
 					"Creating component: " + i
 			);
-			if (
-				zooKeeperCreator.createObject(
-						new Integer(
-								i % zooKeeperCreator.zooKeeperMultiProvider.getNumClusters()
-						),
-						ZooKeeperGroup.COMPONENT,
-						ZooKeeperHelpers.serializeComponent(
-								component
-						)
-				) == null
-			)
-			{
-				throw new OperationTimeoutException();
-			}
+			ZooKeeperObjectId result = zooKeeperCreator.createObject(
+					new ZooKeeperObjectId(
+							String.format(
+									"Component_%010d_%010d",
+									base,
+									i
+							)
+					),
+					ZooKeeperHelpers.serializeComponent(
+							component
+					)
+			);
+			logger.info(
+					"Component created: " + result
+			);
 		}
 		zooKeeperCreator.stop();
 	}

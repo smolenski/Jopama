@@ -4,19 +4,5 @@ import java.io.Serializable;
 
 public abstract class ObjectId implements Serializable, Comparable<ObjectId>
 {
-	public abstract Long toLong();
-	
-	@Override
-	public int compareTo(
-			ObjectId o
-	)
-	{
-		if (o == null)
-		{
-			throw new NullPointerException();
-		}
-		return this.toLong().compareTo(o.toLong());
-	}
-	
-	private static final long serialVersionUID = -1406438078333659301L;
+	private static final long serialVersionUID = 5427801690918996891L;
 }
