@@ -268,7 +268,7 @@ public class RandomExchangesIntegrationTest
 			);
 			StatsAsyncSource remoteStorageGatewayStatsSource = new StatsAsyncSource(
 					integrator.taskRunner,
-					integrator.remoteStorageGateway
+					integrator.remoteStorageGatewayWrapper
 			);
 			statsSources.add(
 					remoteStorageGatewayStatsSource

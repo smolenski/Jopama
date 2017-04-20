@@ -35,7 +35,7 @@ public class ZooKeeperCreatorSample
 			);
 		}
 
-		ZooKeeperCreator zooKeeperCreator = new ZooKeeperCreator(
+		ZooKeeperStorageAccess zooKeeperCreator = new ZooKeeperStorageAccess(
 				args[0],
 				Integer.parseInt(
 						args[1]

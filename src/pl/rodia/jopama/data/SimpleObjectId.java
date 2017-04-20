@@ -5,17 +5,17 @@ import java.io.Serializable;
 public class SimpleObjectId extends ObjectId implements Serializable
 {
 	public SimpleObjectId(
-			int id
+			long id
 	)
 	{
 		super();
-		this.id = new Integer(
-				id
+		this.id = new Long(
+			id
 		);
 	}
 
 	public SimpleObjectId(
-			Integer id
+			Long id
 	)
 	{
 		super();
@@ -104,7 +104,7 @@ public class SimpleObjectId extends ObjectId implements Serializable
 		);
 	}
 
-	public Integer id;
+	public Long id;
 	private static final long serialVersionUID = -1406438078333659301L;
 
 }

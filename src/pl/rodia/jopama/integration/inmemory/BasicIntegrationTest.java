@@ -19,18 +19,33 @@ import pl.rodia.jopama.data.SimpleObjectId;
 import pl.rodia.jopama.data.Transaction;
 import pl.rodia.jopama.data.TransactionComponent;
 import pl.rodia.jopama.data.TransactionPhase;
+import pl.rodia.jopama.gateway.RemoteStorageGateway;
+import pl.rodia.jopama.integration.UniversalStorageAccess;
 import pl.rodia.jopama.stats.StatsAsyncSource;
 import pl.rodia.jopama.stats.StatsCollector;
 
 public class BasicIntegrationTest
 {
 	@Test
-	public void singleTransactionConcurrentlyProcessedByManyIntegratorsTest() throws InterruptedException, ExecutionException
+	public void singleTransactionConcurrentlyProcessedByManyIntegratorsInMemoryTest(
+	) throws InterruptedException, ExecutionException
+	{
+		InMemoryStorageGateway inMemoryStorageGateway = new InMemoryStorageGateway();
+		UniversalStorageAccess storageAccess = new InMemoryUniversalStorageAccess(inMemoryStorageGateway);
+		this.singleTransactionConcurrentlyProcessedByManyIntegratorsTest(
+				storageAccess,
+				inMemoryStorageGateway
+		);
+	}
+	
+	public void singleTransactionConcurrentlyProcessedByManyIntegratorsTest(
+			UniversalStorageAccess storageAccess,
+			RemoteStorageGateway inMemoryStorageGateway
+	) throws InterruptedException, ExecutionException
 	{
 		final int numIntegrators = 10;
-		InMemoryStorageGateway inMemoryStorageGateway = new InMemoryStorageGateway();
-		inMemoryStorageGateway.components.put(
-				new SimpleObjectId(
+		ObjectId comp1 = storageAccess.createComponent(
+				new Long(
 						101
 				),
 				new ExtendedComponent(
@@ -45,8 +60,8 @@ public class BasicIntegrationTest
 						)
 				)
 		);
-		inMemoryStorageGateway.components.put(
-				new SimpleObjectId(
+		ObjectId comp2 = storageAccess.createComponent(
+				new Long(
 						102
 				),
 				new ExtendedComponent(
@@ -61,8 +76,8 @@ public class BasicIntegrationTest
 						)
 				)
 		);
-		inMemoryStorageGateway.components.put(
-				new SimpleObjectId(
+		ObjectId comp3 = storageAccess.createComponent(
+				new Long(
 						103
 				),
 				new ExtendedComponent(
@@ -79,34 +94,28 @@ public class BasicIntegrationTest
 		);
 		TreeMap<ObjectId, TransactionComponent> transactionComponents = new TreeMap<ObjectId, TransactionComponent>();
 		transactionComponents.put(
-				new SimpleObjectId(
-						101
-				),
+				comp1,
 				new TransactionComponent(
 						null,
 						ComponentPhase.INITIAL
 				)
 		);
 		transactionComponents.put(
-				new SimpleObjectId(
-						102
-				),
+				comp2,
 				new TransactionComponent(
 						null,
 						ComponentPhase.INITIAL
 				)
 		);
 		transactionComponents.put(
-				new SimpleObjectId(
-						103
-				),
+				comp3,
 				new TransactionComponent(
 						null,
 						ComponentPhase.INITIAL
 				)
 		);
-		inMemoryStorageGateway.transactions.put(
-				new SimpleObjectId(
+		ObjectId tran1 = storageAccess.createTransaction(
+				new Long(
 						1001
 				),
 				new ExtendedTransaction(
@@ -123,9 +132,7 @@ public class BasicIntegrationTest
 
 		List<ObjectId> transactionIds = new LinkedList<ObjectId>();
 		transactionIds.add(
-				new SimpleObjectId(
-						1001
-				)
+				tran1
 		);
 
 		List<Integrator> integrators = new LinkedList<Integrator>();
@@ -153,7 +160,7 @@ public class BasicIntegrationTest
 			);
 			StatsAsyncSource remoteStorageGatewayStatsSource = new StatsAsyncSource(
 					integrator.taskRunner,
-					integrator.remoteStorageGateway
+					integrator.remoteStorageGatewayWrapper
 			);
 			statsSources.add(
 					remoteStorageGatewayStatsSource
@@ -183,20 +190,14 @@ public class BasicIntegrationTest
 
 		statsCollector.finish();
 
-		ExtendedComponent component101 = inMemoryStorageGateway.components.get(
-				new SimpleObjectId(
-						101
-				)
+		ExtendedComponent component101 = storageAccess.getComponent(
+				comp1
 		);
-		ExtendedComponent component102 = inMemoryStorageGateway.components.get(
-				new SimpleObjectId(
-						102
-				)
+		ExtendedComponent component102 = storageAccess.getComponent(
+				comp2
 		);
-		ExtendedComponent component103 = inMemoryStorageGateway.components.get(
-				new SimpleObjectId(
-						102
-				)
+		ExtendedComponent component103 = storageAccess.getComponent(
+				comp3
 		);
 		logger.info(
 				component101.component.value + " (version:" + component101.externalVersion + ")"

@@ -14,6 +14,7 @@ import pl.rodia.jopama.core.TransactionAnalyzerImpl;
 import pl.rodia.jopama.core.TransactionProcessor;
 import pl.rodia.jopama.core.TransactionProcessorImpl;
 import pl.rodia.jopama.data.ObjectId;
+import pl.rodia.jopama.gateway.RemoteStorageGateway;
 import pl.rodia.mpf.TaskRunner;
 
 public class Integrator
@@ -21,7 +22,7 @@ public class Integrator
 
 	public Integrator(
 			String name,
-			InMemoryStorageGateway inMemoryStorageGateway,
+			RemoteStorageGateway targetRemoteStorageGateway,
 			List<ObjectId> toDoTransactions,
 			Integer numRunningPace
 	)
@@ -32,10 +33,10 @@ public class Integrator
 		this.taskRunnerThread = new Thread(
 				this.taskRunner
 		);
-		this.inMemoryStorageGateway = inMemoryStorageGateway;
-		this.remoteStorageGateway = new RemoteStorageGatewayImpl(
+		this.targetRemoteStorageGateway = targetRemoteStorageGateway;
+		this.remoteStorageGatewayWrapper = new RemoteStorageGatewayImpl(
 				this.taskRunner,
-				this.inMemoryStorageGateway
+				this.targetRemoteStorageGateway
 		);
 		this.localStorage = new LocalStorageImpl();
 		this.transactionAnalyzer = new TransactionAnalyzerImpl(
@@ -45,7 +46,7 @@ public class Integrator
 				this.taskRunner,
 				this.transactionAnalyzer,
 				this.localStorage,
-				this.remoteStorageGateway
+				this.remoteStorageGatewayWrapper
 		);
 		this.paceMaker = new PaceMakerImpl(
 				name + ":PM",
@@ -76,8 +77,8 @@ public class Integrator
 
 	TaskRunner taskRunner;
 	Thread taskRunnerThread;
-	InMemoryStorageGateway inMemoryStorageGateway;
-	RemoteStorageGatewayImpl remoteStorageGateway;
+	RemoteStorageGateway targetRemoteStorageGateway;
+	RemoteStorageGatewayImpl remoteStorageGatewayWrapper;
 	LocalStorage localStorage;
 	TransactionAnalyzer transactionAnalyzer;
 	TransactionProcessor transactionProcessor;
