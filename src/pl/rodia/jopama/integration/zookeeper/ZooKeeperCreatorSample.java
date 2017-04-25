@@ -35,13 +35,16 @@ public class ZooKeeperCreatorSample
 			);
 		}
 
-		ZooKeeperStorageAccess zooKeeperCreator = new ZooKeeperStorageAccess(
+		ZooKeeperMultiProvider zooKeeperMultiProvider = new ZooKeeperMultiProvider(
 				args[0],
 				Integer.parseInt(
 						args[1]
 				)
 		);
-		zooKeeperCreator.start();
+		zooKeeperMultiProvider.start();
+		ZooKeeperStorageAccess zooKeeperCreator = new ZooKeeperStorageAccess(
+				zooKeeperMultiProvider
+		);
 		Integer numComponents = 5;
 		Integer numTransactions = 5;
 		Component component = new Component(
@@ -137,7 +140,7 @@ public class ZooKeeperCreatorSample
 					"Component created: " + result
 			);
 		}
-		zooKeeperCreator.stop();
+		zooKeeperMultiProvider.finish();
 	}
 
 	static final Logger logger = LogManager.getLogger();

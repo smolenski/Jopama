@@ -24,9 +24,11 @@ public class LocalStorageImpl extends LocalStorage
 			ObjectId transactionId
 	)
 	{
-		return this.transactions.get(
+		ExtendedTransaction result = this.transactions.get(
 				transactionId
 		);
+		assert result == null || result.transaction != null;
+		return result;
 	}
 
 	@Override
@@ -34,9 +36,11 @@ public class LocalStorageImpl extends LocalStorage
 			ObjectId componentId
 	)
 	{
-		return this.components.get(
+		ExtendedComponent result = this.components.get(
 				componentId
 		);
+		assert result == null || result.component != null;
+		return result;
 	}
 
 	public Boolean putComponent(
@@ -44,6 +48,7 @@ public class LocalStorageImpl extends LocalStorage
 	)
 	{
 		assert extendedComponent != null;
+		assert extendedComponent.component != null;
 		ExtendedComponent oldExtendedComponent = this.getComponent(
 				componentId
 		);
@@ -66,6 +71,7 @@ public class LocalStorageImpl extends LocalStorage
 	)
 	{
 		assert extendedTransaction != null;
+		assert extendedTransaction.transaction != null;
 		ExtendedTransaction oldExtendedTransaction = this.getTransaction(
 				transactionId
 		);

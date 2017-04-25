@@ -14,24 +14,11 @@ public class ZooKeeperStorageAccess
 {
 
 	public ZooKeeperStorageAccess(
-			String addresses,
-			Integer clusterSize
+			ZooKeeperMultiProvider zooKeeperMultiProvider
 	)
 	{
-		this.zooKeeperMultiProvider = new ZooKeeperMultiProvider(
-				addresses,
-				clusterSize
-		);
-	}
-
-	public void start()
-	{
-		this.zooKeeperMultiProvider.start();
-	}
-
-	public void stop() throws InterruptedException
-	{
-		this.zooKeeperMultiProvider.finish();
+		super();
+		this.zooKeeperMultiProvider = zooKeeperMultiProvider;
 	}
 
 	private ZooKeeperObjectId tryToCreateObject(
@@ -183,7 +170,9 @@ public class ZooKeeperStorageAccess
 		}
 	}
 
-	public ExtendedData readObject(ZooKeeperObjectId objectId)
+	public ExtendedData readObject(
+			ZooKeeperObjectId objectId
+	)
 	{
 		for (int i = 0; i < ZooKeeperStorageAccess.NUM_TRIES.intValue(); ++i)
 		{

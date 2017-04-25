@@ -2,6 +2,7 @@ package pl.rodia.jopama.integration.zookeeper;
 
 import org.apache.zookeeper.AsyncCallback.DataCallback;
 import org.apache.zookeeper.AsyncCallback.StatCallback;
+import org.apache.zookeeper.AsyncCallback.VoidCallback;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooKeeper.States;
 import org.apache.zookeeper.data.Stat;
@@ -20,24 +21,11 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 {
 
 	public ZooKeeperStorageGateway(
-			String addresses,
-			Integer clusterSize
+			ZooKeeperMultiProvider zooKeeperMultiProvider
 	)
 	{
-		this.zooKeeperMultiProvider = new ZooKeeperMultiProvider(
-				addresses,
-				clusterSize
-		);
-	}
-
-	public void start()
-	{
-		this.zooKeeperMultiProvider.start();
-	}
-
-	public void finish() throws InterruptedException
-	{
-		this.zooKeeperMultiProvider.finish();
+		super();
+		this.zooKeeperMultiProvider = zooKeeperMultiProvider;
 	}
 
 	@Override
@@ -47,7 +35,9 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 	{
 		ZooKeeperObjectId objectId = (ZooKeeperObjectId) transactionId;
 		ZooKeeperProvider zooKeeperProvider = this.zooKeeperMultiProvider.getResponsibleProvider(
-				objectId.getClusterId(this.zooKeeperMultiProvider.getNumClusters())
+				objectId.getClusterId(
+						this.zooKeeperMultiProvider.getNumClusters()
+				)
 		);
 		synchronized (zooKeeperProvider)
 		{
@@ -107,7 +97,9 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 	{
 		ZooKeeperObjectId objectId = (ZooKeeperObjectId) componentId;
 		ZooKeeperProvider zooKeeperProvider = this.zooKeeperMultiProvider.getResponsibleProvider(
-				objectId.getClusterId(this.zooKeeperMultiProvider.getNumClusters())
+				objectId.getClusterId(
+						this.zooKeeperMultiProvider.getNumClusters()
+				)
 		);
 		synchronized (zooKeeperProvider)
 		{
@@ -167,7 +159,9 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 	{
 		ZooKeeperObjectId objectId = (ZooKeeperObjectId) transactionChange.transactionId;
 		ZooKeeperProvider zooKeeperProvider = this.zooKeeperMultiProvider.getResponsibleProvider(
-				objectId.getClusterId(this.zooKeeperMultiProvider.getNumClusters())
+				objectId.getClusterId(
+						this.zooKeeperMultiProvider.getNumClusters()
+				)
 		);
 		synchronized (zooKeeperProvider)
 		{
@@ -179,54 +173,102 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 			{
 				return;
 			}
-			zooKeeperProvider.zooKeeper.setData(
-					ZooKeeperHelpers.getTransactionPath(
-							objectId
-					),
-					ZooKeeperHelpers.serializeTransaction(
-							transactionChange.nextVersion
-					),
-					transactionChange.currentVersion.externalVersion,
-					new StatCallback()
-					{
-
-						@Override
-						public void processResult(
-								int rc, String path, Object ctx, Stat stat
-						)
+			if (
+				transactionChange.nextVersion != null
+			)
+			{
+				zooKeeperProvider.zooKeeper.setData(
+						ZooKeeperHelpers.getTransactionPath(
+								objectId
+						),
+						ZooKeeperHelpers.serializeTransaction(
+								transactionChange.nextVersion
+						),
+						transactionChange.currentVersion.externalVersion,
+						new StatCallback()
 						{
-							if (
-								rc == KeeperException.Code.OK.intValue()
+
+							@Override
+							public void processResult(
+									int rc, String path, Object ctx, Stat stat
 							)
 							{
-								assert stat.getVersion() == (transactionChange.currentVersion.externalVersion + 1);
-								feedback.success(
-										new ExtendedTransaction(
-												transactionChange.nextVersion,
-												stat.getVersion()
-										)
-								);
+								if (
+									rc == KeeperException.Code.OK.intValue()
+								)
+								{
+									assert stat.getVersion() == (transactionChange.currentVersion.externalVersion + 1);
+									feedback.success(
+											new ExtendedTransaction(
+													transactionChange.nextVersion,
+													stat.getVersion()
+											)
+									);
+								}
+								else if (
+									rc == KeeperException.Code.NONODE.intValue()
+								)
+								{
+									feedback.failure(
+											ErrorCode.NOT_EXISTS
+									);
+								}
+								else if (
+									rc == KeeperException.Code.BADVERSION.intValue()
+								)
+								{
+									feedback.failure(
+											ErrorCode.BASE_VERSION_NOT_EQUAL
+									);
+								}
 							}
-							else if (
-								rc == KeeperException.Code.NONODE.intValue()
+						},
+						null
+				);
+			}
+			else
+			{
+				zooKeeperProvider.zooKeeper.delete(
+						ZooKeeperHelpers.getTransactionPath(
+								objectId
+						),
+						transactionChange.currentVersion.externalVersion,
+						new VoidCallback()
+						{
+
+							@Override
+							public void processResult(
+									int rc, String path, Object ctx
 							)
 							{
-								feedback.failure(
-										ErrorCode.NOT_EXISTS
-								);
+								if (
+									rc == KeeperException.Code.OK.intValue()
+								)
+								{
+									feedback.success(
+											null
+									);
+								}
+								else if (
+									rc == KeeperException.Code.NONODE.intValue()
+								)
+								{
+									feedback.failure(
+											ErrorCode.NOT_EXISTS
+									);
+								}
+								else
+								{
+									throw new IllegalStateException(
+											"Unexpected returned value, rc: " + rc
+									);
+								}
+
 							}
-							else if (
-								rc == KeeperException.Code.BADVERSION.intValue()
-							)
-							{
-								feedback.failure(
-										ErrorCode.BASE_VERSION_NOT_EQUAL
-								);
-							}
-						}
-					},
-					null
-			);
+						},
+						null
+				);
+			}
 		}
 	}
 
@@ -237,7 +279,9 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 	{
 		ZooKeeperObjectId objectId = (ZooKeeperObjectId) componentChange.componentId;
 		ZooKeeperProvider zooKeeperProvider = this.zooKeeperMultiProvider.getResponsibleProvider(
-				objectId.getClusterId(this.zooKeeperMultiProvider.getNumClusters())
+				objectId.getClusterId(
+						this.zooKeeperMultiProvider.getNumClusters()
+				)
 		);
 		synchronized (zooKeeperProvider)
 		{
@@ -249,54 +293,103 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 			{
 				return;
 			}
-			zooKeeperProvider.zooKeeper.setData(
-					ZooKeeperHelpers.getComponentPath(
-							objectId
-					),
-					ZooKeeperHelpers.serializeComponent(
-							componentChange.nextVersion
-					),
-					componentChange.currentVersion.externalVersion,
-					new StatCallback()
-					{
-
-						@Override
-						public void processResult(
-								int rc, String path, Object ctx, Stat stat
-						)
+			if (
+				componentChange.nextVersion != null
+			)
+			{
+				zooKeeperProvider.zooKeeper.setData(
+						ZooKeeperHelpers.getComponentPath(
+								objectId
+						),
+						ZooKeeperHelpers.serializeComponent(
+								componentChange.nextVersion
+						),
+						componentChange.currentVersion.externalVersion,
+						new StatCallback()
 						{
-							if (
-								rc == KeeperException.Code.OK.intValue()
+
+							@Override
+							public void processResult(
+									int rc, String path, Object ctx, Stat stat
 							)
 							{
-								assert stat.getVersion() == (componentChange.currentVersion.externalVersion.intValue() + 1);
-								feedback.success(
-										new ExtendedComponent(
-												componentChange.nextVersion,
-												stat.getVersion()
-										)
-								);
+								if (
+									rc == KeeperException.Code.OK.intValue()
+								)
+								{
+									assert stat.getVersion() == (componentChange.currentVersion.externalVersion.intValue() + 1);
+									feedback.success(
+											new ExtendedComponent(
+													componentChange.nextVersion,
+													stat.getVersion()
+											)
+									);
+								}
+								else if (
+									rc == KeeperException.Code.NONODE.intValue()
+								)
+								{
+									feedback.failure(
+											ErrorCode.NOT_EXISTS
+									);
+								}
+								else if (
+									rc == KeeperException.Code.BADVERSION.intValue()
+								)
+								{
+									feedback.failure(
+											ErrorCode.BASE_VERSION_NOT_EQUAL
+									);
+								}
 							}
-							else if (
-								rc == KeeperException.Code.NONODE.intValue()
+						},
+						null
+				);
+			}
+			else
+			{
+				zooKeeperProvider.zooKeeper.delete(
+						ZooKeeperHelpers.getComponentPath(
+								objectId
+						),
+						componentChange.currentVersion.externalVersion,
+						new VoidCallback()
+						{
+
+							@Override
+							public void processResult(
+									int rc, String path, Object ctx
 							)
 							{
-								feedback.failure(
-										ErrorCode.NOT_EXISTS
-								);
+								if (
+									rc == KeeperException.Code.OK.intValue()
+								)
+								{
+									feedback.success(
+											null
+									);
+								}
+								else if (
+									rc == KeeperException.Code.NONODE.intValue()
+								)
+								{
+									feedback.failure(
+											ErrorCode.NOT_EXISTS
+									);
+								}
+								else
+								{
+									throw new IllegalStateException(
+											"Unexpected returned value, rc: " + rc
+									);
+								}
+
 							}
-							else if (
-								rc == KeeperException.Code.BADVERSION.intValue()
-							)
-							{
-								feedback.failure(
-										ErrorCode.BASE_VERSION_NOT_EQUAL
-								);
-							}
-						}
-					},
-					null
-			);
+						},
+						null
+				);
+
+			}
 		}
 	}
 

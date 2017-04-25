@@ -18,16 +18,6 @@ public class InMemoryUniversalStorageAccess extends UniversalStorageAccess
 	}
 
 	@Override
-	public void start()
-	{
-	}
-
-	@Override
-	public void stop() throws InterruptedException
-	{
-	}
-
-	@Override
 	public ObjectId createComponent(
 			Long id, ExtendedComponent extendedComponent
 	)

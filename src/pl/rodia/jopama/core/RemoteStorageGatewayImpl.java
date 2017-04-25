@@ -52,7 +52,6 @@ public class RemoteStorageGatewayImpl extends RemoteStorageGateway implements St
 						taskRunner.schedule(
 								new Task()
 								{
-
 									@Override
 									public void execute()
 									{

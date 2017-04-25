@@ -15,18 +15,20 @@ import pl.rodia.jopama.data.ExtendedComponent;
 import pl.rodia.jopama.data.ExtendedTransaction;
 import pl.rodia.jopama.data.Increment;
 import pl.rodia.jopama.data.ObjectId;
-import pl.rodia.jopama.data.SimpleObjectId;
 import pl.rodia.jopama.data.Transaction;
 import pl.rodia.jopama.data.TransactionComponent;
 import pl.rodia.jopama.data.TransactionPhase;
 import pl.rodia.jopama.gateway.RemoteStorageGateway;
 import pl.rodia.jopama.integration.UniversalStorageAccess;
+import pl.rodia.jopama.integration.zookeeper.ZooKeeperMultiProvider;
+import pl.rodia.jopama.integration.zookeeper.ZooKeeperStorageAccess;
+import pl.rodia.jopama.integration.zookeeper.ZooKeeperStorageGateway;
+import pl.rodia.jopama.integration.zookeeper.ZooKeeperUniversalStorageAccess;
 import pl.rodia.jopama.stats.StatsAsyncSource;
 import pl.rodia.jopama.stats.StatsCollector;
 
 public class BasicIntegrationTest
 {
-	@Test
 	public void singleTransactionConcurrentlyProcessedByManyIntegratorsInMemoryTest(
 	) throws InterruptedException, ExecutionException
 	{
@@ -38,6 +40,24 @@ public class BasicIntegrationTest
 		);
 	}
 	
+	@Test
+	public void singleTransactionConcurrentlyProcessedByManyIntegratorsZooKeeperTest(
+	) throws InterruptedException, ExecutionException
+	{
+		String addresses = "127.0.0.1:2181";
+		Integer clusterSize = new Integer(1);
+		ZooKeeperMultiProvider zooKeeperMultiProvider = new ZooKeeperMultiProvider(addresses, clusterSize);
+		zooKeeperMultiProvider.start();
+		ZooKeeperStorageAccess zooKeeperStorageAccess = new ZooKeeperStorageAccess(zooKeeperMultiProvider);
+		ZooKeeperUniversalStorageAccess zooKeeperUniversalStorageAccess = new ZooKeeperUniversalStorageAccess(zooKeeperStorageAccess);
+		ZooKeeperStorageGateway zooKeeperStorageGateway = new ZooKeeperStorageGateway(zooKeeperMultiProvider);
+		this.singleTransactionConcurrentlyProcessedByManyIntegratorsTest(
+				zooKeeperUniversalStorageAccess,
+				zooKeeperStorageGateway
+		);
+		zooKeeperMultiProvider.finish();
+	}
+
 	public void singleTransactionConcurrentlyProcessedByManyIntegratorsTest(
 			UniversalStorageAccess storageAccess,
 			RemoteStorageGateway inMemoryStorageGateway

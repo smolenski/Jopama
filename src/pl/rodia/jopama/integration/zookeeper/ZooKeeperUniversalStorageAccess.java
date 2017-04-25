@@ -18,18 +18,6 @@ public class ZooKeeperUniversalStorageAccess extends UniversalStorageAccess
 	}
 
 	@Override
-	public void start()
-	{
-		this.zooKeeperStorageAccess.start();
-	}
-
-	@Override
-	public void stop() throws InterruptedException
-	{
-		this.zooKeeperStorageAccess.stop();
-	}
-
-	@Override
 	public ObjectId createComponent(
 			Long id, ExtendedComponent extendedComponent
 	)

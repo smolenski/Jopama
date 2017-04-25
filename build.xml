@@ -76,6 +76,7 @@
 					<include name="**/BasicIntegrationTest.java"/>
 				</fileset>
 			</batchtest>
+            <jvmarg value="-ea"/>
 		</junit>
 	</target>
 
