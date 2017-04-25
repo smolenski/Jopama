@@ -79,8 +79,8 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 								rc == KeeperException.Code.NONODE.intValue()
 							)
 							{
-								feedback.success(
-										null
+								feedback.failure(
+										ErrorCode.NOT_EXISTS
 								);
 							}
 						}

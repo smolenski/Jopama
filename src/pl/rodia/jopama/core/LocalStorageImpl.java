@@ -70,8 +70,6 @@ public class LocalStorageImpl extends LocalStorage
 			ObjectId transactionId, ExtendedTransaction extendedTransaction
 	)
 	{
-		assert extendedTransaction != null;
-		assert extendedTransaction.transaction != null;
 		ExtendedTransaction oldExtendedTransaction = this.getTransaction(
 				transactionId
 		);

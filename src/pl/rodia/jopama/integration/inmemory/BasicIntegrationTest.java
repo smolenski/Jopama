@@ -29,6 +29,7 @@ import pl.rodia.jopama.stats.StatsCollector;
 
 public class BasicIntegrationTest
 {
+	@Test
 	public void singleTransactionConcurrentlyProcessedByManyIntegratorsInMemoryTest(
 	) throws InterruptedException, ExecutionException
 	{
@@ -40,7 +41,6 @@ public class BasicIntegrationTest
 		);
 	}
 	
-	@Test
 	public void singleTransactionConcurrentlyProcessedByManyIntegratorsZooKeeperTest(
 	) throws InterruptedException, ExecutionException
 	{
