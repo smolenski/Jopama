@@ -50,7 +50,10 @@ public class TransactionAnalyzerImpl implements TransactionAnalyzer
 					)
 			);
 		}
-		for (SortedMap.Entry<ObjectId, TransactionComponent> transactionComponentEntry : extendedTransaction.transaction.transactionComponents.entrySet())
+		for (
+			SortedMap.Entry<ObjectId, TransactionComponent> transactionComponentEntry : extendedTransaction.transaction.transactionComponents
+					.entrySet()
+		)
 		{
 			ExtendedComponent extendedComponent = this.proxyStorage.getComponent(
 					transactionComponentEntry.getKey()
@@ -110,6 +113,30 @@ public class TransactionAnalyzerImpl implements TransactionAnalyzer
 					);
 				}
 			case UPDATING:
+				for (
+					SortedMap.Entry<ObjectId, TransactionComponent> transactionComponentEntry : extendedTransaction.transaction.transactionComponents
+							.entrySet()
+				)
+				{
+					ComponentPhase componentPhase = transactionComponentEntry.getValue().componentPhase;
+					assert componentPhase == ComponentPhase.NOT_UPDATED || componentPhase == ComponentPhase.UPDATED;
+					ExtendedComponent extendedComponent = this.proxyStorage.getComponent(
+							transactionComponentEntry.getKey()
+					);
+					if (
+						!transactionId.equals(
+								extendedComponent.component.owner
+						)
+					)
+					{
+						return new UnifiedAction(
+								new UnifiedDownloadRequest(
+										transactionId,
+										transactionComponentEntry.getKey()
+								)
+						);
+					}
+				}
 				componentId = this.getFirstComponentInPhase(
 						extendedTransaction.transaction,
 						ComponentPhase.NOT_UPDATED
@@ -361,6 +388,9 @@ public class TransactionAnalyzerImpl implements TransactionAnalyzer
 			assert componentPhase == ComponentPhase.NOT_UPDATED || componentPhase == ComponentPhase.UPDATED;
 			ExtendedComponent extendedComponent = this.proxyStorage.getComponent(
 					transactionComponentEntry.getKey()
+			);
+			assert transactionId.equals(
+					extendedComponent.component.owner
 			);
 			assert extendedComponent != null;
 			functionArguments.put(

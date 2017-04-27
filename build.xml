@@ -11,8 +11,6 @@
     <property name="tests.integration.nonConfPerf.dir"     value="tests/integration/nonConfPerf"/>
     <property name="tests.integration.confPerf.dir"     value="tests/integration/confPerf"/>
 
-    <property name="main-class"  value="pl.rodia.jopama.integration.inmemory.RandomExchangesTest"/>
-
     <path id="libraries">
         <fileset dir="${basedir}/../../lib/" includes="**/*.jar"/>
         <fileset dir="${basedir}/../../" includes="*.jar"/>
@@ -63,7 +61,7 @@
 		</junit>
 	</target>
 
-	<target name="basicIntegrationTest" depends="jar">
+	<target name="inMemoryBasicIntegrationTest" depends="jar">
 		<junit printsummary="yes" dir="${tests.integration.basic.dir}" showoutput="true" timeout="100000">
 			<classpath>
 				<path refid="libraries"/>
@@ -73,14 +71,31 @@
 			<formatter type="xml" usefile="yes"/>
 			<batchtest fork="yes" todir="${tests.integration.basic.dir}">
 				<fileset dir="${src.dir}">
-					<include name="**/BasicIntegrationTest.java"/>
+					<include name="**/inmemory/BasicIntegrationTest.java"/>
+				</fileset>
+			</batchtest>
+            <jvmarg value="-ea"/>
+		</junit>
+	</target>
+	
+	<target name="zooKeeperBasicIntegrationTest" depends="jar">
+		<junit printsummary="yes" dir="${tests.integration.basic.dir}" showoutput="true" timeout="1000000">
+			<classpath>
+				<path refid="libraries"/>
+				<path refid="application"/>
+                <pathelement path="${basedir}"/>
+			</classpath>
+			<formatter type="xml" usefile="yes"/>
+			<batchtest fork="yes" todir="${tests.integration.basic.dir}">
+				<fileset dir="${src.dir}">
+					<include name="**/zookeeper/BasicIntegrationTest.java"/>
 				</fileset>
 			</batchtest>
             <jvmarg value="-ea"/>
 		</junit>
 	</target>
 
-	<target name="confPerfTest" depends="jar">
+	<target name="inMemoryConfPerfTest" depends="jar">
 		<junit printsummary="yes" dir="${tests.integration.confPerf.dir}" showoutput="true" timeout="100000">
 			<classpath>
 				<path refid="libraries"/>
@@ -90,14 +105,32 @@
 			<formatter type="xml" usefile="yes"/>
 			<batchtest fork="yes" todir="${tests.integration.confPerf.dir}">
 				<fileset dir="${src.dir}">
-					<include name="**/ConfPerfTest.java"/>
+					<include name="**/inmemory/ConfPerfTest.java"/>
 				</fileset>
 			</batchtest>
+            <jvmarg value="-ea"/>
+		</junit>
+	</target>
+
+	<target name="zooKeeperConfPerfTest" depends="jar">
+		<junit printsummary="yes" dir="${tests.integration.confPerf.dir}" showoutput="true" timeout="1000000">
+			<classpath>
+				<path refid="libraries"/>
+				<path refid="application"/>
+                <pathelement path="${basedir}"/>
+			</classpath>
+			<formatter type="xml" usefile="yes"/>
+			<batchtest fork="yes" todir="${tests.integration.confPerf.dir}">
+				<fileset dir="${src.dir}">
+					<include name="**/zookeeper/ConfPerfTest.java"/>
+				</fileset>
+			</batchtest>
+            <jvmarg value="-ea"/>
 		</junit>
 	</target>
 
 	
-	<target name="nonConfPerfTest" depends="jar">
+	<target name="inMemoryNonConfPerfTest" depends="jar">
 		<junit printsummary="yes" dir="${tests.integration.nonConfPerf.dir}" showoutput="true" timeout="100000">
 			<classpath>
 				<path refid="libraries"/>
@@ -107,13 +140,32 @@
 			<formatter type="xml" usefile="yes"/>
 			<batchtest fork="yes" todir="${tests.integration.nonConfPerf.dir}">
 				<fileset dir="${src.dir}">
-					<include name="**/NonConfPerfTest.java"/>
+					<include name="**/inmemory/NonConfPerfTest.java"/>
 				</fileset>
 			</batchtest>
+            <jvmarg value="-ea"/>
 		</junit>
 	</target>
 
-	<target name="integrationTests" depends="basicIntegrationTest,confPerfTest,nonConfPerfTest">
+	<target name="zooKeeperNonConfPerfTest" depends="jar">
+		<junit printsummary="yes" dir="${tests.integration.nonConfPerf.dir}" showoutput="true" timeout="1000000">
+			<classpath>
+				<path refid="libraries"/>
+				<path refid="application"/>
+                <pathelement path="${basedir}"/>
+			</classpath>
+			<formatter type="xml" usefile="yes"/>
+			<batchtest fork="yes" todir="${tests.integration.nonConfPerf.dir}">
+				<fileset dir="${src.dir}">
+					<include name="**/zookeeper/NonConfPerfTest.java"/>
+				</fileset>
+			</batchtest>
+            <jvmarg value="-ea"/>
+		</junit>
+	</target>
+
+	
+	<target name="integrationTests" depends="inMemoryBasicIntegrationTest,inMemoryConfPerfTest,inMemoryNonConfPerfTest">
 	</target>
 		
     <target name="run" depends="jar">

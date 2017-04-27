@@ -1,4 +1,4 @@
-package pl.rodia.jopama.integration.inmemory;
+package pl.rodia.jopama.integration;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -19,16 +19,18 @@ import pl.rodia.jopama.data.ExtendedComponent;
 import pl.rodia.jopama.data.ExtendedTransaction;
 import pl.rodia.jopama.data.Function;
 import pl.rodia.jopama.data.ObjectId;
-import pl.rodia.jopama.data.SimpleObjectId;
 import pl.rodia.jopama.data.Transaction;
 import pl.rodia.jopama.data.TransactionComponent;
 import pl.rodia.jopama.data.TransactionPhase;
+import pl.rodia.jopama.gateway.RemoteStorageGateway;
 import pl.rodia.jopama.stats.StatsAsyncSource;
 import pl.rodia.jopama.stats.StatsCollector;
 
 public class RandomExchangesIntegrationTest
 {
 	void performTest(
+			UniversalStorageAccess storageAccess,
+			RemoteStorageGateway storageGateway,
 			Integer NUM_INTEGRATORS,
 			Integer NUM_COMPONENTS,
 			Integer NUM_COMPONENTS_IN_TRANSACTION,
@@ -44,13 +46,16 @@ public class RandomExchangesIntegrationTest
 		Integer TRANSACTION_ID_BASE = new Integer(
 				2000000
 		);
-		InMemoryStorageGateway inMemoryStorageGateway = new InMemoryStorageGateway();
+		Map<Long, ObjectId> componentIds = new TreeMap<Long, ObjectId>();
 		for (int i = 0; i < NUM_COMPONENTS; ++i)
 		{
-			inMemoryStorageGateway.components.put(
-					new SimpleObjectId(
+			Long longId = new Long(
+					new Long(
 							COMPONENT_ID_BASE + i
-					),
+					)
+			);
+			ObjectId componentLongId = storageAccess.createComponent(
+					longId,
 					new ExtendedComponent(
 							new Component(
 									0,
@@ -63,6 +68,10 @@ public class RandomExchangesIntegrationTest
 							)
 					)
 			);
+			componentIds.put(
+					longId,
+					componentLongId
+			);
 		}
 		Long seed = new Long(
 				System.currentTimeMillis()
@@ -73,19 +82,23 @@ public class RandomExchangesIntegrationTest
 		Random random = new Random(
 				seed
 		);
+		List<ObjectId> transactionIds = new LinkedList<ObjectId>();
 		for (int it = 0; it < NUM_TRANSACTIONS; ++it)
 		{
-			SimpleObjectId transactionId = new SimpleObjectId(
+			Long transactionLongId = new Long(
 					TRANSACTION_ID_BASE + it
 			);
 			TreeMap<ObjectId, TransactionComponent> transactionComponents = new TreeMap<ObjectId, TransactionComponent>();
 			for (int ic = 0; ic < NUM_COMPONENTS_IN_TRANSACTION; ++ic)
 			{
+				Long componentLongId = new Long(
+						COMPONENT_ID_BASE + random.nextInt(
+								NUM_COMPONENTS
+						)
+				);
 				transactionComponents.put(
-						new SimpleObjectId(
-								COMPONENT_ID_BASE + random.nextInt(
-										NUM_COMPONENTS
-								)
+						componentIds.get(
+								componentLongId
 						),
 						new TransactionComponent(
 								null,
@@ -93,100 +106,9 @@ public class RandomExchangesIntegrationTest
 						)
 				);
 			}
-			Function randomExchangeFunction = new Function()
-			{
-				@Override
-				public Map<ObjectId, Integer> execute(
-						Map<ObjectId, Integer> oldValues
-				)
-				{
-					Random random = new Random(
-							seed + transactionId.id
-					);
-					Map<ObjectId, Integer> result = new TreeMap<ObjectId, Integer>();
-					for (Map.Entry<ObjectId, Integer> entry : oldValues.entrySet())
-					{
-						result.put(
-								entry.getKey(),
-								new Integer(
-										entry.getValue()
-								)
-						);
-					}
-					if (
-						result.size() <= 1
-					)
-					{
-						return result;
-					}
-					for (int i = 0; i < result.size(); ++i)
-					{
-						int indexToExchangeWith = random.nextInt(
-								oldValues.size() - 1
-						);
-						if (
-							indexToExchangeWith >= i
-						)
-						{
-							++indexToExchangeWith;
-						}
-						assert indexToExchangeWith != i;
-						ObjectId keyExchange1 = null;
-						ObjectId keyExchange2 = null;
-						int vi = 0;
-						for (Map.Entry<ObjectId, Integer> entry : result.entrySet())
-						{
-							if (
-								vi == i
-							)
-							{
-								keyExchange1 = entry.getKey();
-							}
-							if (
-								vi == indexToExchangeWith
-							)
-							{
-								keyExchange2 = entry.getKey();
-							}
-							if (
-								keyExchange1 != null && keyExchange2 != null
-							)
-							{
-								break;
-							}
-							++vi;
-
-						}
-						assert keyExchange1 != null;
-						assert keyExchange2 != null;
-						Integer valueExchange1 = new Integer(
-								result.get(
-										keyExchange1
-								)
-						);
-						Integer valueExchange2 = new Integer(
-								result.get(
-										keyExchange2
-								)
-						);
-						logger.debug(
-								"Exchanging: " + valueExchange1 + " <=> " + valueExchange2
-						);
-						result.put(
-								keyExchange1,
-								valueExchange2
-						);
-						result.put(
-								keyExchange2,
-								valueExchange1
-						);
-					}
-					return result;
-				}
-				private static final long serialVersionUID = -6910284440716455093L;
-			};
-			inMemoryStorageGateway.transactions.put(
-					transactionId,
+			Function randomExchangeFunction = new RandomExchangeFunction(transactionLongId, seed + transactionLongId);
+			ObjectId transactionId = storageAccess.createTransaction(
+					transactionLongId,
 					new ExtendedTransaction(
 							new Transaction(
 									TransactionPhase.INITIAL,
@@ -198,6 +120,7 @@ public class RandomExchangesIntegrationTest
 							)
 					)
 			);
+			transactionIds.add(transactionId);
 		}
 
 		List<StatsAsyncSource> statsSources = new LinkedList<StatsAsyncSource>();
@@ -214,9 +137,7 @@ public class RandomExchangesIntegrationTest
 		}
 		for (int it = 0; it < NUM_TRANSACTIONS; ++it)
 		{
-			ObjectId transactionId = new SimpleObjectId(
-					TRANSACTION_ID_BASE + it
-			);
+			ObjectId transactionId = transactionIds.get(it);
 			Set<Integer> integratorIds = new HashSet<Integer>();
 			while (
 				integratorIds.size() < TRANSACTION_REPEAT_COUNT
@@ -247,7 +168,7 @@ public class RandomExchangesIntegrationTest
 			);
 			Integrator integrator = new Integrator(
 					"Integrator_" + ii,
-					inMemoryStorageGateway,
+					storageGateway,
 					transactions,
 					NUM_IN_FLIGHT_IN_INITIATOR
 			);
@@ -329,15 +250,18 @@ public class RandomExchangesIntegrationTest
 					)
 			);
 		}
-		logger.debug(
+		logger.info(
 				"FINAL STATE BEGIN"
 		);
 		for (int i = 0; i < NUM_COMPONENTS; ++i)
 		{
-			int value = inMemoryStorageGateway.components.get(
-					new SimpleObjectId(
+			ObjectId componentId = componentIds.get(
+					new Long(
 							COMPONENT_ID_BASE + i
 					)
+			);
+			int value = storageAccess.getComponent(
+					componentId
 			).component.value;
 			assert valueExists.get(
 					value
@@ -348,11 +272,11 @@ public class RandomExchangesIntegrationTest
 							true
 					)
 			);
-			logger.debug(
-					"Component: " + (COMPONENT_ID_BASE + i) + " => " + value
+			logger.info(
+					"ComponentId: " + componentId + " => " + value
 			);
 		}
-		logger.debug(
+		logger.info(
 				"FINAL STATE END"
 		);
 		assert valueExists.size() == NUM_COMPONENTS;

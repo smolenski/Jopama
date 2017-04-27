@@ -10,7 +10,7 @@ public class ExtendedData
 		this.data = data;
 		this.version = version;
 	}
-	
-	public byte [] data;
+
+	public byte[] data;
 	public Integer version;
 }

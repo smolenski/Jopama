@@ -4,20 +4,21 @@ import java.util.concurrent.ExecutionException;
 
 import org.junit.Test;
 
+import pl.rodia.jopama.integration.UniversalStorageAccess;
+
 public class ConfPerfTest
 {
 	@Test
 	public void conflictingTransactionsPerformance() throws InterruptedException, ExecutionException
 	{
-		RandomExchangesIntegrationTest exchangesTester = new RandomExchangesIntegrationTest();
-		exchangesTester.performTest(
-				10,
-				100,
-				10,
-				1000,
-				2,
-				5,
-				30
+		InMemoryStorageGateway inMemoryStorageGateway = new InMemoryStorageGateway();
+		UniversalStorageAccess storageAccess = new InMemoryUniversalStorageAccess(
+				inMemoryStorageGateway
+		);
+		pl.rodia.jopama.integration.ConfPerfTest test = new pl.rodia.jopama.integration.ConfPerfTest();
+		test.conflictingTransactionsPerformance(
+				storageAccess,
+				inMemoryStorageGateway
 		);
 	}
 }

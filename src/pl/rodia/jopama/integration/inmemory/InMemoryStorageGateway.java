@@ -95,7 +95,9 @@ public class InMemoryStorageGateway extends RemoteStorageGateway
 				)
 			)
 			{
-				assert transactionChange.currentVersion.externalVersion.equals(extendedTransaction.externalVersion);
+				assert transactionChange.currentVersion.externalVersion.equals(
+						extendedTransaction.externalVersion
+				);
 				if (
 					transactionChange.nextVersion != null
 				)
@@ -165,7 +167,9 @@ public class InMemoryStorageGateway extends RemoteStorageGateway
 				)
 			)
 			{
-				assert componentChange.currentVersion.externalVersion.equals(extendedComponent.externalVersion);
+				assert componentChange.currentVersion.externalVersion.equals(
+						extendedComponent.externalVersion
+				);
 				if (
 					componentChange.nextVersion != null
 				)

@@ -81,6 +81,7 @@ public class StatsCollector
 	public void tick()
 	{
 		this.scheduledPeriodicTaskId = null;
+		/*
 		for (StatsAsyncSource statsSource : this.sources)
 		{
 			statsSource.scheduleGetStats(
@@ -100,6 +101,7 @@ public class StatsCollector
 					}
 			);
 		}
+		*/
 		if (this.stopRequested.equals(new Boolean(false)))
 		{
 			this.scheduleTick();
