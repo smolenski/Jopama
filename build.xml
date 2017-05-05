@@ -10,6 +10,7 @@
     <property name="tests.integration.basic.dir"     value="tests/integration/basic"/>
     <property name="tests.integration.nonConfPerf.dir"     value="tests/integration/nonConfPerf"/>
     <property name="tests.integration.confPerf.dir"     value="tests/integration/confPerf"/>
+	<property name="main.class"  value="pl.rodia.jopama.integration.zookeeper.ZooKeeperPerfRunner"/>
 
     <path id="libraries">
         <fileset dir="${basedir}/../../lib/" includes="**/*.jar"/>
@@ -40,7 +41,7 @@
         <mkdir dir="${jar.dir}"/>
         <jar destfile="${jar.dir}/${ant.project.name}.jar" basedir="${classes.dir}">
             <manifest>
-                <attribute name="Main-Class" value="${main-class}"/>
+                <attribute name="Main-Class" value="${main.class}"/>
             </manifest>
         </jar>
     </target>
@@ -169,13 +170,14 @@
 	</target>
 		
     <target name="run" depends="jar">
-        <java fork="true" classname="${main-class}">
-		<classpath>
+        <java fork="true" classname="${main.class}">
+		<arg line="127.0.0.1:2181 /StartFinish"/>
+        <classpath>
 			<path refid="libraries"/>
 			<path refid="application"/>
             <pathelement path="${basedir}"/>
 		</classpath>
-	</java>
+		</java>
     </target>
 
     <target name="clean-build" depends="clean,jar"/>
