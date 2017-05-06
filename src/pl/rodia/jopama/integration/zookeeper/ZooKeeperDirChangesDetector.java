@@ -2,9 +2,9 @@ package pl.rodia.jopama.integration.zookeeper;
 
 import java.util.List;
 
-import org.apache.zookeeper.AsyncCallback.Children2Callback;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.zookeeper.AsyncCallback.Children2Callback;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper.States;
@@ -13,28 +13,26 @@ import org.apache.zookeeper.data.Stat;
 import pl.rodia.mpf.Task;
 import pl.rodia.mpf.TaskRunner;
 
-public class ZooKeeperPerfRunner
+public class ZooKeeperDirChangesDetector
 {
 
-	public ZooKeeperPerfRunner(
-			String connectionString, String startFinishDir
+	public ZooKeeperDirChangesDetector(
+			String connectionString, String dir, DirChangesObserver dirChangesObserver
 	)
 	{
 		super();
+		this.finish = new Boolean(
+				false
+		);
 		this.scheduledTaskId = null;
-		this.startAppearanceReported = new Boolean(
-				false
-		);
-		this.finishAppearanceReported = new Boolean(
-				false
-		);
-		this.startFinishDir = startFinishDir;
+		this.dir = dir;
+		this.dirChangesObserver = dirChangesObserver;
 		this.zooKeeperProvider = new ZooKeeperProvider(
-				"ZooKeeperPerfRunner.zooKeeperConnectionProvider",
+				"ZooKeeperDirChangesDetector.ZooKeeperProvider",
 				connectionString
 		);
 		this.taskRunner = new TaskRunner(
-				"ZooKeeperPerfRunner"
+				"ZooKeeperDirChangesDetector"
 		);
 		this.taskRunnerThread = new Thread(
 				this.taskRunner
@@ -59,6 +57,12 @@ public class ZooKeeperPerfRunner
 
 	public void finish() throws InterruptedException
 	{
+		synchronized (this)
+		{
+			this.finish = new Boolean(
+					true
+			);
+		}
 		this.taskRunner.finish();
 		this.taskRunnerThread.join();
 		this.zooKeeperProvider.finish();
@@ -83,19 +87,33 @@ public class ZooKeeperPerfRunner
 
 	public void scheduleGetListingAsap()
 	{
-		Boolean noTaskScheduled = new Boolean(false);
-		if (this.scheduledTaskId == null)
+		Boolean noTaskScheduled = new Boolean(
+				false
+		);
+		if (
+			this.scheduledTaskId == null
+		)
 		{
-			noTaskScheduled = new Boolean(true);
+			noTaskScheduled = new Boolean(
+					true
+			);
 		}
 		else
 		{
-			if (this.taskRunner.cancelTask(this.scheduledTaskId))
+			if (
+				this.taskRunner.cancelTask(
+						this.scheduledTaskId
+				).equals(new Boolean(true))
+			)
 			{
-				noTaskScheduled = new Boolean(true);
+				noTaskScheduled = new Boolean(
+						true
+				);
 			}
 		}
-		if (noTaskScheduled)
+		if (
+			noTaskScheduled
+		)
 		{
 			this.scheduledTaskId = this.taskRunner.schedule(
 					new Task()
@@ -112,10 +130,20 @@ public class ZooKeeperPerfRunner
 
 	public void getListing()
 	{
+		logger.info("getListing start, dir: " + dir);
 		this.scheduledTaskId = null;
-		if (finishAppearanceReported.equals(new Boolean(true)))
+		synchronized (this)
 		{
-			return;
+			if (
+				this.finish.equals(
+						new Boolean(
+								true
+						)
+				)
+			)
+			{
+				return;
+			}
 		}
 		this.scheduleGetListing();
 		synchronized (this.zooKeeperProvider)
@@ -131,7 +159,7 @@ public class ZooKeeperPerfRunner
 			else
 			{
 				this.zooKeeperProvider.zooKeeper.getChildren(
-						this.startFinishDir,
+						this.dir,
 						new Watcher()
 						{
 							@Override
@@ -158,6 +186,7 @@ public class ZooKeeperPerfRunner
 									int rc, String path, Object ctx, List<String> children, Stat stat
 							)
 							{
+								logger.info("getListing done, dir: " + dir);
 								taskRunner.schedule(
 										new Task()
 										{
@@ -182,95 +211,19 @@ public class ZooKeeperPerfRunner
 			List<String> children
 	)
 	{
-		StringBuilder childrenNames = new StringBuilder();
-		childrenNames.append("[");
-		for (String child : children)
-		{
-			childrenNames.append(child + ",");
-		}
-		childrenNames.append("]");
-		logger.info("Children: " + childrenNames.toString());
-		if (
-			startAppearanceReported.equals(
-					new Boolean(
-							false
-					)
-			)
-		)
-		{
-			if (
-				children.contains(
-						START_NAME
-				)
-			)
-			{
-				reportStart();
-				this.startAppearanceReported = new Boolean(true);
-			}
-		}
-		if (
-			finishAppearanceReported.equals(
-					new Boolean(
-							false
-					)
-			)
-		)
-		{
-			if (
-				children.contains(
-						FINISH_NAME
-				)
-			)
-			{
-				reportFinish();
-				this.finishAppearanceReported = new Boolean(true);
-				if (this.scheduledTaskId != null)
-				{
-					this.taskRunner.cancelTask(this.scheduledTaskId);
-				}
-			}
-		}
+		dirChangesObserver.directoryContentChanged(
+				children
+		);
 	}
 
-	public void reportStart()
-	{
-		logger.info("START OBSERVED");
-	}
-
-	public void reportFinish()
-	{
-		logger.info("FINISH OBSERVED");
-	}
-
+	Boolean finish;
 	Integer scheduledTaskId;
-	Boolean startAppearanceReported;
-	Boolean finishAppearanceReported;
-	String startFinishDir;
+	String dir;
+	DirChangesObserver dirChangesObserver;
 	ZooKeeperProvider zooKeeperProvider;
 	TaskRunner taskRunner;
 	Thread taskRunnerThread;
+
 	static final Logger logger = LogManager.getLogger();
-	static final String START_NAME = "START";
-	static final String FINISH_NAME = "FINISH";
-	
-	
-	public static void main(
-			String[] args
-	)
-	{
-		assert (args.length == 2);
-		String connectionString = args[0];
-		String startFinishDir = args[1];
-		ZooKeeperPerfRunner perfRunner = new ZooKeeperPerfRunner(connectionString, startFinishDir);
-		perfRunner.start();
-		try
-		{
-			perfRunner.finish();
-		}
-		catch (InterruptedException e)
-		{
-			e.printStackTrace();
-		}
-	}
 
 }

@@ -1,62 +1,62 @@
 <project name="Jopama" default="main">
 
-    <property name="src.dir"     value="src"/>
+	<property name="src.dir" value="src" />
 
-    <property name="build.dir"   value="build"/>
-    <property name="classes.dir" value="${build.dir}/classes"/>
-    <property name="jar.dir"     value="${build.dir}/jar"/>
-    <property name="tests.dir"     value="tests"/>
-    <property name="tests.unit.dir"     value="tests/unit"/>
-    <property name="tests.integration.basic.dir"     value="tests/integration/basic"/>
-    <property name="tests.integration.nonConfPerf.dir"     value="tests/integration/nonConfPerf"/>
-    <property name="tests.integration.confPerf.dir"     value="tests/integration/confPerf"/>
-	<property name="main.class"  value="pl.rodia.jopama.integration.zookeeper.ZooKeeperPerfRunner"/>
+	<property name="build.dir" value="build" />
+	<property name="classes.dir" value="${build.dir}/classes" />
+	<property name="jar.dir" value="${build.dir}/jar" />
+	<property name="tests.dir" value="tests" />
+	<property name="tests.unit.dir" value="tests/unit" />
+	<property name="tests.integration.basic.dir" value="tests/integration/basic" />
+	<property name="tests.integration.nonConfPerf.dir" value="tests/integration/nonConfPerf" />
+	<property name="tests.integration.confPerf.dir" value="tests/integration/confPerf" />
+	<property name="main.class" value="pl.rodia.jopama.integration.zookeeper.ZooKeeperTransactionCreatorRunner" />
 
-    <path id="libraries">
-        <fileset dir="${basedir}/../../lib/" includes="**/*.jar"/>
-        <fileset dir="${basedir}/../../" includes="*.jar"/>
-        <fileset dir="${basedir}/lib/" includes="*.jar"/>
-    </path>
-	
-	<path id="application">
-		<path location="${jar.dir}/${ant.project.name}.jar"/>
+	<path id="libraries">
+		<fileset dir="${basedir}/../../lib/" includes="**/*.jar" />
+		<fileset dir="${basedir}/../../" includes="*.jar" />
+		<fileset dir="${basedir}/lib/" includes="*.jar" />
 	</path>
 
-    <target name="clean">
-        <delete dir="${build.dir}"/>
-    	<delete dir="${tests.dir}"/>
-    </target>
+	<path id="application">
+		<path location="${jar.dir}/${ant.project.name}.jar" />
+	</path>
 
-    <target name="compile">
-        <mkdir dir="${classes.dir}"/>
-        <mkdir dir="${tests.dir}"/>
-    	<mkdir dir="${tests.unit.dir}"/>
-    	<mkdir dir="${tests.integration.basic.dir}"/>
-    	<mkdir dir="${tests.integration.nonConfPerf.dir}"/>
-    	<mkdir dir="${tests.integration.confPerf.dir}"/>
-    	<javac srcdir="${src.dir}" destdir="${classes.dir}" classpathref="libraries" includeantruntime="true" debug="true"/>
-    </target>
+	<target name="clean">
+		<delete dir="${build.dir}" />
+		<delete dir="${tests.dir}" />
+	</target>
 
-    <target name="jar" depends="compile">
-        <mkdir dir="${jar.dir}"/>
-        <jar destfile="${jar.dir}/${ant.project.name}.jar" basedir="${classes.dir}">
-            <manifest>
-                <attribute name="Main-Class" value="${main.class}"/>
-            </manifest>
-        </jar>
-    </target>
+	<target name="compile">
+		<mkdir dir="${classes.dir}" />
+		<mkdir dir="${tests.dir}" />
+		<mkdir dir="${tests.unit.dir}" />
+		<mkdir dir="${tests.integration.basic.dir}" />
+		<mkdir dir="${tests.integration.nonConfPerf.dir}" />
+		<mkdir dir="${tests.integration.confPerf.dir}" />
+		<javac srcdir="${src.dir}" destdir="${classes.dir}" classpathref="libraries" includeantruntime="true" debug="true" />
+	</target>
+
+	<target name="jar" depends="compile">
+		<mkdir dir="${jar.dir}" />
+		<jar destfile="${jar.dir}/${ant.project.name}.jar" basedir="${classes.dir}">
+			<manifest>
+				<attribute name="Main-Class" value="${main.class}" />
+			</manifest>
+		</jar>
+	</target>
 
 	<target name="unitTests" depends="jar">
 		<junit printsummary="yes" dir="${tests.unit.dir}" showoutput="true" timeout="20000">
 			<classpath>
-				<path refid="libraries"/>
-				<path refid="application"/>
-                <pathelement path="${basedir}"/>
+				<path refid="libraries" />
+				<path refid="application" />
+				<pathelement path="${basedir}" />
 			</classpath>
-			<formatter type="xml" usefile="yes"/>
+			<formatter type="xml" usefile="yes" />
 			<batchtest fork="yes" todir="${tests.unit.dir}">
 				<fileset dir="${src.dir}">
-					<include name="**/*UnitTests.java"/>
+					<include name="**/*UnitTests.java" />
 				</fileset>
 			</batchtest>
 		</junit>
@@ -65,123 +65,124 @@
 	<target name="inMemoryBasicIntegrationTest" depends="jar">
 		<junit printsummary="yes" dir="${tests.integration.basic.dir}" showoutput="true" timeout="100000">
 			<classpath>
-				<path refid="libraries"/>
-				<path refid="application"/>
-                <pathelement path="${basedir}"/>
+				<path refid="libraries" />
+				<path refid="application" />
+				<pathelement path="${basedir}" />
 			</classpath>
-			<formatter type="xml" usefile="yes"/>
+			<formatter type="xml" usefile="yes" />
 			<batchtest fork="yes" todir="${tests.integration.basic.dir}">
 				<fileset dir="${src.dir}">
-					<include name="**/inmemory/BasicIntegrationTest.java"/>
+					<include name="**/inmemory/BasicIntegrationTest.java" />
 				</fileset>
 			</batchtest>
-            <jvmarg value="-ea"/>
+			<jvmarg value="-ea" />
 		</junit>
 	</target>
-	
+
 	<target name="zooKeeperBasicIntegrationTest" depends="jar">
 		<junit printsummary="yes" dir="${tests.integration.basic.dir}" showoutput="true" timeout="1000000">
 			<classpath>
-				<path refid="libraries"/>
-				<path refid="application"/>
-                <pathelement path="${basedir}"/>
+				<path refid="libraries" />
+				<path refid="application" />
+				<pathelement path="${basedir}" />
 			</classpath>
-			<formatter type="xml" usefile="yes"/>
+			<formatter type="xml" usefile="yes" />
 			<batchtest fork="yes" todir="${tests.integration.basic.dir}">
 				<fileset dir="${src.dir}">
-					<include name="**/zookeeper/BasicIntegrationTest.java"/>
+					<include name="**/zookeeper/BasicIntegrationTest.java" />
 				</fileset>
 			</batchtest>
-            <jvmarg value="-ea"/>
+			<jvmarg value="-ea" />
 		</junit>
 	</target>
 
 	<target name="inMemoryConfPerfTest" depends="jar">
 		<junit printsummary="yes" dir="${tests.integration.confPerf.dir}" showoutput="true" timeout="100000">
 			<classpath>
-				<path refid="libraries"/>
-				<path refid="application"/>
-                <pathelement path="${basedir}"/>
+				<path refid="libraries" />
+				<path refid="application" />
+				<pathelement path="${basedir}" />
 			</classpath>
-			<formatter type="xml" usefile="yes"/>
+			<formatter type="xml" usefile="yes" />
 			<batchtest fork="yes" todir="${tests.integration.confPerf.dir}">
 				<fileset dir="${src.dir}">
-					<include name="**/inmemory/ConfPerfTest.java"/>
+					<include name="**/inmemory/ConfPerfTest.java" />
 				</fileset>
 			</batchtest>
-            <jvmarg value="-ea"/>
+			<jvmarg value="-ea" />
 		</junit>
 	</target>
 
 	<target name="zooKeeperConfPerfTest" depends="jar">
 		<junit printsummary="yes" dir="${tests.integration.confPerf.dir}" showoutput="true" timeout="1000000">
 			<classpath>
-				<path refid="libraries"/>
-				<path refid="application"/>
-                <pathelement path="${basedir}"/>
+				<path refid="libraries" />
+				<path refid="application" />
+				<pathelement path="${basedir}" />
 			</classpath>
-			<formatter type="xml" usefile="yes"/>
+			<formatter type="xml" usefile="yes" />
 			<batchtest fork="yes" todir="${tests.integration.confPerf.dir}">
 				<fileset dir="${src.dir}">
-					<include name="**/zookeeper/ConfPerfTest.java"/>
+					<include name="**/zookeeper/ConfPerfTest.java" />
 				</fileset>
 			</batchtest>
-            <jvmarg value="-ea"/>
+			<jvmarg value="-ea" />
 		</junit>
 	</target>
 
-	
+
 	<target name="inMemoryNonConfPerfTest" depends="jar">
 		<junit printsummary="yes" dir="${tests.integration.nonConfPerf.dir}" showoutput="true" timeout="100000">
 			<classpath>
-				<path refid="libraries"/>
-				<path refid="application"/>
-                <pathelement path="${basedir}"/>
+				<path refid="libraries" />
+				<path refid="application" />
+				<pathelement path="${basedir}" />
 			</classpath>
-			<formatter type="xml" usefile="yes"/>
+			<formatter type="xml" usefile="yes" />
 			<batchtest fork="yes" todir="${tests.integration.nonConfPerf.dir}">
 				<fileset dir="${src.dir}">
-					<include name="**/inmemory/NonConfPerfTest.java"/>
+					<include name="**/inmemory/NonConfPerfTest.java" />
 				</fileset>
 			</batchtest>
-            <jvmarg value="-ea"/>
+			<jvmarg value="-ea" />
 		</junit>
 	</target>
 
 	<target name="zooKeeperNonConfPerfTest" depends="jar">
 		<junit printsummary="yes" dir="${tests.integration.nonConfPerf.dir}" showoutput="true" timeout="1000000">
 			<classpath>
-				<path refid="libraries"/>
-				<path refid="application"/>
-                <pathelement path="${basedir}"/>
+				<path refid="libraries" />
+				<path refid="application" />
+				<pathelement path="${basedir}" />
 			</classpath>
-			<formatter type="xml" usefile="yes"/>
+			<formatter type="xml" usefile="yes" />
 			<batchtest fork="yes" todir="${tests.integration.nonConfPerf.dir}">
 				<fileset dir="${src.dir}">
-					<include name="**/zookeeper/NonConfPerfTest.java"/>
+					<include name="**/zookeeper/NonConfPerfTest.java" />
 				</fileset>
 			</batchtest>
-            <jvmarg value="-ea"/>
+			<jvmarg value="-ea" />
 		</junit>
 	</target>
 
-	
+
 	<target name="integrationTests" depends="inMemoryBasicIntegrationTest,inMemoryConfPerfTest,inMemoryNonConfPerfTest">
 	</target>
-		
-    <target name="run" depends="jar">
-        <java fork="true" classname="${main.class}">
-		<arg line="127.0.0.1:2181 /StartFinish"/>
-        <classpath>
-			<path refid="libraries"/>
-			<path refid="application"/>
-            <pathelement path="${basedir}"/>
-		</classpath>
+
+	<target name="run" depends="jar">
+		<java fork="true" classname="${main.class}">
+			<arg line="127.0.0.1:2181 /StartFinish 127.0.0.1:2181 /Transactions 10 1" />
+			<jvmarg value="-ea" />
+			<classpath>
+				<path refid="libraries" />
+				<path refid="application" />
+				<pathelement path="${basedir}" />
+			</classpath>
 		</java>
-    </target>
+	</target>
 
-    <target name="clean-build" depends="clean,jar"/>
+	<target name="clean-build" depends="clean,jar" />
 
-    <target name="main" depends="clean,run"/>
+	<target name="main" depends="clean,run" />
 
 </project>
