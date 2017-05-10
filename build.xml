@@ -171,7 +171,7 @@
 
 	<target name="run" depends="jar">
 		<java fork="true" classname="${main.class}">
-			<arg line="127.0.0.1:2181 /StartFinish 127.0.0.1:2181 /Transactions 10 1" />
+			<arg line="127.0.0.1:2181 /StartFinish 127.0.0.1:2181 /Transactions 10" />
 			<jvmarg value="-ea" />
 			<classpath>
 				<path refid="libraries" />

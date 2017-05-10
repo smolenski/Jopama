@@ -11,7 +11,7 @@ public class ZooKeeperTransactionCreatorRunner
 
 	public ZooKeeperTransactionCreatorRunner(
 			String startFinishConnectionString, String startFinishDir, String transactionConnectionString, String transactionDir,
-			Integer desiredOutstandingTransactionsNum, Integer numCreators
+			Integer desiredOutstandingTransactionsNum
 	)
 	{
 		super();
@@ -29,7 +29,6 @@ public class ZooKeeperTransactionCreatorRunner
 		this.transactionConnectionString = transactionConnectionString;
 		this.transactionDir = transactionDir;
 		this.desiredOutstandingTransactionsNum = desiredOutstandingTransactionsNum;
-		this.numCreators = numCreators;
 		this.init();
 	}
 
@@ -45,8 +44,20 @@ public class ZooKeeperTransactionCreatorRunner
 							@Override
 							public void execute()
 							{
-								logger.info("ZooKeeperTransactionCreatorRunner::Observer::Start detected");
-								start();
+								taskRunner.schedule(
+										new Task()
+										{
+
+											@Override
+											public void execute()
+											{
+												logger.info(
+														"ZooKeeperTransactionCreatorRunner::Observer::Start detected"
+												);
+												start();
+											}
+										}
+								);
 							}
 						},
 						new Task()
@@ -55,8 +66,21 @@ public class ZooKeeperTransactionCreatorRunner
 							@Override
 							public void execute()
 							{
-								logger.info("ZooKeeperTransactionCreatorRunner::Observer::Finish detected");
-								finish();
+								taskRunner.schedule(
+										new Task()
+										{
+
+											@Override
+											public void execute()
+											{
+												logger.info(
+														"ZooKeeperTransactionCreatorRunner::Observer::Finish detected"
+												);
+												finish();
+
+											}
+										}
+								);
 							}
 						}
 				)
@@ -66,7 +90,9 @@ public class ZooKeeperTransactionCreatorRunner
 
 	void start()
 	{
-		logger.info("ZooKeeperTransactionCreatorRunner::start");
+		logger.info(
+				"ZooKeeperTransactionCreatorRunner::start"
+		);
 		this.transactionCreator = new ZooKeeperTransactionCreator(
 				this.transactionConnectionString,
 				this.transactionDir,
@@ -78,7 +104,9 @@ public class ZooKeeperTransactionCreatorRunner
 
 	void finish()
 	{
-		logger.info("ZooKeeperTransactionCreatorRunner::finish");
+		logger.info(
+				"ZooKeeperTransactionCreatorRunner::finish"
+		);
 		try
 		{
 			this.transactionCreator.finish();
@@ -96,9 +124,21 @@ public class ZooKeeperTransactionCreatorRunner
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		this.taskRunner.finish();
+		try
+		{
+			this.taskRunnerThread.join();
+		}
+		catch (InterruptedException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		synchronized (this)
 		{
-			this.finished = new Boolean(true);
+			this.finished = new Boolean(
+					true
+			);
 		}
 	}
 
@@ -117,8 +157,6 @@ public class ZooKeeperTransactionCreatorRunner
 				);
 			}
 		}
-		this.taskRunner.finish();
-		this.taskRunnerThread.join();
 	}
 
 	Boolean finished;
@@ -130,7 +168,7 @@ public class ZooKeeperTransactionCreatorRunner
 	String transactionDir;
 	Integer desiredOutstandingTransactionsNum;
 	Integer numCreators;
-	ZooKeeperDirChangesDetector startFinishDetector;
+	ZooKeeperMonitoringBase startFinishDetector;
 	ZooKeeperTransactionCreator transactionCreator;
 	static final Logger logger = LogManager.getLogger();
 
@@ -138,7 +176,7 @@ public class ZooKeeperTransactionCreatorRunner
 			String[] args
 	)
 	{
-		assert (args.length == 6);
+		assert (args.length == 5);
 		String startFinishConnectionString = args[0];
 		String startFinishDir = args[1];
 		String transactionConnectionString = args[2];
@@ -146,16 +184,12 @@ public class ZooKeeperTransactionCreatorRunner
 		Integer desiredOutstandingTransactionsNum = Integer.parseInt(
 				args[4]
 		);
-		Integer numCreators = Integer.parseInt(
-				args[5]
-		);
 		ZooKeeperTransactionCreatorRunner transactionCreatorRunner = new ZooKeeperTransactionCreatorRunner(
 				startFinishConnectionString,
 				startFinishDir,
 				transactionConnectionString,
 				transactionDir,
-				desiredOutstandingTransactionsNum,
-				numCreators
+				desiredOutstandingTransactionsNum
 		);
 		try
 		{

@@ -9,7 +9,7 @@ import pl.rodia.mpf.Task;
 
 public class StartFinishDetector implements DirChangesObserver
 {
-	
+
 	public StartFinishDetector(
 			Task onStart,
 			Task onFinish
@@ -19,31 +19,51 @@ public class StartFinishDetector implements DirChangesObserver
 		this.onStart = onStart;
 		this.onFinish = onFinish;
 	}
-	
+
 	@Override
 	public void directoryContentChanged(
 			List<String> fileNames
 	)
 	{
 		StringBuilder dirContentStr = new StringBuilder();
-		dirContentStr.append("[");
+		dirContentStr.append(
+				"["
+		);
 		for (String child : fileNames)
 		{
-			dirContentStr.append(child + ",");
+			dirContentStr.append(
+					child + ","
+			);
 		}
-		dirContentStr.append("]");
-		logger.debug("DirectoryContent: " + dirContentStr);
-		if (fileNames.contains(START_FILE_NAME))
+		dirContentStr.append(
+				"]"
+		);
+		logger.debug(
+				"DirectoryContent: " + dirContentStr
+		);
+		if (
+			fileNames.contains(
+					START_FILE_NAME
+			)
+		)
 		{
-			if (this.onStart != null)
+			if (
+				this.onStart != null
+			)
 			{
 				this.onStart.execute();
 				this.onStart = null;
 			}
 		}
-		if (fileNames.contains(FINISH_FILE_NAME))
+		if (
+			fileNames.contains(
+					FINISH_FILE_NAME
+			)
+		)
 		{
-			if (this.onFinish != null)
+			if (
+				this.onFinish != null
+			)
 			{
 				this.onFinish.execute();
 				this.onFinish = null;
@@ -51,14 +71,13 @@ public class StartFinishDetector implements DirChangesObserver
 		}
 	}
 
-	
 	Task onStart;
 	Task onFinish;
-	
+
 	static final Logger logger = LogManager.getLogger();
 	static final String START_FILE_NAME = "START";
 	static final String FINISH_FILE_NAME = "FINISH";
-	
+
 	public static void main(
 			String[] args
 	)
@@ -69,11 +88,13 @@ public class StartFinishDetector implements DirChangesObserver
 		StartFinishDetector startFinishDetector = new StartFinishDetector(
 				new Task()
 				{
-					
+
 					@Override
 					public void execute()
 					{
-						logger.info("START DETECTED");
+						logger.info(
+								"START DETECTED"
+						);
 					}
 				},
 				new Task()
@@ -81,11 +102,17 @@ public class StartFinishDetector implements DirChangesObserver
 					@Override
 					public void execute()
 					{
-						logger.info("FINISH DETECTED");						
+						logger.info(
+								"FINISH DETECTED"
+						);
 					}
 				}
 		);
-		ZooKeeperDirChangesDetector perfRunner = new ZooKeeperDirChangesDetector(connectionString, startFinishDir, startFinishDetector);
+		ZooKeeperDirChangesDetector perfRunner = new ZooKeeperDirChangesDetector(
+				connectionString,
+				startFinishDir,
+				startFinishDetector
+		);
 		perfRunner.start();
 		try
 		{
@@ -96,6 +123,5 @@ public class StartFinishDetector implements DirChangesObserver
 			e.printStackTrace();
 		}
 	}
-
 
 }
