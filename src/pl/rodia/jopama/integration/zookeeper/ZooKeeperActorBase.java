@@ -7,10 +7,10 @@ import org.apache.zookeeper.ZooKeeper.States;
 import pl.rodia.mpf.Task;
 import pl.rodia.mpf.TaskRunner;
 
-public abstract class ZooKeeperMonitoringBase
+public abstract class ZooKeeperActorBase
 {
 
-	public ZooKeeperMonitoringBase(
+	public ZooKeeperActorBase(
 			String connectionString
 	)
 	{
@@ -30,28 +30,56 @@ public abstract class ZooKeeperMonitoringBase
 				this.taskRunner
 		);
 	}
-	
-	public Integer schedule(Task task)
+
+	public Integer schedule(
+			Task task
+	)
 	{
-		if (this.finish.equals(new Boolean(false)))
+		synchronized (this)
 		{
-			return this.taskRunner.schedule(task);
-		}
-		else
-		{
-			return null;
+
+			if (
+				this.finish.equals(
+						new Boolean(
+								false
+						)
+				)
+			)
+			{
+				return this.taskRunner.schedule(
+						task
+				);
+			}
+			else
+			{
+				return null;
+			}
 		}
 	}
-	
-	public Integer schedule(Task task, Long delay)
+
+	public Integer schedule(
+			Task task, Long delay
+	)
 	{
-		if (this.finish.equals(new Boolean(false)))
+		synchronized (this)
 		{
-			return this.taskRunner.schedule(task, delay);
-		}
-		else
-		{
-			return null;
+			if (
+				this.finish.equals(
+						new Boolean(
+								false
+						)
+				)
+			)
+			{
+				return this.taskRunner.schedule(
+						task,
+						delay
+				);
+			}
+			else
+			{
+				return null;
+			}
 		}
 	}
 

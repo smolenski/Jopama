@@ -14,7 +14,7 @@ import org.apache.zookeeper.data.Stat;
 
 import pl.rodia.mpf.Task;
 
-public class ZooKeeperTransactionCreator extends ZooKeeperMonitoringBase
+public class ZooKeeperTransactionCreator extends ZooKeeperActorBase
 {
 
 	public ZooKeeperTransactionCreator(
@@ -52,7 +52,7 @@ public class ZooKeeperTransactionCreator extends ZooKeeperMonitoringBase
 							rc == KeeperException.Code.OK.intValue()
 						)
 						{
-							taskRunner.schedule(
+							schedule(
 									new Task()
 									{
 										@Override

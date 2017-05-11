@@ -168,7 +168,7 @@ public class ZooKeeperTransactionCreatorRunner
 	String transactionDir;
 	Integer desiredOutstandingTransactionsNum;
 	Integer numCreators;
-	ZooKeeperMonitoringBase startFinishDetector;
+	ZooKeeperActorBase startFinishDetector;
 	ZooKeeperTransactionCreator transactionCreator;
 	static final Logger logger = LogManager.getLogger();
 

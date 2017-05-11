@@ -12,7 +12,7 @@ import org.apache.zookeeper.data.Stat;
 
 import pl.rodia.mpf.Task;
 
-public class ZooKeeperDirChangesDetector extends ZooKeeperMonitoringBase
+public class ZooKeeperDirChangesDetector extends ZooKeeperActorBase
 {
 
 	public ZooKeeperDirChangesDetector(
