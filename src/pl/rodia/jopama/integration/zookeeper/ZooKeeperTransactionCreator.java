@@ -1,6 +1,7 @@
 package pl.rodia.jopama.integration.zookeeper;
 
 import java.util.List;
+import java.util.Random;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,90 +19,129 @@ public class ZooKeeperTransactionCreator extends ZooKeeperActorBase
 {
 
 	public ZooKeeperTransactionCreator(
-			String connectionString, String transactionDir, Integer desiredOutstandingTransactionsNum, Integer numCreators
+			String addresses, Integer numClusters, String transactionDir, Integer desiredOutstandingTransactionsNum, Integer numCreators
 	)
 	{
 		super(
-				connectionString
+				addresses,
+				numClusters
 		);
 		this.transactionDir = transactionDir;
 		this.desiredOutstandingTransactionsNum = desiredOutstandingTransactionsNum;
+		this.random = new Random();
 	}
 
 	public Long getRetryDelay()
 	{
 		return new Long(
-				3000
+				1000
 		);
 	}
 
 	public void tryToPerform()
 	{
-		this.zooKeeperProvider.zooKeeper.getChildren(
-				this.transactionDir,
-				null,
-				new Children2Callback()
-				{
+		ZooKeeperProvider zooKeeperProvider = zooKeeperMultiProvider.getResponsibleProvider(
+				new Integer(
+						this.random.nextInt()
+				)
+		);
+		synchronized (zooKeeperProvider)
+		{
 
-					@Override
-					public void processResult(
-							int rc, String path, Object ctx, List<String> children, Stat stat
-					)
+			if (
+				zooKeeperProvider.zooKeeper == null
+						||
+						zooKeeperProvider.zooKeeper.getState() != States.CONNECTED
+			)
+			{
+				return;
+			}
+
+			zooKeeperProvider.zooKeeper.getChildren(
+					this.transactionDir,
+					null,
+					new Children2Callback()
 					{
-						if (
-							rc == KeeperException.Code.OK.intValue()
+
+						@Override
+						public void processResult(
+								int rc, String path, Object ctx, List<String> children, Stat stat
 						)
 						{
-							schedule(
-									new Task()
-									{
-										@Override
-										public void execute()
+							if (
+								rc == KeeperException.Code.OK.intValue()
+							)
+							{
+								schedule(
+										new Task()
 										{
-											tryToPerformCont(
-													children.size()
-											);
+											@Override
+											public void execute()
+											{
+												tryToPerformCont(
+														children.size()
+												);
+											}
 										}
-									}
-							);
+								);
+							}
 						}
-					}
-				},
-				null
-		);
+					},
+					null
+			);
+		}
 	}
 
 	public void tryToPerformCont(
 			Integer numExistingFiles
 	)
 	{
-		synchronized (this.zooKeeperProvider)
+		logger.info(
+				"numExisitingFiles: " + numExistingFiles
+		);
+
+		assert this.desiredOutstandingTransactionsNum.compareTo(
+				numExistingFiles
+		) >= 0;
+		Integer numFilesToCreate = (this.desiredOutstandingTransactionsNum - numExistingFiles);
+		logger.info(
+				"ZooKeeperTransactionCreator::createFilesUpToTheTreshold, numFilesToCreate: " + numFilesToCreate
+		);
+
+		for (int i = 0; i < numFilesToCreate; ++i)
 		{
-			if (
-				this.zooKeeperProvider.zooKeeper == null
-						||
-						this.zooKeeperProvider.zooKeeper.getState() != States.CONNECTED
-			)
+
+			ZooKeeperObjectId zooKeeperObjectId = new ZooKeeperObjectId(
+					String.format(
+							"Transaction_%020d",
+							Math.abs(
+									this.random.nextLong()
+							)
+					)
+			);
+			ZooKeeperProvider zooKeeperProvider = this.zooKeeperMultiProvider.getResponsibleProvider(
+					zooKeeperObjectId.getClusterId(
+							this.zooKeeperMultiProvider.getNumClusters()
+					)
+			);
+			synchronized (zooKeeperProvider)
 			{
-				return;
-			}
-			else
-			{
-				assert this.desiredOutstandingTransactionsNum.compareTo(
-						numExistingFiles
-				) >= 0;
-				Integer numFilesToCreate = (this.desiredOutstandingTransactionsNum - numExistingFiles);
-				logger.info(
-						"ZooKeeperTransactionCreator::createFilesUpToTheTreshold, numFilesToCreate: " + numFilesToCreate
-				);
-				for (int i = 0; i < numFilesToCreate.intValue(); ++i)
+				if (
+					zooKeeperProvider.zooKeeper == null
+							||
+							zooKeeperProvider.zooKeeper.getState() != States.CONNECTED
+				)
+				{
+					continue;
+				}
+				else
 				{
 					byte[] serializedTransaction = new byte[10];
-					this.zooKeeperProvider.zooKeeper.create(
-							this.transactionDir + "/",
+					zooKeeperProvider.zooKeeper.create(
+							this.transactionDir + "/" + zooKeeperObjectId.uniqueName,
 							serializedTransaction,
 							Ids.OPEN_ACL_UNSAFE,
-							CreateMode.PERSISTENT_SEQUENTIAL,
+							CreateMode.PERSISTENT,
 							new StringCallback()
 							{
 								@Override
@@ -110,13 +150,11 @@ public class ZooKeeperTransactionCreator extends ZooKeeperActorBase
 								)
 								{
 									logger.debug(
-											"ZooKeeperTransactionCreator fileCreated, i: " + ctx
+											"ZooKeeperTransactionCreator fileCreated, name: " + zooKeeperObjectId.uniqueName
 									);
 								}
 							},
-							new Integer(
-									i
-							)
+							zooKeeperObjectId
 					);
 				}
 			}
@@ -126,5 +164,6 @@ public class ZooKeeperTransactionCreator extends ZooKeeperActorBase
 	String connectionString;
 	String transactionDir;
 	Integer desiredOutstandingTransactionsNum;
+	Random random;
 	static final Logger logger = LogManager.getLogger();
 }

@@ -2,7 +2,6 @@ package pl.rodia.jopama.integration.zookeeper;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.zookeeper.ZooKeeper.States;
 
 import pl.rodia.mpf.Task;
 import pl.rodia.mpf.TaskRunner;
@@ -11,7 +10,8 @@ public abstract class ZooKeeperActorBase
 {
 
 	public ZooKeeperActorBase(
-			String connectionString
+			String addresses,
+			Integer clusterSize
 	)
 	{
 		super();
@@ -19,9 +19,9 @@ public abstract class ZooKeeperActorBase
 				false
 		);
 		this.scheduledTaskId = null;
-		this.zooKeeperProvider = new ZooKeeperProvider(
-				"ZooKeeperDirChangesDetector.ZooKeeperProvider",
-				connectionString
+		this.zooKeeperMultiProvider = new ZooKeeperMultiProvider(
+				addresses,
+				clusterSize
 		);
 		this.taskRunner = new TaskRunner(
 				"ZooKeeperDirChangesDetector"
@@ -85,7 +85,7 @@ public abstract class ZooKeeperActorBase
 
 	public void start()
 	{
-		this.zooKeeperProvider.start();
+		this.zooKeeperMultiProvider.start();
 		this.taskRunnerThread.start();
 		this.scheduledTaskId = this.schedule(
 				new Task()
@@ -109,7 +109,7 @@ public abstract class ZooKeeperActorBase
 		}
 		this.taskRunner.finish();
 		this.taskRunnerThread.join();
-		this.zooKeeperProvider.finish();
+		this.zooKeeperMultiProvider.finish();
 	}
 
 	public void scheduleNextIfNotScheduled(
@@ -210,28 +210,16 @@ public abstract class ZooKeeperActorBase
 		this.scheduleNextIfNotScheduled(
 				this.getRetryDelay()
 		);
-		synchronized (this.zooKeeperProvider)
-		{
-			if (
-				this.zooKeeperProvider.zooKeeper == null
-						||
-						this.zooKeeperProvider.zooKeeper.getState() != States.CONNECTED
-			)
-			{
-				return;
-			}
-			else
-			{
-				this.tryToPerform();
-			}
-		}
+
+		this.tryToPerform();
+
 	}
 
 	Boolean finish;
 	Integer scheduledTaskId;
 	String dir;
 	DirChangesObserver dirChangesObserver;
-	ZooKeeperProvider zooKeeperProvider;
+	ZooKeeperMultiProvider zooKeeperMultiProvider;
 	TaskRunner taskRunner;
 	Thread taskRunnerThread;
 

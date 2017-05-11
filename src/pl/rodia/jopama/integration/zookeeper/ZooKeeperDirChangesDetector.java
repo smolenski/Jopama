@@ -5,6 +5,7 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.zookeeper.AsyncCallback.Children2Callback;
+import org.apache.zookeeper.ZooKeeper.States;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
@@ -16,12 +17,14 @@ public class ZooKeeperDirChangesDetector extends ZooKeeperActorBase
 {
 
 	public ZooKeeperDirChangesDetector(
-			String connectionString, String dir, DirChangesObserver dirChangesObserver
+			String addresses, Integer numClusters, Integer clusterId, String dir, DirChangesObserver dirChangesObserver
 	)
 	{
 		super(
-				connectionString
+				addresses,
+				numClusters
 		);
+		this.clusterId = clusterId;
 		this.dir = dir;
 		this.dirChangesObserver = dirChangesObserver;
 	}
@@ -36,39 +39,28 @@ public class ZooKeeperDirChangesDetector extends ZooKeeperActorBase
 
 	public void tryToPerform()
 	{
-		this.zooKeeperProvider.zooKeeper.getChildren(
-				this.dir,
-				new Watcher()
-				{
-					@Override
-					public void process(
-							WatchedEvent event
-					)
+		ZooKeeperProvider zooKeeperProvider = zooKeeperMultiProvider.getResponsibleProvider(
+				this.clusterId
+		);
+		synchronized (zooKeeperProvider)
+		{
+
+			if (
+				zooKeeperProvider.zooKeeper == null
+						||
+						zooKeeperProvider.zooKeeper.getState() != States.CONNECTED
+			)
+			{
+				return;
+			}
+
+			zooKeeperProvider.zooKeeper.getChildren(
+					this.dir,
+					new Watcher()
 					{
-						schedule(
-								new Task()
-								{
-									@Override
-									public void execute()
-									{
-										scheduleNextAsap();
-									}
-								}
-						);
-					}
-				},
-				new Children2Callback()
-				{
-					@Override
-					public void processResult(
-							int rc, String path, Object ctx, List<String> children, Stat stat
-					)
-					{
-						logger.info(
-								"getListing done, dir: " + dir
-						);
-						if (
-							rc == KeeperException.Code.OK.intValue()
+						@Override
+						public void process(
+								WatchedEvent event
 						)
 						{
 							schedule(
@@ -77,24 +69,50 @@ public class ZooKeeperDirChangesDetector extends ZooKeeperActorBase
 										@Override
 										public void execute()
 										{
-											processListing(
-													children
-											);
+											scheduleNextAsap();
 										}
 									}
 							);
 						}
-						else
+					},
+					new Children2Callback()
+					{
+						@Override
+						public void processResult(
+								int rc, String path, Object ctx, List<String> children, Stat stat
+						)
 						{
-							logger.error(
-									"getListing failed, rc: " + rc
+							logger.info(
+									"getListing done, dir: " + dir
 							);
+							if (
+								rc == KeeperException.Code.OK.intValue()
+							)
+							{
+								schedule(
+										new Task()
+										{
+											@Override
+											public void execute()
+											{
+												processListing(
+														children
+												);
+											}
+										}
+								);
+							}
+							else
+							{
+								logger.error(
+										"getListing failed, rc: " + rc
+								);
+							}
 						}
-					}
-				},
-				null
-		);
-
+					},
+					null
+			);
+		}
 	}
 
 	public void processListing(
@@ -106,6 +124,7 @@ public class ZooKeeperDirChangesDetector extends ZooKeeperActorBase
 		);
 	}
 
+	Integer clusterId;
 	String dir;
 	DirChangesObserver dirChangesObserver;
 

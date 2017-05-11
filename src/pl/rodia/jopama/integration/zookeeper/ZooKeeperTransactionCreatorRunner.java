@@ -10,7 +10,10 @@ public class ZooKeeperTransactionCreatorRunner
 {
 
 	public ZooKeeperTransactionCreatorRunner(
-			String startFinishConnectionString, String startFinishDir, String transactionConnectionString, String transactionDir,
+			String addresses,
+			Integer numClusters,
+			String startFinishDir,
+			String transactionDir,
 			Integer desiredOutstandingTransactionsNum
 	)
 	{
@@ -24,9 +27,9 @@ public class ZooKeeperTransactionCreatorRunner
 		this.taskRunnerThread = new Thread(
 				this.taskRunner
 		);
-		this.startFinishConnectionString = startFinishConnectionString;
+		this.addresses = addresses;
+		this.numClusters = numClusters;
 		this.startFinishDir = startFinishDir;
-		this.transactionConnectionString = transactionConnectionString;
 		this.transactionDir = transactionDir;
 		this.desiredOutstandingTransactionsNum = desiredOutstandingTransactionsNum;
 		this.init();
@@ -36,7 +39,9 @@ public class ZooKeeperTransactionCreatorRunner
 	{
 		this.taskRunnerThread.start();
 		this.startFinishDetector = new ZooKeeperDirChangesDetector(
-				this.startFinishConnectionString,
+				this.addresses,
+				this.numClusters,
+				new Integer(0),
 				this.startFinishDir,
 				new StartFinishDetector(
 						new Task()
@@ -94,7 +99,8 @@ public class ZooKeeperTransactionCreatorRunner
 				"ZooKeeperTransactionCreatorRunner::start"
 		);
 		this.transactionCreator = new ZooKeeperTransactionCreator(
-				this.transactionConnectionString,
+				this.addresses,
+				this.numClusters,
 				this.transactionDir,
 				this.desiredOutstandingTransactionsNum,
 				this.numCreators
@@ -139,7 +145,9 @@ public class ZooKeeperTransactionCreatorRunner
 				)
 			)
 			{
-				this.wait(1000);
+				this.wait(
+						1000
+				);
 			}
 		}
 		this.taskRunner.finish();
@@ -158,9 +166,9 @@ public class ZooKeeperTransactionCreatorRunner
 	Boolean finished;
 	TaskRunner taskRunner;
 	Thread taskRunnerThread;
-	String startFinishConnectionString;
+	String addresses;
+	Integer numClusters;
 	String startFinishDir;
-	String transactionConnectionString;
 	String transactionDir;
 	Integer desiredOutstandingTransactionsNum;
 	Integer numCreators;
@@ -173,17 +181,17 @@ public class ZooKeeperTransactionCreatorRunner
 	)
 	{
 		assert (args.length == 5);
-		String startFinishConnectionString = args[0];
-		String startFinishDir = args[1];
-		String transactionConnectionString = args[2];
+		String addresses = args[0];
+		Integer numClusters = new Integer(Integer.parseInt(args[1]));
+		String startFinishDir = args[2];
 		String transactionDir = args[3];
 		Integer desiredOutstandingTransactionsNum = Integer.parseInt(
 				args[4]
 		);
 		ZooKeeperTransactionCreatorRunner transactionCreatorRunner = new ZooKeeperTransactionCreatorRunner(
-				startFinishConnectionString,
+				addresses,
+				numClusters,
 				startFinishDir,
-				transactionConnectionString,
 				transactionDir,
 				desiredOutstandingTransactionsNum
 		);
