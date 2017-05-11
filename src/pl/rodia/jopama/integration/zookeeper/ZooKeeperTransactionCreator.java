@@ -19,14 +19,13 @@ public class ZooKeeperTransactionCreator extends ZooKeeperActorBase
 {
 
 	public ZooKeeperTransactionCreator(
-			String addresses, Integer numClusters, String transactionDir, Integer desiredOutstandingTransactionsNum, Integer numCreators
+			String addresses, Integer clusterSize, Integer desiredOutstandingTransactionsNum
 	)
 	{
 		super(
 				addresses,
-				numClusters
+				clusterSize
 		);
-		this.transactionDir = transactionDir;
 		this.desiredOutstandingTransactionsNum = desiredOutstandingTransactionsNum;
 		this.random = new Random();
 	}
@@ -58,7 +57,7 @@ public class ZooKeeperTransactionCreator extends ZooKeeperActorBase
 			}
 
 			zooKeeperProvider.zooKeeper.getChildren(
-					this.transactionDir,
+					ZooKeeperHelpers.getBasePath(),
 					null,
 					new Children2Callback()
 					{
@@ -78,8 +77,25 @@ public class ZooKeeperTransactionCreator extends ZooKeeperActorBase
 											@Override
 											public void execute()
 											{
+												Integer numTransactions = new Integer(
+														0
+												);
+												for (String fileName : children)
+												{
+													String transactionPrefix = "Transaction_";
+													if (
+														fileName.startsWith(
+																transactionPrefix
+														)
+													)
+													{
+														numTransactions = new Integer(
+																numTransactions + 1
+														);
+													}
+												}
 												tryToPerformCont(
-														children.size()
+														numTransactions
 												);
 											}
 										}
@@ -138,7 +154,9 @@ public class ZooKeeperTransactionCreator extends ZooKeeperActorBase
 				{
 					byte[] serializedTransaction = new byte[10];
 					zooKeeperProvider.zooKeeper.create(
-							this.transactionDir + "/" + zooKeeperObjectId.uniqueName,
+							ZooKeeperHelpers.getTransactionPath(
+									zooKeeperObjectId
+							),
 							serializedTransaction,
 							Ids.OPEN_ACL_UNSAFE,
 							CreateMode.PERSISTENT,
@@ -161,8 +179,6 @@ public class ZooKeeperTransactionCreator extends ZooKeeperActorBase
 		}
 	}
 
-	String connectionString;
-	String transactionDir;
 	Integer desiredOutstandingTransactionsNum;
 	Random random;
 	static final Logger logger = LogManager.getLogger();

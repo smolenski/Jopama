@@ -14,11 +14,17 @@ import pl.rodia.jopama.data.Transaction;
 
 public class ZooKeeperHelpers
 {
+	
+	static String getBasePath()
+	{
+		return "/";
+	}
+	
 	static String getPath(
 			ZooKeeperObjectId objectId
 	)
 	{
-		return "/" + objectId.uniqueName;
+		return getBasePath() + objectId.uniqueName;
 	}
 	
 	static ZooKeeperObjectId getIdFromPath(String path)

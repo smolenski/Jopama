@@ -17,12 +17,12 @@ public class ZooKeeperDirChangesDetector extends ZooKeeperActorBase
 {
 
 	public ZooKeeperDirChangesDetector(
-			String addresses, Integer numClusters, Integer clusterId, String dir, DirChangesObserver dirChangesObserver
+			String addresses, Integer clusterSize, Integer clusterId, String dir, DirChangesObserver dirChangesObserver
 	)
 	{
 		super(
 				addresses,
-				numClusters
+				clusterSize
 		);
 		this.clusterId = clusterId;
 		this.dir = dir;
