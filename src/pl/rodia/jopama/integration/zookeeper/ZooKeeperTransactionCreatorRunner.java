@@ -104,9 +104,6 @@ public class ZooKeeperTransactionCreatorRunner
 
 	void finish()
 	{
-		logger.info(
-				"ZooKeeperTransactionCreatorRunner::finish"
-		);
 		try
 		{
 			this.transactionCreator.finish();
@@ -118,16 +115,6 @@ public class ZooKeeperTransactionCreatorRunner
 		try
 		{
 			this.startFinishDetector.finish();
-		}
-		catch (InterruptedException e)
-		{
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		this.taskRunner.finish();
-		try
-		{
-			this.taskRunnerThread.join();
 		}
 		catch (InterruptedException e)
 		{
@@ -152,11 +139,20 @@ public class ZooKeeperTransactionCreatorRunner
 				)
 			)
 			{
-				Thread.sleep(
-						1000
-				);
+				this.wait(1000);
 			}
 		}
+		this.taskRunner.finish();
+		try
+		{
+			this.taskRunnerThread.join();
+		}
+		catch (InterruptedException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
 	}
 
 	Boolean finished;
