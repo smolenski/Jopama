@@ -6,6 +6,7 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper.States;
 
+import pl.rodia.jopama.data.Component;
 import pl.rodia.mpf.Task;
 
 public class ZooKeeperComponentCreator extends ZooKeeperActorBase
@@ -24,9 +25,6 @@ public class ZooKeeperComponentCreator extends ZooKeeperActorBase
 		);
 		this.firstComponentId = firstComponentId;
 		this.numComponents = numComponents;
-		this.failed = new Boolean(
-				false
-		);
 		this.done = new Boolean(
 				false
 		);
@@ -70,7 +68,8 @@ public class ZooKeeperComponentCreator extends ZooKeeperActorBase
 				}
 				else
 				{
-					byte[] serializedComponent = new byte[10];
+					Component component = new Component(new Integer(0), null, new Integer(0), null);
+					byte[] serializedComponent = ZooKeeperHelpers.serializeComponent(component);
 					zooKeeperProvider.zooKeeper.create(
 							ZooKeeperHelpers.getComponentPath(zooKeeperObjectId),
 							serializedComponent,
@@ -84,7 +83,7 @@ public class ZooKeeperComponentCreator extends ZooKeeperActorBase
 								)
 								{
 									logger.debug(
-											"ZooKeeperCompoentCreator fileCreated, name: " + zooKeeperObjectId.uniqueName
+											"ZooKeeperCompoentCreator create file process result, name: " + zooKeeperObjectId.uniqueName + " rc: " + rc
 									);
 									schedule(
 											new Task()
@@ -133,17 +132,6 @@ public class ZooKeeperComponentCreator extends ZooKeeperActorBase
 				}
 			}
 		}
-		else
-		{
-			synchronized (this)
-			{
-
-				this.failed = new Boolean(
-						true
-				);
-
-			}
-		}
 	}
 
 	void waitUntilDone() throws InterruptedException
@@ -155,12 +143,7 @@ public class ZooKeeperComponentCreator extends ZooKeeperActorBase
 						new Boolean(
 								false
 						)
-				) &&
-						this.failed.equals(
-								new Boolean(
-										false
-								)
-						)
+				)
 			)
 			{
 				this.wait(
@@ -169,19 +152,12 @@ public class ZooKeeperComponentCreator extends ZooKeeperActorBase
 						)
 				);
 			}
-
-			assert (this.failed.equals(
-					new Boolean(
-							false
-					)
-			));
 		}
 	}
 
 	Long numFilesCreated;
 	Long firstComponentId;
 	Long numComponents;
-	Boolean failed;
 	Boolean done;
 
 	public static void main(

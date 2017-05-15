@@ -34,23 +34,37 @@ public class RandomExchangeFunction extends Function implements Serializable
 		Set<Integer> values = new TreeSet<Integer>();
 		for (Map.Entry<ObjectId, Integer> entry : oldValues.entrySet())
 		{
-			values.add(entry.getValue());
+			values.add(
+					entry.getValue()
+			);
 		}
-		if (values.size() != oldValues.size())
+		if (
+			values.size() != oldValues.size()
+		)
 		{
-			logger.debug("VALUES");
+			logger.debug(
+					"VALUES"
+			);
 			for (Integer val : values)
 			{
-				logger.debug(val);
+				logger.debug(
+						val
+				);
 			}
-			logger.debug("MAP");
+			logger.debug(
+					"MAP"
+			);
 			for (Map.Entry<ObjectId, Integer> entry : oldValues.entrySet())
 			{
-				logger.debug("key: " + entry.getKey() + " value: " + entry.getValue());
+				logger.debug(
+						"key: " + entry.getKey() + " value: " + entry.getValue()
+				);
 			}
 			assert false;
 		}
-		Random random = new Random(this.seed);
+		Random random = new Random(
+				this.seed
+		);
 		Map<ObjectId, Integer> result = new TreeMap<ObjectId, Integer>();
 		for (Map.Entry<ObjectId, Integer> entry : oldValues.entrySet())
 		{
@@ -126,16 +140,24 @@ public class RandomExchangeFunction extends Function implements Serializable
 					valueExchange1
 			);
 		}
-		logger.debug("Function application: input values");
+		logger.debug(
+				"Function application: input values"
+		);
 		for (Map.Entry<ObjectId, Integer> entry : oldValues.entrySet())
 		{
-			logger.debug("INPUT (transactionId: " + transactionId + ") objectId: " + entry.getKey() + " value: " + entry.getValue());
-		}		
-		logger.debug("Function application output values");
+			logger.debug(
+					"INPUT (transactionId: " + this.transactionId + ") objectId: " + entry.getKey() + " value: " + entry.getValue()
+			);
+		}
+		logger.debug(
+				"Function application output values"
+		);
 		for (Map.Entry<ObjectId, Integer> entry : result.entrySet())
 		{
-			logger.debug("OUTPUT (transactionId: " + transactionId + ") objectId: " + entry.getKey() + " value: " + entry.getValue());
-		}		
+			logger.debug(
+					"OUTPUT (transactionId: " + this.transactionId + ") objectId: " + entry.getKey() + " value: " + entry.getValue()
+			);
+		}
 		return result;
 	}
 

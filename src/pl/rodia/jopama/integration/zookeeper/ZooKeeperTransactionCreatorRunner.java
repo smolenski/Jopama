@@ -13,7 +13,10 @@ public class ZooKeeperTransactionCreatorRunner
 			String addresses,
 			Integer clusterSize,
 			String startFinishDir,
-			Integer desiredOutstandingTransactionsNum
+			Integer desiredOutstandingTransactionsNum,
+			Long firstComponentId,
+			Long numComponents,
+			Long numComponentsInTransaction
 	)
 	{
 		super();
@@ -30,6 +33,9 @@ public class ZooKeeperTransactionCreatorRunner
 		this.clusterSize = clusterSize;
 		this.startFinishDir = startFinishDir;
 		this.desiredOutstandingTransactionsNum = desiredOutstandingTransactionsNum;
+		this.firstComponentId = firstComponentId;
+		this.numComponents = numComponents;
+		this.numComponentsInTransaction = numComponentsInTransaction;
 		this.init();
 	}
 
@@ -39,7 +45,9 @@ public class ZooKeeperTransactionCreatorRunner
 		this.startFinishDetector = new ZooKeeperDirChangesDetector(
 				this.addresses,
 				this.clusterSize,
-				new Integer(0),
+				new Integer(
+						0
+				),
 				this.startFinishDir,
 				new StartFinishDetector(
 						new Task()
@@ -99,7 +107,10 @@ public class ZooKeeperTransactionCreatorRunner
 		this.transactionCreator = new ZooKeeperTransactionCreator(
 				this.addresses,
 				this.clusterSize,
-				this.desiredOutstandingTransactionsNum
+				this.desiredOutstandingTransactionsNum,
+				this.firstComponentId,
+				this.numComponents,
+				this.numComponentsInTransaction
 		);
 		this.transactionCreator.start();
 	}
@@ -166,6 +177,9 @@ public class ZooKeeperTransactionCreatorRunner
 	Integer clusterSize;
 	String startFinishDir;
 	Integer desiredOutstandingTransactionsNum;
+	Long firstComponentId;
+	Long numComponents;
+	Long numComponentsInTransaction;
 	ZooKeeperActorBase startFinishDetector;
 	ZooKeeperTransactionCreator transactionCreator;
 	static final Logger logger = LogManager.getLogger();
@@ -174,18 +188,34 @@ public class ZooKeeperTransactionCreatorRunner
 			String[] args
 	)
 	{
-		assert (args.length == 4);
+		assert (args.length == 7);
 		String addresses = args[0];
-		Integer clusterSize = new Integer(Integer.parseInt(args[1]));
+		Integer clusterSize = new Integer(
+				Integer.parseInt(
+						args[1]
+				)
+		);
 		String startFinishDir = args[2];
 		Integer desiredOutstandingTransactionsNum = Integer.parseInt(
 				args[3]
+		);
+		Long firstComponentId = Long.parseLong(
+				args[4]
+		);
+		Long numComponents = Long.parseLong(
+				args[5]
+		);
+		Long numComponentsInTransaction = Long.parseLong(
+				args[6]
 		);
 		ZooKeeperTransactionCreatorRunner transactionCreatorRunner = new ZooKeeperTransactionCreatorRunner(
 				addresses,
 				clusterSize,
 				startFinishDir,
-				desiredOutstandingTransactionsNum
+				desiredOutstandingTransactionsNum,
+				firstComponentId,
+				numComponents,
+				numComponentsInTransaction
 		);
 		try
 		{
