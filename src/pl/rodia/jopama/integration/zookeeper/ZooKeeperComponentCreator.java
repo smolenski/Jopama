@@ -46,10 +46,7 @@ public class ZooKeeperComponentCreator extends ZooKeeperActorBase
 		{
 
 			ZooKeeperObjectId zooKeeperObjectId = new ZooKeeperObjectId(
-					String.format(
-							"Component_%020d",
-							i
-					)
+					ZooKeeperObjectId.getComponentUniqueName(i)
 			);
 			ZooKeeperProvider zooKeeperProvider = this.zooKeeperMultiProvider.getResponsibleProvider(
 					zooKeeperObjectId.getClusterId(

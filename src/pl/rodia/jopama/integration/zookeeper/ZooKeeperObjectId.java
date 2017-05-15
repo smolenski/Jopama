@@ -103,12 +103,12 @@ public class ZooKeeperObjectId extends ObjectId implements Serializable
 	
 	static public String getComponentUniqueName(Long componentId)
 	{
-		return String.format("Component_%020", componentId); 
+		return String.format("Component_%020d", componentId); 
 	}
 	
 	static public String getTransactionUniqueName(Long transactionId)
 	{
-		return String.format("Transaction_%020", transactionId); 
+		return String.format("Transaction_%020d", transactionId); 
 	}
 	
 	String uniqueName;

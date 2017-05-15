@@ -180,12 +180,7 @@ public class ZooKeeperTransactionCreator extends ZooKeeperActorBase
 		{
 			Long transactionId = this.random.nextLong();
 			ZooKeeperObjectId zooKeeperObjectId = new ZooKeeperObjectId(
-					String.format(
-							"Transaction_%020d",
-							Math.abs(
-									transactionId
-							)
-					)
+					ZooKeeperObjectId.getTransactionUniqueName(transactionId)
 			);
 			ZooKeeperProvider zooKeeperProvider = this.zooKeeperMultiProvider.getResponsibleProvider(
 					zooKeeperObjectId.getClusterId(

@@ -28,8 +28,7 @@ public class ZooKeeperUniversalStorageAccess extends UniversalStorageAccess
 				)
 		);
 		ZooKeeperObjectId zooKeeperObjectId = new ZooKeeperObjectId(
-				String.format(
-						"Component_%010d",
+				ZooKeeperObjectId.getComponentUniqueName(
 						id
 				)
 		);
@@ -52,8 +51,7 @@ public class ZooKeeperUniversalStorageAccess extends UniversalStorageAccess
 				)
 		);
 		ZooKeeperObjectId zooKeeperObjectId = new ZooKeeperObjectId(
-				String.format(
-						"Transaction_%010d",
+				ZooKeeperObjectId.getTransactionUniqueName(
 						id
 				)
 		);

@@ -10,7 +10,8 @@
 	<property name="tests.integration.basic.dir" value="tests/integration/basic" />
 	<property name="tests.integration.nonConfPerf.dir" value="tests/integration/nonConfPerf" />
 	<property name="tests.integration.confPerf.dir" value="tests/integration/confPerf" />
-	<property name="main.class" value="pl.rodia.jopama.integration.zookeeper.ZooKeeperTransactionCreatorRunner" />
+	<property name="componentCreator.class" value="pl.rodia.jopama.integration.zookeeper.ZooKeeperComponentCreator" />
+	<property name="transactionCreator.class" value="pl.rodia.jopama.integration.zookeeper.ZooKeeperTransactionCreatorRunner" />
 
 	<path id="libraries">
 		<fileset dir="${basedir}/../../lib/" includes="**/*.jar" />
@@ -169,9 +170,9 @@
 	<target name="integrationTests" depends="inMemoryBasicIntegrationTest,inMemoryConfPerfTest,inMemoryNonConfPerfTest">
 	</target>
 
-	<target name="run" depends="jar">
-		<java fork="true" classname="${main.class}">
-			<arg line="127.0.0.1:2181 1 /StartFinish 10" />
+	<target name="runCC" depends="jar">
+		<java fork="true" classname="${componentCreator.class}">
+			<arg line="127.0.0.1:2181 1 100 100" />
 			<jvmarg value="-ea" />
 			<classpath>
 				<path refid="libraries" />
@@ -180,9 +181,21 @@
 			</classpath>
 		</java>
 	</target>
-
+	
+	<target name="runTC" depends="jar">
+		<java fork="true" classname="${transactionCreator.class}">
+			<arg line="127.0.0.1:2181 1 /StartFinish 10 100 100 10" />
+			<jvmarg value="-ea" />
+			<classpath>
+				<path refid="libraries" />
+				<path refid="application" />
+				<pathelement path="${basedir}" />
+			</classpath>
+		</java>
+	</target>
+	
 	<target name="clean-build" depends="clean,jar" />
 
-	<target name="main" depends="clean,run" />
+	<target name="main" depends="clean,jar" />
 
 </project>
