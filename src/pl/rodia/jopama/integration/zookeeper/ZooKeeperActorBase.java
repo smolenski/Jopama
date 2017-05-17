@@ -1,5 +1,7 @@
 package pl.rodia.jopama.integration.zookeeper;
 
+import java.util.concurrent.ExecutionException;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -99,7 +101,7 @@ public abstract class ZooKeeperActorBase
 		);
 	}
 
-	public void finish() throws InterruptedException
+	public void finish() throws InterruptedException, ExecutionException
 	{
 		synchronized (this)
 		{

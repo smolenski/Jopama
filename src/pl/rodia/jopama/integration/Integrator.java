@@ -57,18 +57,18 @@ public class Integrator
 		);
 	}
 
-	void start()
+	public void start()
 	{
 		this.taskRunnerThread.start();
 		this.paceMaker.start();
 	}
 
-	void prepareToFinish() throws InterruptedException, ExecutionException
+	public void prepareToFinish() throws InterruptedException, ExecutionException
 	{
 		this.paceMaker.prepareToFinish();
 	}
 	
-	void finish() throws InterruptedException, ExecutionException
+	public void finish() throws InterruptedException, ExecutionException
 	{
 		this.paceMaker.finish();
 		this.taskRunner.finish();

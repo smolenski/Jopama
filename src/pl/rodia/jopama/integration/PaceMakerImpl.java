@@ -154,6 +154,16 @@ public class PaceMakerImpl implements PaceMaker
 			Set<ObjectId> transactionIds
 	)
 	{
+		if (
+			this.finish.equals(
+					new Boolean(
+							true
+					)
+			)
+		)
+		{
+			return;
+		}
 		this.taskRunner.schedule(
 				new Task()
 				{
@@ -163,16 +173,7 @@ public class PaceMakerImpl implements PaceMaker
 						waitingTransactions.addAll(
 								transactionIds
 						);
-						if (
-							finish.equals(
-									new Boolean(
-											false
-									)
-							)
-						)
-						{
-							scheduleUpToTheLimit();
-						}
+						scheduleUpToTheLimit();
 					}
 				}
 		);
@@ -222,6 +223,16 @@ public class PaceMakerImpl implements PaceMaker
 
 	void scheduleUpToTheLimit()
 	{
+		if (
+			this.finish.equals(
+					new Boolean(
+							true
+					)
+			)
+		)
+		{
+			return;
+		}
 		while (
 			this.waitingTransactions.size() > 0 && this.runningTransactions.size() < this.numRunningPace
 		)
@@ -253,16 +264,7 @@ public class PaceMakerImpl implements PaceMaker
 				transactionId
 		);
 		++this.numFinished;
-		if (
-			this.finish.equals(
-					new Boolean(
-							false
-					)
-			)
-		)
-		{
-			this.scheduleUpToTheLimit();
-		}
+		this.scheduleUpToTheLimit();
 	}
 
 	@Override

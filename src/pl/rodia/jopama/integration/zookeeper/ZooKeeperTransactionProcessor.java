@@ -1,8 +1,10 @@
 package pl.rodia.jopama.integration.zookeeper;
 
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 import org.apache.zookeeper.AsyncCallback.Children2Callback;
 import org.apache.zookeeper.KeeperException;
@@ -25,6 +27,31 @@ public class ZooKeeperTransactionProcessor extends ZooKeeperActorBase
 				clusterSize
 		);
 		this.clusterId = clusterId;
+		this.integratorZooKeeperMultiProvider = new ZooKeeperMultiProvider(
+				addresses,
+				clusterSize
+		);
+		this.integratorZooKeeperStorageGateway = new ZooKeeperStorageGateway(
+				zooKeeperMultiProvider
+		);
+		this.integrator = new Integrator("Integrator", this.integratorZooKeeperStorageGateway, new LinkedList<ObjectId>(), 20);
+	}
+	
+	@Override
+	public void start()
+	{
+		super.start();
+		this.integratorZooKeeperMultiProvider.start();
+		this.integrator.start();
+	}
+
+	@Override
+	public void finish() throws InterruptedException, ExecutionException
+	{
+		this.integrator.prepareToFinish();
+		this.integrator.finish();
+		this.integratorZooKeeperMultiProvider.finish();
+		super.finish();
 	}
 
 	@Override
@@ -97,5 +124,7 @@ public class ZooKeeperTransactionProcessor extends ZooKeeperActorBase
 	}
 
 	Integer clusterId;
+	ZooKeeperMultiProvider integratorZooKeeperMultiProvider;
+	ZooKeeperStorageGateway integratorZooKeeperStorageGateway;
 	Integrator integrator;
 }

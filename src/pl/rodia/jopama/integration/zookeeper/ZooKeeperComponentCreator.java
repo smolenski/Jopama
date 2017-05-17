@@ -1,5 +1,7 @@
 package pl.rodia.jopama.integration.zookeeper;
 
+import java.util.concurrent.ExecutionException;
+
 import org.apache.zookeeper.AsyncCallback.StringCallback;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
@@ -192,6 +194,10 @@ public class ZooKeeperComponentCreator extends ZooKeeperActorBase
 			componentCreator.finish();
 		}
 		catch (InterruptedException e)
+		{
+			e.printStackTrace();
+		}
+		catch (ExecutionException e)
 		{
 			e.printStackTrace();
 		}
