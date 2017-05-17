@@ -14,28 +14,48 @@ import pl.rodia.jopama.data.Transaction;
 
 public class ZooKeeperHelpers
 {
-	
-	static String getBasePath()
+
+	static String getTransactionBasePath()
 	{
-		return "/";
+		return "/Transactions/";
 	}
-	
+
+	static String getComponentBasePath()
+	{
+		return "/Components/";
+	}
+
 	static String getPath(
+			String basePath,
 			ZooKeeperObjectId objectId
 	)
 	{
-		return getBasePath() + objectId.uniqueName;
+		return basePath + objectId.uniqueName;
 	}
-	
-	static ZooKeeperObjectId getIdFromPath(String path)
+
+	static ZooKeeperObjectId getIdFromPath(
+			String path
+	)
 	{
-		String [] components = path.split("/");
-		if (components.length != 2 || components[0].equals("") == false)
+		String[] components = path.split(
+				"/"
+		);
+		if (
+			components.length != 3 || components[0].equals(
+					""
+			) == false
+		)
 		{
-			throw new IllegalArgumentException("path: " + path + " splitted: " + Arrays.toString(components));
+			throw new IllegalArgumentException(
+					"path: " + path + " splitted: " + Arrays.toString(
+							components
+					)
+			);
 		}
-		String fileName = components[1];
-		return new ZooKeeperObjectId(fileName);
+		String fileName = components[2];
+		return new ZooKeeperObjectId(
+				fileName
+		);
 	}
 
 	static String getTransactionPath(
@@ -43,6 +63,7 @@ public class ZooKeeperHelpers
 	)
 	{
 		return ZooKeeperHelpers.getPath(
+				getTransactionBasePath(),
 				objectId
 		);
 	}
@@ -52,6 +73,7 @@ public class ZooKeeperHelpers
 	)
 	{
 		return ZooKeeperHelpers.getPath(
+				getComponentBasePath(),
 				objectId
 		);
 	}

@@ -1,9 +1,9 @@
 package pl.rodia.jopama.integration;
 
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -39,9 +39,11 @@ public class PaceMakerImpl implements PaceMaker
 		this.taskRunnerThread = new Thread(
 				this.taskRunner
 		);
-		this.numFinished = new Integer(0);
+		this.numFinished = new Integer(
+				0
+		);
 		this.name = name;
-		this.waitingTransactions = new LinkedList<ObjectId>();
+		this.waitingTransactions = new TreeSet<ObjectId>();
 		for (ObjectId transactionId : toDoTransactions)
 		{
 			this.waitingTransactions.add(
@@ -57,19 +59,19 @@ public class PaceMakerImpl implements PaceMaker
 	public void start()
 	{
 		this.taskRunnerThread.start();
-		
-			this.taskRunner.schedule(
-					new Task()
-					{
 
-						@Override
-						public void execute()
-						{
-							scheduleUpToTheLimit();
-						}
+		this.taskRunner.schedule(
+				new Task()
+				{
+
+					@Override
+					public void execute()
+					{
+						scheduleUpToTheLimit();
 					}
-			);
-		
+				}
+		);
+
 	}
 
 	void teardown() throws InterruptedException
@@ -77,21 +79,33 @@ public class PaceMakerImpl implements PaceMaker
 		this.taskRunner.finish();
 		this.taskRunnerThread.join();
 	}
-	
+
 	public void prepareToFinish() throws InterruptedException, ExecutionException
 	{
 		CompletableFuture<Boolean> done = new CompletableFuture<Boolean>();
-		this.taskRunner.schedule(new Task()
-		{
-			@Override
-			public void execute()
-			{
-				finish = new Boolean(true);
-				done.complete(new Boolean(true));
-			}
-		});
+		this.taskRunner.schedule(
+				new Task()
+				{
+					@Override
+					public void execute()
+					{
+						finish = new Boolean(
+								true
+						);
+						done.complete(
+								new Boolean(
+										true
+								)
+						);
+					}
+				}
+		);
 		Boolean result = done.get();
-		assert result.equals(new Boolean(true));
+		assert result.equals(
+				new Boolean(
+						true
+				)
+		);
 	}
 
 	public void finish() throws InterruptedException, ExecutionException
@@ -126,10 +140,42 @@ public class PaceMakerImpl implements PaceMaker
 			{
 				break;
 			}
-			Thread.sleep(100);
+			Thread.sleep(
+					100
+			);
 		}
 		this.teardown();
-		this.finished = new Boolean(true);
+		this.finished = new Boolean(
+				true
+		);
+	}
+
+	public void addTransactions(
+			Set<ObjectId> transactionIds
+	)
+	{
+		this.taskRunner.schedule(
+				new Task()
+				{
+					@Override
+					public void execute()
+					{
+						waitingTransactions.addAll(
+								transactionIds
+						);
+						if (
+							finish.equals(
+									new Boolean(
+											false
+									)
+							)
+						)
+						{
+							scheduleUpToTheLimit();
+						}
+					}
+				}
+		);
 	}
 
 	void schedule(
@@ -180,8 +226,9 @@ public class PaceMakerImpl implements PaceMaker
 			this.waitingTransactions.size() > 0 && this.runningTransactions.size() < this.numRunningPace
 		)
 		{
-			ObjectId transactionId = this.waitingTransactions.remove(
-					0
+			ObjectId transactionId = this.waitingTransactions.first();
+			this.waitingTransactions.remove(
+					transactionId
 			);
 			this.runningTransactions.add(
 					transactionId
@@ -221,17 +268,21 @@ public class PaceMakerImpl implements PaceMaker
 	@Override
 	public Integer getNumFinished()
 	{
-		assert this.finished.equals(new Boolean(true));
+		assert this.finished.equals(
+				new Boolean(
+						true
+				)
+		);
 		return this.numFinished;
 	}
-	
+
 	Boolean finish;
 	Boolean finished;
 	TaskRunner taskRunner;
 	Thread taskRunnerThread;
 	Integer numFinished;
 	final String name;
-	List<ObjectId> waitingTransactions;
+	TreeSet<ObjectId> waitingTransactions;
 	Set<ObjectId> runningTransactions;
 	final Integer numRunningPace;
 	TransactionProcessor transactionProcessor;

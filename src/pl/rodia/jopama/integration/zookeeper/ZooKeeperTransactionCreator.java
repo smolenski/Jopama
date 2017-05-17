@@ -80,7 +80,7 @@ public class ZooKeeperTransactionCreator extends ZooKeeperActorBase
 			}
 
 			zooKeeperProvider.zooKeeper.getChildren(
-					ZooKeeperHelpers.getBasePath(),
+					ZooKeeperHelpers.getTransactionBasePath(),
 					null,
 					new Children2Callback()
 					{
@@ -100,25 +100,14 @@ public class ZooKeeperTransactionCreator extends ZooKeeperActorBase
 											@Override
 											public void execute()
 											{
-												Integer numTransactions = new Integer(
-														0
-												);
 												for (String fileName : children)
 												{
-													String transactionPrefix = "Transaction_";
-													if (
-														fileName.startsWith(
-																transactionPrefix
-														)
-													)
-													{
-														numTransactions = new Integer(
-																numTransactions + 1
-														);
-													}
+													assert (fileName.startsWith(
+															ZooKeeperObjectId.transactionPrefix
+													));
 												}
 												tryToPerformCont(
-														numTransactions
+														children.size()
 												);
 											}
 										}
@@ -142,7 +131,11 @@ public class ZooKeeperTransactionCreator extends ZooKeeperActorBase
 		{
 			Long componentId = this.firstComponentId + (this.random.nextLong() % this.numComponents);
 			transactionComponents.put(
-					new ZooKeeperObjectId(ZooKeeperObjectId.getComponentUniqueName(componentId)),
+					new ZooKeeperObjectId(
+							ZooKeeperObjectId.getComponentUniqueName(
+									componentId
+							)
+					),
 					new TransactionComponent(
 							null,
 							ComponentPhase.INITIAL
@@ -180,7 +173,9 @@ public class ZooKeeperTransactionCreator extends ZooKeeperActorBase
 		{
 			Long transactionId = this.random.nextLong();
 			ZooKeeperObjectId zooKeeperObjectId = new ZooKeeperObjectId(
-					ZooKeeperObjectId.getTransactionUniqueName(transactionId)
+					ZooKeeperObjectId.getTransactionUniqueName(
+							transactionId
+					)
 			);
 			ZooKeeperProvider zooKeeperProvider = this.zooKeeperMultiProvider.getResponsibleProvider(
 					zooKeeperObjectId.getClusterId(
@@ -202,7 +197,9 @@ public class ZooKeeperTransactionCreator extends ZooKeeperActorBase
 					Transaction transaction = this.generateTransaction(
 							transactionId
 					);
-					byte[] serializedTransaction = ZooKeeperHelpers.serializeTransaction(transaction);
+					byte[] serializedTransaction = ZooKeeperHelpers.serializeTransaction(
+							transaction
+					);
 					zooKeeperProvider.zooKeeper.create(
 							ZooKeeperHelpers.getTransactionPath(
 									zooKeeperObjectId

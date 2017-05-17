@@ -22,7 +22,7 @@ public class ZooKeeperStorageAccess
 	}
 
 	private ZooKeeperObjectId tryToCreateObject(
-			ZooKeeperObjectId objectId, byte[] data
+			ZooKeeperObjectId objectId, String path, byte[] data
 	)
 	{
 		ZooKeeperProvider zooKeeperProvider = this.zooKeeperMultiProvider.getResponsibleProvider(
@@ -48,9 +48,7 @@ public class ZooKeeperStorageAccess
 							"zooKeeper.create calling"
 					);
 					String result = zooKeeperProvider.zooKeeper.create(
-							ZooKeeperHelpers.getPath(
-									objectId
-							),
+							path,
 							data,
 							Ids.OPEN_ACL_UNSAFE,
 							CreateMode.PERSISTENT
@@ -77,7 +75,7 @@ public class ZooKeeperStorageAccess
 	}
 
 	public ZooKeeperObjectId createObject(
-			ZooKeeperObjectId objectId, byte[] data
+			ZooKeeperObjectId objectId, String path, byte[] data
 	)
 	{
 		for (int i = 0; i < ZooKeeperStorageAccess.NUM_TRIES.intValue(); ++i)
@@ -85,15 +83,17 @@ public class ZooKeeperStorageAccess
 			logger.debug(
 					"zooKeeper.createObject (try: " + i + ")"
 			);
-			ZooKeeperObjectId path = this.tryToCreateObject(
+			ZooKeeperObjectId result = this.tryToCreateObject(
 					objectId,
+					path,
 					data
 			);
 			if (
-				path != null
+				result != null
 			)
 			{
-				return path;
+				assert objectId.equals(result);
+				return objectId;
 			}
 			try
 			{
@@ -112,7 +112,8 @@ public class ZooKeeperStorageAccess
 	}
 
 	private ExtendedData tryToReadObject(
-			ZooKeeperObjectId objectId
+			ZooKeeperObjectId objectId,
+			String path
 	)
 	{
 		ZooKeeperProvider zooKeeperProvider = this.zooKeeperMultiProvider.getResponsibleProvider(
@@ -134,9 +135,6 @@ public class ZooKeeperStorageAccess
 			{
 				try
 				{
-					String path = ZooKeeperHelpers.getPath(
-							objectId
-					);
 					logger.debug(
 							"zooKeeper.readObject calling (path: " + path + ")"
 					);
@@ -171,7 +169,8 @@ public class ZooKeeperStorageAccess
 	}
 
 	public ExtendedData readObject(
-			ZooKeeperObjectId objectId
+			ZooKeeperObjectId objectId,
+			String path
 	)
 	{
 		for (int i = 0; i < ZooKeeperStorageAccess.NUM_TRIES.intValue(); ++i)
@@ -180,7 +179,8 @@ public class ZooKeeperStorageAccess
 					"zooKeeper.readObject (try: " + i + ")"
 			);
 			ExtendedData data = this.tryToReadObject(
-					objectId
+					objectId,
+					path
 			);
 			if (
 				data != null

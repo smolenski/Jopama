@@ -82,6 +82,6 @@ public class Integrator
 	LocalStorage localStorage;
 	TransactionAnalyzer transactionAnalyzer;
 	TransactionProcessor transactionProcessor;
-	PaceMaker paceMaker;
+	public PaceMaker paceMaker;
 	static final Logger logger = LogManager.getLogger();
 }

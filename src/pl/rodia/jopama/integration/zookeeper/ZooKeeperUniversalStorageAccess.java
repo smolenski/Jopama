@@ -34,6 +34,7 @@ public class ZooKeeperUniversalStorageAccess extends UniversalStorageAccess
 		);
 		return this.zooKeeperStorageAccess.createObject(
 				zooKeeperObjectId,
+				ZooKeeperHelpers.getComponentPath(zooKeeperObjectId),
 				ZooKeeperHelpers.serializeComponent(
 						extendedComponent.component
 				)
@@ -57,6 +58,7 @@ public class ZooKeeperUniversalStorageAccess extends UniversalStorageAccess
 		);
 		return this.zooKeeperStorageAccess.createObject(
 				zooKeeperObjectId,
+				ZooKeeperHelpers.getTransactionPath(zooKeeperObjectId),
 				ZooKeeperHelpers.serializeTransaction(
 						extendedTransaction.transaction
 				)
@@ -70,8 +72,10 @@ public class ZooKeeperUniversalStorageAccess extends UniversalStorageAccess
 			ObjectId objectId
 	)
 	{
+		ZooKeeperObjectId zooKeeperObjectId = (ZooKeeperObjectId) objectId;
 		ExtendedData extendedData = this.zooKeeperStorageAccess.readObject(
-				(ZooKeeperObjectId) objectId
+				zooKeeperObjectId,
+				ZooKeeperHelpers.getComponentPath(zooKeeperObjectId)
 		);
 		if (
 			extendedData == null
@@ -95,8 +99,10 @@ public class ZooKeeperUniversalStorageAccess extends UniversalStorageAccess
 			ObjectId objectId
 	)
 	{
+		ZooKeeperObjectId zooKeeperObjectId = (ZooKeeperObjectId) objectId;
 		ExtendedData extendedData = this.zooKeeperStorageAccess.readObject(
-				(ZooKeeperObjectId) objectId
+				zooKeeperObjectId,
+				ZooKeeperHelpers.getTransactionPath(zooKeeperObjectId)
 		);
 		if (
 			extendedData == null

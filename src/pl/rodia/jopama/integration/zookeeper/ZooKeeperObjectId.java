@@ -103,14 +103,16 @@ public class ZooKeeperObjectId extends ObjectId implements Serializable
 	
 	static public String getComponentUniqueName(Long componentId)
 	{
-		return String.format("Component_%020d", componentId); 
+		return String.format("%s_%020d", componentPrefix, componentId);
 	}
 	
 	static public String getTransactionUniqueName(Long transactionId)
 	{
-		return String.format("Transaction_%020d", transactionId); 
+		return String.format("%s_%020d", transactionPrefix, transactionId);
 	}
 	
 	String uniqueName;
+	static String componentPrefix = "Component_";
+	static String transactionPrefix = "Transaction_";
 	private static final long serialVersionUID = -1667024543558371506L;
 }
