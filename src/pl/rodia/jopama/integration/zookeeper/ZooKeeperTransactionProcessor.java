@@ -19,7 +19,7 @@ public class ZooKeeperTransactionProcessor extends ZooKeeperActorBase
 {
 
 	public ZooKeeperTransactionProcessor(
-			String addresses, Integer clusterSize, Integer clusterId
+			String addresses, Integer clusterSize, Integer clusterId, Integer numOutstanding
 	)
 	{
 		super(
@@ -34,7 +34,7 @@ public class ZooKeeperTransactionProcessor extends ZooKeeperActorBase
 		this.integratorZooKeeperStorageGateway = new ZooKeeperStorageGateway(
 				zooKeeperMultiProvider
 		);
-		this.integrator = new Integrator("Integrator", this.integratorZooKeeperStorageGateway, new LinkedList<ObjectId>(), 20);
+		this.integrator = new Integrator("Integrator", this.integratorZooKeeperStorageGateway, new LinkedList<ObjectId>(), numOutstanding);
 	}
 	
 	@Override

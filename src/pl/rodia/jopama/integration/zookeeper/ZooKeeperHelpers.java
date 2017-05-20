@@ -17,12 +17,12 @@ public class ZooKeeperHelpers
 
 	static String getTransactionBasePath()
 	{
-		return "/Transactions/";
+		return "/Transactions";
 	}
 
 	static String getComponentBasePath()
 	{
-		return "/Components/";
+		return "/Components";
 	}
 
 	static String getPath(
@@ -30,7 +30,7 @@ public class ZooKeeperHelpers
 			ZooKeeperObjectId objectId
 	)
 	{
-		return basePath + objectId.uniqueName;
+		return basePath + "/" + objectId.uniqueName;
 	}
 
 	static ZooKeeperObjectId getIdFromPath(

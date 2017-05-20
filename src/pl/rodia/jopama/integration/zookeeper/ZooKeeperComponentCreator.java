@@ -46,7 +46,8 @@ public class ZooKeeperComponentCreator extends ZooKeeperActorBase
 		logger.info("tryToPerform");
 		for (long i = this.firstComponentId; i < this.firstComponentId + this.numComponents; ++i)
 		{
-
+			assert i < Integer.MAX_VALUE;
+			Integer id = new Integer((int) i);
 			ZooKeeperObjectId zooKeeperObjectId = new ZooKeeperObjectId(
 					ZooKeeperObjectId.getComponentUniqueName(i)
 			);
@@ -67,7 +68,7 @@ public class ZooKeeperComponentCreator extends ZooKeeperActorBase
 				}
 				else
 				{
-					Component component = new Component(new Integer(0), null, new Integer(0), null);
+					Component component = new Component(new Integer(0), null, new Integer(id), null);
 					byte[] serializedComponent = ZooKeeperHelpers.serializeComponent(component);
 					zooKeeperProvider.zooKeeper.create(
 							ZooKeeperHelpers.getComponentPath(zooKeeperObjectId),

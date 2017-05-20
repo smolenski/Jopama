@@ -253,6 +253,7 @@ public class TransactionProcessorImpl extends TransactionProcessor
 					ErrorCode errorCode
 			)
 			{
+				logger.debug("Failure, transactionId: " + transactionId + " componentId: " + componentId + " errorCode: " + errorCode);
 				assert errorCode != ErrorCode.NOT_EXISTS;
 			}
 		};

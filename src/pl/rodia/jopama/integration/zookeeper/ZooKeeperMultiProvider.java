@@ -49,7 +49,7 @@ public class ZooKeeperMultiProvider
 	)
 	{
 		return this.zooKeeperProvideers.get(
-				id % this.zooKeeperProvideers.size()
+				Math.floorMod(id, this.zooKeeperProvideers.size())
 		);
 	}
 	

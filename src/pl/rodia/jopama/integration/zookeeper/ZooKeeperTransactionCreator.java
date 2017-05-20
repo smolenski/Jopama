@@ -129,7 +129,7 @@ public class ZooKeeperTransactionCreator extends ZooKeeperActorBase
 			transactionComponents.size() < this.numComponentsInTransaction
 		)
 		{
-			Long componentId = this.firstComponentId + (this.random.nextLong() % this.numComponents);
+			Long componentId = this.firstComponentId + Math.floorMod(this.random.nextLong(), this.numComponents);
 			transactionComponents.put(
 					new ZooKeeperObjectId(
 							ZooKeeperObjectId.getComponentUniqueName(
@@ -171,7 +171,7 @@ public class ZooKeeperTransactionCreator extends ZooKeeperActorBase
 
 		for (int i = 0; i < numFilesToCreate; ++i)
 		{
-			Long transactionId = this.random.nextLong();
+			Long transactionId = Math.abs(this.random.nextLong());
 			ZooKeeperObjectId zooKeeperObjectId = new ZooKeeperObjectId(
 					ZooKeeperObjectId.getTransactionUniqueName(
 							transactionId

@@ -5,10 +5,7 @@ import java.util.concurrent.ExecutionException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import pl.rodia.mpf.Task;
-import pl.rodia.mpf.TaskRunner;
-
-public class ZooKeeperTransactionCreatorRunner
+public class ZooKeeperTransactionCreatorRunner extends ZooKeeperSyncedRunner
 {
 
 	public ZooKeeperTransactionCreatorRunner(
@@ -21,87 +18,14 @@ public class ZooKeeperTransactionCreatorRunner
 			Long numComponentsInTransaction
 	)
 	{
-		super();
-		this.finished = new Boolean(
-				false
-		);
-		this.taskRunner = new TaskRunner(
-				"ZooKeeperTransactionCreatorRunner"
-		);
-		this.taskRunnerThread = new Thread(
-				this.taskRunner
-		);
-		this.addresses = addresses;
-		this.clusterSize = clusterSize;
-		this.startFinishDir = startFinishDir;
+		super(addresses, clusterSize, startFinishDir);
 		this.desiredOutstandingTransactionsNum = desiredOutstandingTransactionsNum;
 		this.firstComponentId = firstComponentId;
 		this.numComponents = numComponents;
 		this.numComponentsInTransaction = numComponentsInTransaction;
-		this.init();
 	}
 
-	void init()
-	{
-		this.taskRunnerThread.start();
-		this.startFinishDetector = new ZooKeeperDirChangesDetector(
-				this.addresses,
-				this.clusterSize,
-				new Integer(
-						0
-				),
-				this.startFinishDir,
-				new StartFinishDetector(
-						new Task()
-						{
-							@Override
-							public void execute()
-							{
-								taskRunner.schedule(
-										new Task()
-										{
-
-											@Override
-											public void execute()
-											{
-												logger.info(
-														"ZooKeeperTransactionCreatorRunner::Observer::Start detected"
-												);
-												start();
-											}
-										}
-								);
-							}
-						},
-						new Task()
-						{
-
-							@Override
-							public void execute()
-							{
-								taskRunner.schedule(
-										new Task()
-										{
-
-											@Override
-											public void execute()
-											{
-												logger.info(
-														"ZooKeeperTransactionCreatorRunner::Observer::Finish detected"
-												);
-												finish();
-
-											}
-										}
-								);
-							}
-						}
-				)
-		);
-		this.startFinishDetector.start();
-	}
-
-	void start()
+	void startDetected()
 	{
 		logger.info(
 				"ZooKeeperTransactionCreatorRunner::start"
@@ -117,7 +41,7 @@ public class ZooKeeperTransactionCreatorRunner
 		this.transactionCreator.start();
 	}
 
-	void finish()
+	void finishDetected()
 	{
 		try
 		{
@@ -131,65 +55,13 @@ public class ZooKeeperTransactionCreatorRunner
 		{
 			e.printStackTrace();
 		}
-		try
-		{
-			this.startFinishDetector.finish();
-		}
-		catch (InterruptedException e)
-		{
-			e.printStackTrace();
-		}
-		catch (ExecutionException e)
-		{
-			e.printStackTrace();
-		}
-		synchronized (this)
-		{
-			this.finished = new Boolean(
-					true
-			);
-		}
+		this.finish();
 	}
 
-	void waitForFinish() throws InterruptedException
-	{
-		synchronized (this)
-		{
-			while (
-				this.finished.equals(
-						false
-				)
-			)
-			{
-				this.wait(
-						1000
-				);
-			}
-		}
-		this.taskRunner.finish();
-		try
-		{
-			this.taskRunnerThread.join();
-		}
-		catch (InterruptedException e)
-		{
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-	}
-
-	Boolean finished;
-	TaskRunner taskRunner;
-	Thread taskRunnerThread;
-	String addresses;
-	Integer clusterSize;
-	String startFinishDir;
 	Integer desiredOutstandingTransactionsNum;
 	Long firstComponentId;
 	Long numComponents;
 	Long numComponentsInTransaction;
-	ZooKeeperActorBase startFinishDetector;
 	ZooKeeperTransactionCreator transactionCreator;
 	static final Logger logger = LogManager.getLogger();
 
@@ -226,6 +98,7 @@ public class ZooKeeperTransactionCreatorRunner
 				numComponents,
 				numComponentsInTransaction
 		);
+		transactionCreatorRunner.start();
 		try
 		{
 			transactionCreatorRunner.waitForFinish();

@@ -12,6 +12,7 @@
 	<property name="tests.integration.confPerf.dir" value="tests/integration/confPerf" />
 	<property name="componentCreator.class" value="pl.rodia.jopama.integration.zookeeper.ZooKeeperComponentCreator" />
 	<property name="transactionCreator.class" value="pl.rodia.jopama.integration.zookeeper.ZooKeeperTransactionCreatorRunner" />
+	<property name="transactionProcessor.class" value="pl.rodia.jopama.integration.zookeeper.ZooKeeperTransactionProcessorRunner" />
 
 	<path id="libraries">
 		<fileset dir="${basedir}/../../lib/" includes="**/*.jar" />
@@ -185,6 +186,18 @@
 	<target name="runTC" depends="jar">
 		<java fork="true" classname="${transactionCreator.class}">
 			<arg line="127.0.0.1:2181 1 /StartFinish 10 100 100 10" />
+			<jvmarg value="-ea" />
+			<classpath>
+				<path refid="libraries" />
+				<path refid="application" />
+				<pathelement path="${basedir}" />
+			</classpath>
+		</java>
+	</target>
+
+	<target name="runTP" depends="jar">
+		<java fork="true" classname="${transactionProcessor.class}">
+			<arg line="127.0.0.1:2181 1 /StartFinish 0 5" />
 			<jvmarg value="-ea" />
 			<classpath>
 				<path refid="libraries" />
