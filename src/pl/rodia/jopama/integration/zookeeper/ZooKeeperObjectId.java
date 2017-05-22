@@ -1,6 +1,7 @@
 package pl.rodia.jopama.integration.zookeeper;
 
 import java.io.Serializable;
+import java.util.Random;
 
 import pl.rodia.jopama.data.ObjectId;
 
@@ -96,11 +97,35 @@ public class ZooKeeperObjectId extends ObjectId implements Serializable
 		);
 	}
 	
-	public Integer getClusterId(Integer numClusters)
+	public Long getId()
 	{
-		return new Integer(Math.floorMod(this.hashCode(), numClusters));
+		assert this.uniqueName.indexOf('_') + 21 == this.uniqueName.length();
+		String numStr = this.uniqueName.substring(this.uniqueName.length() - 21);
+		Long numValue = Long.parseLong(numStr);
+		return numValue;
 	}
 	
+	public Integer getClusterId(Integer numClusters)
+	{
+		return getClusterId(this.getId(), numClusters);
+	}
+	
+	static public Integer getClusterId(Long id, Integer numClusters)
+	{
+		Long clusterId = Math.floorMod(id, new Long(numClusters));
+		assert clusterId <= Integer.MAX_VALUE;
+		return new Integer(clusterId.intValue());
+	}
+	
+	static public Long getRandomIdForCluster(Random random, Integer clusterId, Integer numClusters)
+	{
+		Long rid = random.nextLong();
+		Long mod = Math.floorMod(rid, new Long(numClusters));
+		Long id = rid + clusterId + numClusters - mod;
+		assert getClusterId(id, numClusters).equals(new Integer(clusterId));
+		return new Long(id);
+	}
+		
 	static public String getComponentUniqueName(Long componentId)
 	{
 		return String.format("%s_%020d", componentPrefix, componentId);

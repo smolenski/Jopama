@@ -46,7 +46,7 @@ public class ZooKeeperComponentCreator extends ZooKeeperActorBase
 		logger.info("tryToPerform");
 		for (long i = this.firstComponentId; i < this.firstComponentId + this.numComponents; ++i)
 		{
-			assert i < Integer.MAX_VALUE;
+			assert i <= Integer.MAX_VALUE;
 			Integer id = new Integer((int) i);
 			ZooKeeperObjectId zooKeeperObjectId = new ZooKeeperObjectId(
 					ZooKeeperObjectId.getComponentUniqueName(i)
