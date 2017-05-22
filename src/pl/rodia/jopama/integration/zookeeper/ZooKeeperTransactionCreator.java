@@ -28,6 +28,7 @@ public class ZooKeeperTransactionCreator extends ZooKeeperActorBase
 	public ZooKeeperTransactionCreator(
 			String addresses,
 			Integer clusterSize,
+			Integer clusterId,
 			Integer desiredOutstandingTransactionsNum,
 			Long firstComponentId,
 			Long numComponents,
@@ -38,6 +39,7 @@ public class ZooKeeperTransactionCreator extends ZooKeeperActorBase
 				addresses,
 				clusterSize
 		);
+		this.clusterId = clusterId;
 		this.desiredOutstandingTransactionsNum = desiredOutstandingTransactionsNum;
 		this.seed = new Long(
 				System.currentTimeMillis()
@@ -63,9 +65,7 @@ public class ZooKeeperTransactionCreator extends ZooKeeperActorBase
 	public void tryToPerform()
 	{
 		ZooKeeperProvider zooKeeperProvider = zooKeeperMultiProvider.getResponsibleProvider(
-				new Integer(
-						this.random.nextInt()
-				)
+				this.clusterId
 		);
 		synchronized (zooKeeperProvider)
 		{
@@ -129,7 +129,10 @@ public class ZooKeeperTransactionCreator extends ZooKeeperActorBase
 			transactionComponents.size() < this.numComponentsInTransaction
 		)
 		{
-			Long componentId = this.firstComponentId + Math.floorMod(this.random.nextLong(), this.numComponents);
+			Long componentId = this.firstComponentId + Math.floorMod(
+					this.random.nextLong(),
+					this.numComponents
+			);
 			transactionComponents.put(
 					new ZooKeeperObjectId(
 							ZooKeeperObjectId.getComponentUniqueName(
@@ -171,16 +174,25 @@ public class ZooKeeperTransactionCreator extends ZooKeeperActorBase
 
 		for (int i = 0; i < numFilesToCreate; ++i)
 		{
-			Long transactionId = Math.abs(this.random.nextLong());
+			Long transactionId = ZooKeeperObjectId.getRandomIdForCluster(
+					this.random,
+					this.clusterId,
+					this.zooKeeperMultiProvider.getNumClusters()
+			);
 			ZooKeeperObjectId zooKeeperObjectId = new ZooKeeperObjectId(
 					ZooKeeperObjectId.getTransactionUniqueName(
 							transactionId
 					)
 			);
-			ZooKeeperProvider zooKeeperProvider = this.zooKeeperMultiProvider.getResponsibleProvider(
-					zooKeeperObjectId.getClusterId(
-							this.zooKeeperMultiProvider.getNumClusters()
+			assert zooKeeperObjectId.getClusterId(
+					this.zooKeeperMultiProvider.getNumClusters()
+			).equals(
+					new Integer(
+							this.clusterId
 					)
+			);
+			ZooKeeperProvider zooKeeperProvider = this.zooKeeperMultiProvider.getResponsibleProvider(
+					this.clusterId
 			);
 			synchronized (zooKeeperProvider)
 			{
@@ -226,6 +238,7 @@ public class ZooKeeperTransactionCreator extends ZooKeeperActorBase
 		}
 	}
 
+	Integer clusterId;
 	Integer desiredOutstandingTransactionsNum;
 	Long seed;
 	Random random;

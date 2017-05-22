@@ -12,6 +12,7 @@ public class ZooKeeperTransactionCreatorRunner extends ZooKeeperSyncedRunner
 			String addresses,
 			Integer clusterSize,
 			String startFinishDir,
+			Integer clusterId,
 			Integer desiredOutstandingTransactionsNum,
 			Long firstComponentId,
 			Long numComponents,
@@ -19,6 +20,7 @@ public class ZooKeeperTransactionCreatorRunner extends ZooKeeperSyncedRunner
 	)
 	{
 		super(addresses, clusterSize, startFinishDir);
+		this.clusterId = clusterId;
 		this.desiredOutstandingTransactionsNum = desiredOutstandingTransactionsNum;
 		this.firstComponentId = firstComponentId;
 		this.numComponents = numComponents;
@@ -33,6 +35,7 @@ public class ZooKeeperTransactionCreatorRunner extends ZooKeeperSyncedRunner
 		this.transactionCreator = new ZooKeeperTransactionCreator(
 				this.addresses,
 				this.clusterSize,
+				this.clusterId,
 				this.desiredOutstandingTransactionsNum,
 				this.firstComponentId,
 				this.numComponents,
@@ -58,6 +61,7 @@ public class ZooKeeperTransactionCreatorRunner extends ZooKeeperSyncedRunner
 		this.finish();
 	}
 
+	Integer clusterId;
 	Integer desiredOutstandingTransactionsNum;
 	Long firstComponentId;
 	Long numComponents;
@@ -69,7 +73,7 @@ public class ZooKeeperTransactionCreatorRunner extends ZooKeeperSyncedRunner
 			String[] args
 	)
 	{
-		assert (args.length == 7);
+		assert (args.length == 8);
 		String addresses = args[0];
 		Integer clusterSize = new Integer(
 				Integer.parseInt(
@@ -77,22 +81,28 @@ public class ZooKeeperTransactionCreatorRunner extends ZooKeeperSyncedRunner
 				)
 		);
 		String startFinishDir = args[2];
-		Integer desiredOutstandingTransactionsNum = Integer.parseInt(
-				args[3]
+		Integer clusterId = new Integer(
+				Integer.parseInt(
+						args[3]
+				)
 		);
-		Long firstComponentId = Long.parseLong(
+		Integer desiredOutstandingTransactionsNum = Integer.parseInt(
 				args[4]
 		);
-		Long numComponents = Long.parseLong(
+		Long firstComponentId = Long.parseLong(
 				args[5]
 		);
-		Long numComponentsInTransaction = Long.parseLong(
+		Long numComponents = Long.parseLong(
 				args[6]
+		);
+		Long numComponentsInTransaction = Long.parseLong(
+				args[7]
 		);
 		ZooKeeperTransactionCreatorRunner transactionCreatorRunner = new ZooKeeperTransactionCreatorRunner(
 				addresses,
 				clusterSize,
 				startFinishDir,
+				clusterId,
 				desiredOutstandingTransactionsNum,
 				firstComponentId,
 				numComponents,

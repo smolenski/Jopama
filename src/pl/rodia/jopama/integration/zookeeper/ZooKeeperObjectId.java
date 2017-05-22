@@ -3,6 +3,9 @@ package pl.rodia.jopama.integration.zookeeper;
 import java.io.Serializable;
 import java.util.Random;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import pl.rodia.jopama.data.ObjectId;
 
 public class ZooKeeperObjectId extends ObjectId implements Serializable
@@ -100,7 +103,7 @@ public class ZooKeeperObjectId extends ObjectId implements Serializable
 	public Long getId()
 	{
 		assert this.uniqueName.indexOf('_') + 21 == this.uniqueName.length();
-		String numStr = this.uniqueName.substring(this.uniqueName.length() - 21);
+		String numStr = this.uniqueName.substring(this.uniqueName.length() - 20);
 		Long numValue = Long.parseLong(numStr);
 		return numValue;
 	}
@@ -137,7 +140,8 @@ public class ZooKeeperObjectId extends ObjectId implements Serializable
 	}
 	
 	String uniqueName;
-	static String componentPrefix = "Component_";
-	static String transactionPrefix = "Transaction_";
+	static String componentPrefix = "Component";
+	static String transactionPrefix = "Transaction";
+	static final Logger logger = LogManager.getLogger();
 	private static final long serialVersionUID = -1667024543558371506L;
 }
