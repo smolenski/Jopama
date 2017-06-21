@@ -10,6 +10,8 @@
 	<property name="tests.integration.basic.dir" value="tests/integration/basic" />
 	<property name="tests.integration.nonConfPerf.dir" value="tests/integration/nonConfPerf" />
 	<property name="tests.integration.confPerf.dir" value="tests/integration/confPerf" />
+	<property name="tests.perf.dir.tp" value="tests/perf/TP" />
+	<property name="tests.perf.dir.tc" value="tests/perf/TC" />
 	<property name="componentCreator.class" value="pl.rodia.jopama.integration.zookeeper.ZooKeeperComponentCreator" />
 	<property name="transactionCreator.class" value="pl.rodia.jopama.integration.zookeeper.ZooKeeperTransactionCreatorRunner" />
 	<property name="transactionProcessor.class" value="pl.rodia.jopama.integration.zookeeper.ZooKeeperTransactionProcessorRunner" />
@@ -36,6 +38,8 @@
 		<mkdir dir="${tests.integration.basic.dir}" />
 		<mkdir dir="${tests.integration.nonConfPerf.dir}" />
 		<mkdir dir="${tests.integration.confPerf.dir}" />
+		<mkdir dir="${tests.perf.dir.tp}" />
+		<mkdir dir="${tests.perf.dir.tc}" />
 		<javac srcdir="${src.dir}" destdir="${classes.dir}" classpathref="libraries" includeantruntime="true" debug="true" />
 	</target>
 
@@ -173,7 +177,7 @@
 
 	<target name="runCC" depends="jar">
 		<java fork="true" classname="${componentCreator.class}">
-			<arg line="127.0.0.1:2181 1 100 100" />
+			<arg line="CC 127.0.0.1:2181 1 100 100" />
 			<jvmarg value="-ea" />
 			<classpath>
 				<path refid="libraries" />
@@ -184,8 +188,8 @@
 	</target>
 	
 	<target name="runTC" depends="jar">
-		<java fork="true" classname="${transactionCreator.class}">
-			<arg line="127.0.0.1:2181 1 /StartFinish 0 10 100 100 10" />
+		<java fork="true" dir="${tests.perf.dir.tc}" classname="${transactionCreator.class}">
+			<arg line="TC 127.0.0.1:2181 1 /StartFinish 0 10 100 100 10" />
 			<jvmarg value="-ea" />
 			<classpath>
 				<path refid="libraries" />
@@ -196,8 +200,8 @@
 	</target>
 
 	<target name="runTP" depends="jar">
-		<java fork="true" classname="${transactionProcessor.class}">
-			<arg line="127.0.0.1:2181 1 /StartFinish 0 5" />
+		<java fork="true" dir="${tests.perf.dir.tp}" classname="${transactionProcessor.class}">
+			<arg line="TP 127.0.0.1:2181 1 /StartFinish 0 5" />
 			<jvmarg value="-ea" />
 			<classpath>
 				<path refid="libraries" />

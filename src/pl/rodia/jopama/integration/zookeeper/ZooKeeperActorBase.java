@@ -12,6 +12,7 @@ public abstract class ZooKeeperActorBase
 {
 
 	public ZooKeeperActorBase(
+			String id,
 			String addresses,
 			Integer clusterSize
 	)
@@ -21,6 +22,7 @@ public abstract class ZooKeeperActorBase
 				false
 		);
 		this.scheduledTaskId = null;
+		this.id = id;
 		this.zooKeeperMultiProvider = new ZooKeeperMultiProvider(
 				addresses,
 				clusterSize
@@ -103,14 +105,18 @@ public abstract class ZooKeeperActorBase
 
 	public void finish() throws InterruptedException, ExecutionException
 	{
+		logger.info(this.id + " finish");
 		synchronized (this)
 		{
 			this.finish = new Boolean(
 					true
 			);
 		}
+		logger.info(this.id + " waiting for task runner");
 		this.taskRunner.finish();
+		logger.info(this.id + " waiting for thread");
 		this.taskRunnerThread.join();
+		logger.info(this.id + " waiting for zoo keeper multi provider");
 		this.zooKeeperMultiProvider.finish();
 	}
 
@@ -190,7 +196,7 @@ public abstract class ZooKeeperActorBase
 	public void tryToPerformWrapped()
 	{
 		logger.info(
-				"tryToPerformWrapped start"
+			this.id + " tryToPerformWrapped start"
 		);
 		this.scheduledTaskId = null;
 		synchronized (this)
@@ -204,7 +210,7 @@ public abstract class ZooKeeperActorBase
 			)
 			{
 				logger.info(
-						"tryToPerformWrapped not calling tryToPerform, because finish"
+					this.id + " tryToPerformWrapped not calling tryToPerform, because finish"
 				);
 				return;
 			}
@@ -219,6 +225,7 @@ public abstract class ZooKeeperActorBase
 
 	Boolean finish;
 	Integer scheduledTaskId;
+	String id;
 	String dir;
 	DirChangesObserver dirChangesObserver;
 	ZooKeeperMultiProvider zooKeeperMultiProvider;

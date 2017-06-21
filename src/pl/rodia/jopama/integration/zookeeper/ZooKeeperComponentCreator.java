@@ -15,10 +15,15 @@ public class ZooKeeperComponentCreator extends ZooKeeperActorBase
 {
 
 	public ZooKeeperComponentCreator(
-			String addresses, Integer clusterSize, Long firstComponentId, Long numComponents
+			String id,
+			String addresses,
+			Integer clusterSize,
+			Long firstComponentId,
+			Long numComponents
 	)
 	{
 		super(
+				id,
 				addresses,
 				clusterSize
 		);
@@ -164,18 +169,20 @@ public class ZooKeeperComponentCreator extends ZooKeeperActorBase
 			String[] args
 	)
 	{
-		assert (args.length == 4);
-		String addresses = args[0];
+		assert (args.length == 5);
+		String id = args[0];
+		String addresses = args[1];
 		Integer clusterSize = Integer.parseInt(
-				args[1]
-		);
-		Long firstComponentId = Long.parseLong(
 				args[2]
 		);
-		Long numComponents = Long.parseLong(
+		Long firstComponentId = Long.parseLong(
 				args[3]
 		);
+		Long numComponents = Long.parseLong(
+				args[4]
+		);
 		ZooKeeperComponentCreator componentCreator = new ZooKeeperComponentCreator(
+				id,
 				addresses,
 				clusterSize,
 				firstComponentId,

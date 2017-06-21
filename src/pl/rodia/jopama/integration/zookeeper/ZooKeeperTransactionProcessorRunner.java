@@ -1,5 +1,6 @@
 package pl.rodia.jopama.integration.zookeeper;
 
+import java.util.Random;
 import java.util.concurrent.ExecutionException;
 
 import org.apache.logging.log4j.LogManager;
@@ -9,6 +10,7 @@ public class ZooKeeperTransactionProcessorRunner extends ZooKeeperSyncedRunner
 {
 
 	public ZooKeeperTransactionProcessorRunner(
+			String id,
 			String addresses,
 			Integer clusterSize,
 			String startFinishDir,
@@ -16,27 +18,28 @@ public class ZooKeeperTransactionProcessorRunner extends ZooKeeperSyncedRunner
 			Integer numOutstanding
 	)
 	{
-		super(addresses, clusterSize, startFinishDir);
+		super(id, addresses, clusterSize, startFinishDir);
 		this.clusterId = clusterId;
 		this.numOutstanding = numOutstanding;
 	}
 
 	void startDetected()
 	{
-		logger.info(
-				"ZooKeeperTransactionProcessorRunner::start"
-		);
+		logger.info(this.id + " start detected - starting");
 		this.transactionProcessor = new ZooKeeperTransactionProcessor(
+				this.id + "TransactionProcessor",
 				this.addresses,
 				this.clusterSize,
 				this.clusterId,
 				this.numOutstanding
 		);
 		this.transactionProcessor.start();
+		logger.info(this.id + " start detected - done");
 	}
 
 	void finishDetected()
 	{
+		logger.info(this.id + " finish detected - starting");
 		try
 		{
 			this.transactionProcessor.finish();
@@ -50,6 +53,27 @@ public class ZooKeeperTransactionProcessorRunner extends ZooKeeperSyncedRunner
 			e.printStackTrace();
 		}
 		this.finish();
+		logger.info(this.id + " finish detected - done");
+	}
+	
+	String getReadyPath()
+	{
+		return "/TP_READY/" + this.id;
+	}
+	
+	String getDonePath()
+	{
+		return "/TP_DONE/" + this.id;
+	}
+	
+	String getReadyString()
+	{
+		return "READY";
+	}
+	
+	String getDoneString()
+	{
+		return "DONE";
 	}
 
 	Integer clusterId;
@@ -61,21 +85,23 @@ public class ZooKeeperTransactionProcessorRunner extends ZooKeeperSyncedRunner
 			String[] args
 	)
 	{
-		assert (args.length == 5);
-		String addresses = args[0];
+		assert (args.length == 6);
+		String id = args[0];
+		String addresses = args[1];
 		Integer clusterSize = new Integer(
 				Integer.parseInt(
-						args[1]
+						args[2]
 				)
 		);
-		String startFinishDir = args[2];
+		String startFinishDir = args[3];
 		Integer clusterId = Integer.parseInt(
-				args[3]
-		);
-		Integer numOutstanding = Integer.parseInt(
 				args[4]
 		);
+		Integer numOutstanding = Integer.parseInt(
+				args[5]
+		);
 		ZooKeeperTransactionProcessorRunner transactionCreatorRunner = new ZooKeeperTransactionProcessorRunner(
+				id,
 				addresses,
 				clusterSize,
 				startFinishDir,

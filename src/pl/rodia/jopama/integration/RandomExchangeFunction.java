@@ -140,24 +140,6 @@ public class RandomExchangeFunction extends Function implements Serializable
 					valueExchange1
 			);
 		}
-		logger.debug(
-				"Function application: input values"
-		);
-		for (Map.Entry<ObjectId, Integer> entry : oldValues.entrySet())
-		{
-			logger.debug(
-					"INPUT (transactionId: " + this.transactionId + ") objectId: " + entry.getKey() + " value: " + entry.getValue()
-			);
-		}
-		logger.debug(
-				"Function application output values"
-		);
-		for (Map.Entry<ObjectId, Integer> entry : result.entrySet())
-		{
-			logger.debug(
-					"OUTPUT (transactionId: " + this.transactionId + ") objectId: " + entry.getKey() + " value: " + entry.getValue()
-			);
-		}
 		return result;
 	}
 

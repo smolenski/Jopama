@@ -104,12 +104,7 @@ public class TransactionProcessorImpl extends TransactionProcessor
 					entry.getKey()
 			);
 		}
-		if (
-			this.transactions.isEmpty() == false
-		)
-		{
-			this.scheduleProcessing();
-		}
+		this.scheduleProcessing();
 	}
 
 	public void scheduleProcessing()
@@ -117,6 +112,13 @@ public class TransactionProcessorImpl extends TransactionProcessor
 		logger.debug(
 				"executeScheduledProcessing - scheduling"
 		);
+		if (
+			this.transactions.isEmpty() == true
+		)
+		{
+			return;
+		}
+		assert(this.scheduledProcessingTaskId == null);
 		this.scheduledProcessingTaskId = this.taskRunner.schedule(
 				new Task()
 				{

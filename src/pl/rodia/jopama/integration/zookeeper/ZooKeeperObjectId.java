@@ -122,7 +122,7 @@ public class ZooKeeperObjectId extends ObjectId implements Serializable
 	
 	static public Long getRandomIdForCluster(Random random, Integer clusterId, Integer numClusters)
 	{
-		Long rid = random.nextLong();
+		Long rid = Math.abs(random.nextLong());
 		Long mod = Math.floorMod(rid, new Long(numClusters));
 		Long id = rid + clusterId + numClusters - mod;
 		assert getClusterId(id, numClusters).equals(new Integer(clusterId));

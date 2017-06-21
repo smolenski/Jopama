@@ -26,6 +26,7 @@ public class ZooKeeperTransactionCreator extends ZooKeeperActorBase
 {
 
 	public ZooKeeperTransactionCreator(
+			String id,
 			String addresses,
 			Integer clusterSize,
 			Integer clusterId,
@@ -36,6 +37,7 @@ public class ZooKeeperTransactionCreator extends ZooKeeperActorBase
 	)
 	{
 		super(
+				id,
 				addresses,
 				clusterSize
 		);
@@ -53,6 +55,7 @@ public class ZooKeeperTransactionCreator extends ZooKeeperActorBase
 		this.firstComponentId = firstComponentId;
 		this.numComponents = numComponents;
 		this.numComponentsInTransaction = numComponentsInTransaction;
+		this.numCreated = new Long(0);
 	}
 
 	public Long getRetryDelay()
@@ -226,9 +229,19 @@ public class ZooKeeperTransactionCreator extends ZooKeeperActorBase
 										int rc, String path, Object ctx, String name
 								)
 								{
-									logger.debug(
-											"ZooKeeperTransactionCreator fileCreated, name: " + zooKeeperObjectId.uniqueName
-									);
+									if (rc == KeeperException.Code.OK.intValue())
+									{
+										logger.debug(
+												"ZooKeeperTransactionCreator fileCreation success, name: " + zooKeeperObjectId.uniqueName
+										);
+										numCreated = new Long(numCreated.longValue() + 1);
+									}
+									else
+									{
+										logger.debug(
+												"ZooKeeperTransactionCreator fileCreation failed, name: " + zooKeeperObjectId.uniqueName
+										);
+									}
 								}
 							},
 							zooKeeperObjectId
@@ -245,5 +258,6 @@ public class ZooKeeperTransactionCreator extends ZooKeeperActorBase
 	Long firstComponentId;
 	Long numComponents;
 	Long numComponentsInTransaction;
+	Long numCreated;
 	static final Logger logger = LogManager.getLogger();
 }

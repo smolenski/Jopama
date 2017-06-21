@@ -19,10 +19,15 @@ public class ZooKeeperTransactionProcessor extends ZooKeeperActorBase
 {
 
 	public ZooKeeperTransactionProcessor(
-			String addresses, Integer clusterSize, Integer clusterId, Integer numOutstanding
+		String id,
+		String addresses,
+		Integer clusterSize,
+		Integer clusterId,
+		Integer numOutstanding
 	)
 	{
 		super(
+				id,
 				addresses,
 				clusterSize
 		);

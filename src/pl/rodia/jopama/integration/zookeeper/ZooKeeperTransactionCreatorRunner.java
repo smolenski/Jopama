@@ -1,5 +1,6 @@
 package pl.rodia.jopama.integration.zookeeper;
 
+import java.util.Random;
 import java.util.concurrent.ExecutionException;
 
 import org.apache.logging.log4j.LogManager;
@@ -9,6 +10,7 @@ public class ZooKeeperTransactionCreatorRunner extends ZooKeeperSyncedRunner
 {
 
 	public ZooKeeperTransactionCreatorRunner(
+			String id,
 			String addresses,
 			Integer clusterSize,
 			String startFinishDir,
@@ -19,7 +21,7 @@ public class ZooKeeperTransactionCreatorRunner extends ZooKeeperSyncedRunner
 			Long numComponentsInTransaction
 	)
 	{
-		super(addresses, clusterSize, startFinishDir);
+		super(id, addresses, clusterSize, startFinishDir);
 		this.clusterId = clusterId;
 		this.desiredOutstandingTransactionsNum = desiredOutstandingTransactionsNum;
 		this.firstComponentId = firstComponentId;
@@ -29,10 +31,9 @@ public class ZooKeeperTransactionCreatorRunner extends ZooKeeperSyncedRunner
 
 	void startDetected()
 	{
-		logger.info(
-				"ZooKeeperTransactionCreatorRunner::start"
-		);
+		logger.info(this.id + " start detected - starting");
 		this.transactionCreator = new ZooKeeperTransactionCreator(
+				this.id + "TransactionCreator",
 				this.addresses,
 				this.clusterSize,
 				this.clusterId,
@@ -42,10 +43,12 @@ public class ZooKeeperTransactionCreatorRunner extends ZooKeeperSyncedRunner
 				this.numComponentsInTransaction
 		);
 		this.transactionCreator.start();
+		logger.info(this.id + " start detected - done");
 	}
 
 	void finishDetected()
 	{
+		logger.info(this.id + " finish detected - starting");
 		try
 		{
 			this.transactionCreator.finish();
@@ -59,6 +62,28 @@ public class ZooKeeperTransactionCreatorRunner extends ZooKeeperSyncedRunner
 			e.printStackTrace();
 		}
 		this.finish();
+		logger.info(this.id + " finish detected - done");
+	}
+	
+	String getReadyPath()
+	{
+		return "/TC_READY/" + this.id;
+	}
+	
+	String getDonePath()
+	{
+		return "/TC_DONE/" + this.id;
+	}
+	
+	String getReadyString()
+	{
+		return "READY";
+	}
+	
+	String getDoneString()
+	{
+		Long value = this.transactionCreator.numCreated;
+		return "DONE " + value.toString();
 	}
 
 	Integer clusterId;
@@ -73,32 +98,34 @@ public class ZooKeeperTransactionCreatorRunner extends ZooKeeperSyncedRunner
 			String[] args
 	)
 	{
-		assert (args.length == 8);
-		String addresses = args[0];
+		assert (args.length == 9);
+		String id = args[0];
+		String addresses = args[1];
 		Integer clusterSize = new Integer(
 				Integer.parseInt(
-						args[1]
+						args[2]
 				)
 		);
-		String startFinishDir = args[2];
+		String startFinishDir = args[3];
 		Integer clusterId = new Integer(
 				Integer.parseInt(
-						args[3]
+						args[4]
 				)
 		);
 		Integer desiredOutstandingTransactionsNum = Integer.parseInt(
-				args[4]
-		);
-		Long firstComponentId = Long.parseLong(
 				args[5]
 		);
-		Long numComponents = Long.parseLong(
+		Long firstComponentId = Long.parseLong(
 				args[6]
 		);
-		Long numComponentsInTransaction = Long.parseLong(
+		Long numComponents = Long.parseLong(
 				args[7]
 		);
+		Long numComponentsInTransaction = Long.parseLong(
+				args[8]
+		);
 		ZooKeeperTransactionCreatorRunner transactionCreatorRunner = new ZooKeeperTransactionCreatorRunner(
+				id,
 				addresses,
 				clusterSize,
 				startFinishDir,
