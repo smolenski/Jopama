@@ -24,7 +24,7 @@
         <Logger name="pl.rodia.jopama.stats" level="info" additivity="false">
             <AppenderRef ref="StatsFile"/>
         </Logger>
-        <Logger name="pl.rodia.jopama.integration" level="debug">
+        <Logger name="pl.rodia.jopama.integration" level="info">
             <AppenderRef ref="IntegrationFile"/>
         </Logger>
         <Logger name="pl.rodia.jopama.integration.inmemory" level="info">
@@ -33,7 +33,7 @@
         <Logger name="pl.rodia.jopama.integration.zookeeper" level="debug">
             <AppenderRef ref="IntegrationFile"/>
         </Logger>
-        <Logger name="pl.rodia.jopama.core" level="debug">
+        <Logger name="pl.rodia.jopama.core" level="info">
             <AppenderRef ref="File"/>
         </Logger>
         <Logger name="pl.rodia.jopama.data" level="info">

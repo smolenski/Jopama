@@ -10,11 +10,14 @@
 	<property name="tests.integration.basic.dir" value="tests/integration/basic" />
 	<property name="tests.integration.nonConfPerf.dir" value="tests/integration/nonConfPerf" />
 	<property name="tests.integration.confPerf.dir" value="tests/integration/confPerf" />
+	<property name="tests.perf.dir.cc" value="tests/perf/CC" />
+	<property name="tests.perf.dir.tv" value="tests/perf/TV" />
 	<property name="tests.perf.dir.tp" value="tests/perf/TP" />
 	<property name="tests.perf.dir.tc" value="tests/perf/TC" />
 	<property name="componentCreator.class" value="pl.rodia.jopama.integration.zookeeper.ZooKeeperComponentCreator" />
 	<property name="transactionCreator.class" value="pl.rodia.jopama.integration.zookeeper.ZooKeeperTransactionCreatorRunner" />
 	<property name="transactionProcessor.class" value="pl.rodia.jopama.integration.zookeeper.ZooKeeperTransactionProcessorRunner" />
+	<property name="testVerificator.class" value="pl.rodia.jopama.integration.zookeeper.ZooKeeperTestVerifier" />
 
 	<path id="libraries">
 		<fileset dir="${basedir}/../../lib/" includes="**/*.jar" />
@@ -38,6 +41,8 @@
 		<mkdir dir="${tests.integration.basic.dir}" />
 		<mkdir dir="${tests.integration.nonConfPerf.dir}" />
 		<mkdir dir="${tests.integration.confPerf.dir}" />
+		<mkdir dir="${tests.perf.dir.cc}" />
+		<mkdir dir="${tests.perf.dir.tv}" />
 		<mkdir dir="${tests.perf.dir.tp}" />
 		<mkdir dir="${tests.perf.dir.tc}" />
 		<javac srcdir="${src.dir}" destdir="${classes.dir}" classpathref="libraries" includeantruntime="true" debug="true" />
@@ -176,8 +181,20 @@
 	</target>
 
 	<target name="runCC" depends="jar">
-		<java fork="true" classname="${componentCreator.class}">
+		<java fork="true" dir="${tests.perf.dir.cc}" classname="${componentCreator.class}">
 			<arg line="CC 127.0.0.1:2181 1 100 100" />
+			<jvmarg value="-ea" />
+			<classpath>
+				<path refid="libraries" />
+				<path refid="application" />
+				<pathelement path="${basedir}" />
+			</classpath>
+		</java>
+	</target>
+	
+	<target name="runTV" depends="jar">
+		<java fork="true" dir="${tests.perf.dir.tv}" classname="${testVerificator.class}">
+			<arg line="TV 127.0.0.1:2181 1 100 100" />
 			<jvmarg value="-ea" />
 			<classpath>
 				<path refid="libraries" />
