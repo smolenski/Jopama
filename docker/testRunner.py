@@ -3,16 +3,31 @@ import doctest
 import sys
 import subprocess
 import time
+import os
 from datetime import datetime
 
-def id2ZKPort(id):
-    return 10000 + 3 * id
+def gId2Name(gId):
+    return format('jopamaTest_%d' % gId)
+
+def id2ZKPortExt(id):
+    return 10000 + 10 * id
+
+def id2ZKPortInt1(id):
+    return 10001 + 10 * id
+
+def id2ZKPortInt2(id):
+    return 10002 + 10 * id
 
 def id2TPPort(id):
-    return 10001 + 3 * id
+    return 10003 + 10 * id
 
 def id2TCPort(id):
-    return 10002 + 3 * id
+    return 10004 + 10 * id
+
+def printIt(cmd, shell=None):
+    print('%s' % cmd)
+
+#subprocess.check_call=printIt
 
 class Instance(object):
     def __init__(self, gId, clId, coId, ip, runTP, runTC):
@@ -56,11 +71,31 @@ class ConfigGenerator(object):
                 self.dist.append(inst)
         assert max(numTPOnIp.values()) - min(numTPOnIp.values()) <= 1
         assert max(numTCOnIp.values()) - min(numTCOnIp.values()) <= 1
+    def getZKServersConf(self, gId):
+        startId=gId - (gId % self.args.clusterSize)
+        stopId=startId + self.args.clusterSize
+        assert len(self.dist) >= stopId
+        servers=[]
+        for mId in range(startId, stopId):
+            intPort1=None
+            intPort2=None
+            if mId == gId:
+                intPort1=3181
+                intPort2=4181
+            else:
+                intPort1=id2ZKPortInt1(mId)
+                intPort2=id2ZKPortInt2(mId)
+            mInst = self.dist[mId]
+            servers.append(mInst.ip + ':' + str(intPort1) + ':' + str(intPort2))
+        return ','.join(servers)
+    def getZKServerId(self, gId):
+        return gId % self.args.clusterSize 
 
 class TestRunner(object):
-    def __init__(self, args, dist):
+    def __init__(self, args, gen):
         self.args = args
-        self.dist = dist
+        self.gen = gen
+        self.dist = self.gen.dist
         self.start = None
         self.finish = None
 
@@ -68,8 +103,37 @@ class TestRunner(object):
         print("Rotating log directory (not impl yet)")
 
     def startZooKeepers(self):
-        for instance in self.dist:
-            print("Starting ZK %s:%d" % (instance.ip, id2ZKPort(instance.gId)))
+        for ins in self.dist:
+            name=gId2Name(ins.gId)
+            hostStorageDir=format("/var/jopamaTest/storage/%d" % ins.gId)
+            hostLogsDir=format("/var/jopamaTest/logs/%d" % ins.gId)
+            extPort=id2ZKPortExt(ins.gId)
+            intPort1=id2ZKPortInt1(ins.gId)
+            intPort2=id2ZKPortInt2(ins.gId)
+            peers=self.gen.getZKServersConf(ins.gId)
+            zkId=self.gen.getZKServerId(ins.gId)
+            subprocess.check_call('mkdir %s' % hostStorageDir, shell=True)
+            subprocess.check_call('mkdir %s' % hostLogsDir, shell=True)
+            subprocess.check_call(
+                'docker run -d --name %s --net host -v %s:/var/jopamaTest/storage -v %s:/var/jopamaTest/logs -p %d:2181 -p %d:3181 -p %d:4181 zookeeper %s %d'
+                %
+                (
+                    name,
+                    hostStorageDir,
+                    hostLogsDir,
+                    extPort,
+                    intPort1,
+                    intPort2,
+                    peers,
+                    zkId
+                ),
+                shell=True
+            )
+
+    def stopZooKeepers(self):
+        for ins in self.dist:
+            name=gId2Name(ins.gId)
+            subprocess.check_call('docker kill %s' % name, shell=True)
 
     def startTPs(self):
         for instance in self.dist:
@@ -101,7 +165,7 @@ class TestRunner(object):
 
     def waitDesiredDuration(self):
         print("Wait desired duration")
-        time.sleep(2)
+        time.sleep(120)
 
     def getProcessedTransactionsNum(self):
         return 1000
@@ -125,6 +189,7 @@ class TestRunner(object):
         self.finish = datetime.now()
         self.runTV()
         self.printResult()
+        self.stopZooKeepers()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Generate jopama docker cluster configuration')
@@ -138,7 +203,11 @@ if __name__ == '__main__':
     parser.add_argument('-compsInTra', type=int, required=True, dest='compsInTra', help="Components in transaction")
     parser.add_argument('-outForTC', type=int, required=True, dest='outcre', help="Outstanding transactions for creator")
     parser.add_argument('-outForTP', type=int, required=True, dest='outForTP', help="Outstanding transactions for processor")
+    parser.add_argument('-doctest', action='store_true', dest='doctest', help="Run doctests")
     args = parser.parse_args()
+    if args.doctest:
+        doctest.testmod()
+        sys.exit(0) 
     if (args.numClusters * args.clusterSize) % len(args.ips) != 0:
         print('Arguments, numClusters * clusterSize should be multiplication of num ips, numClusters: %d, clusterSize: %d num ips: %d' % (args.numClusters, args.clusterSize, len(args.ips)))
         sys.exit(1)
@@ -153,6 +222,6 @@ if __name__ == '__main__':
     for inst in gen.dist:
         print('%s' % str(inst))
     print('DIST END')
-    test = TestRunner(args, gen.dist)
+    test = TestRunner(args, gen)
     test.run()
     sys.exit(0)
