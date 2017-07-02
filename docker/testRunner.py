@@ -79,12 +79,8 @@ class ConfigGenerator(object):
         for mId in range(startId, stopId):
             intPort1=None
             intPort2=None
-            if mId == gId:
-                intPort1=3181
-                intPort2=4181
-            else:
-                intPort1=id2ZKPortInt1(mId)
-                intPort2=id2ZKPortInt2(mId)
+            intPort1=id2ZKPortInt1(mId)
+            intPort2=id2ZKPortInt2(mId)
             mInst = self.dist[mId]
             servers.append(mInst.ip + ':' + str(intPort1) + ':' + str(intPort2))
         return ','.join(servers)
@@ -115,7 +111,7 @@ class TestRunner(object):
             subprocess.check_call('mkdir %s' % hostStorageDir, shell=True)
             subprocess.check_call('mkdir %s' % hostLogsDir, shell=True)
             subprocess.check_call(
-                'docker run -d --name %s --net host -v %s:/var/jopamaTest/storage -v %s:/var/jopamaTest/logs -p %d:2181 -p %d:3181 -p %d:4181 zookeeper %s %d'
+                'docker run -d --name %s --net host -v %s:/var/jopamaTest/storage -v %s:/var/jopamaTest/logs -p %d -p %d -p %d zookeeper %s %d %d'
                 %
                 (
                     name,
@@ -125,6 +121,7 @@ class TestRunner(object):
                     intPort1,
                     intPort2,
                     peers,
+                    extPort,
                     zkId
                 ),
                 shell=True
@@ -165,7 +162,7 @@ class TestRunner(object):
 
     def waitDesiredDuration(self):
         print("Wait desired duration")
-        time.sleep(120)
+        time.sleep(20)
 
     def getProcessedTransactionsNum(self):
         return 1000
