@@ -101,8 +101,8 @@ class TestRunner(object):
     def startZooKeepers(self):
         for ins in self.dist:
             name=gId2Name(ins.gId)
-            hostStorageDir=format("/var/jopamaTest/storage/%d" % ins.gId)
-            hostLogsDir=format("/var/jopamaTest/logs/%d" % ins.gId)
+            hostStorageDir=format("/var/jopamaTest/storage/%d/zookeeper" % ins.gId)
+            hostLogsDir=format("/var/jopamaTest/logs/%d/zookeeper" % ins.gId)
             extPort=id2ZKPortExt(ins.gId)
             intPort1=id2ZKPortInt1(ins.gId)
             intPort2=id2ZKPortInt2(ins.gId)
