@@ -98,6 +98,18 @@ class TestRunner(object):
     def rotateLogDir(self):
         print("Rotating log directory (not impl yet)")
 
+    def getAddresses(self):
+        clId2Member={}
+        for i in range(self.args.numClusters):
+            clId2Member[i]=[]
+        for ins in self.dist:
+            clId2Member[ins.clId].append(ins)
+        addresses=[]
+        for clId in sorted(clId2Member):
+            for ins in clId2Member[clId]:
+                addresses.append(format('%s:%d' % (ins.ip, id2ZKPortExt(ins.gId))))
+        return ','.join(addresses)
+
     def startZooKeepers(self):
         for ins in self.dist:
             name=gId2Name(ins.gId)
@@ -108,8 +120,9 @@ class TestRunner(object):
             intPort2=id2ZKPortInt2(ins.gId)
             peers=self.gen.getZKServersConf(ins.gId)
             zkId=self.gen.getZKServerId(ins.gId)
-            subprocess.check_call('mkdir %s' % hostStorageDir, shell=True)
-            subprocess.check_call('mkdir %s' % hostLogsDir, shell=True)
+            subprocess.check_call('mkdir -p %s' % hostStorageDir, shell=True)
+            subprocess.check_call('mkdir -p %s' % hostLogsDir, shell=True)
+            print("Starting ZooKeeper, ins: %d, extport: %d" % (ins.gId, extPort))
             subprocess.check_call(
                 'docker run -d --name %s --net host -v %s:/var/jopamaTest/storage -v %s:/var/jopamaTest/logs -p %d -p %d -p %d zookeeper %s %d %d'
                 %
@@ -126,6 +139,17 @@ class TestRunner(object):
                 ),
                 shell=True
             )
+
+    def zkCli(self, server, cmd):
+        return subprocess.check_output(
+            'docker run --network host --entrypoint /opt/ZooKeeper/zookeeper-3.4.9/bin/zkCli.sh zookeeper -server %s %s'
+            %
+            (
+                server,
+                cmd
+            ),
+            shell=True
+        )
 
     def stopZooKeepers(self):
         for ins in self.dist:
@@ -162,7 +186,18 @@ class TestRunner(object):
 
     def waitDesiredDuration(self):
         print("Wait desired duration")
-        time.sleep(20)
+        time.sleep(5)
+
+    def performLs(self):
+        print('Addresses: %s' % (self.getAddresses()))
+        print('Performing ls')
+        assert len(self.dist) > 0
+        ins=self.dist[0]
+        server=format('%s:%d' % (ins.ip, id2ZKPortExt(ins.gId)))
+        output=self.zkCli(server, 'ls /')
+        lines=output.splitlines()
+        assert len(lines) > 0
+        print('zoo ls result: %s' % lines[-1])
 
     def getProcessedTransactionsNum(self):
         return 1000
@@ -173,6 +208,7 @@ class TestRunner(object):
         print("Performance num: %d dur: %d speed: %d (T/s)" % (num, durSec, float(num) / durSec))
         
     def run(self):
+        self.rotateLogDir()
         self.startZooKeepers()
         self.startTPs()
         self.startTCs()
@@ -181,11 +217,13 @@ class TestRunner(object):
         self.start = datetime.now()
         self.triggerStart()
         self.waitDesiredDuration()
+        self.performLs()
         self.triggerFinish()
         self.waitForDone()
         self.finish = datetime.now()
         self.runTV()
         self.printResult()
+        self.stopTPs()
         self.stopZooKeepers()
 
 if __name__ == '__main__':
