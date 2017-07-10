@@ -160,14 +160,44 @@ class TestRunner(object):
         for instance in self.dist:
             if instance.runTP:
                 print("Starting TP %s:%d" % (instance.ip, id2TPPort(instance.gId)))
+
+    def stopTPs(self):
+        for instance in self.dist:
+            if instance.runTP:
+                print("Stopping TP %s:%d" % (instance.ip, id2TPPort(instance.gId)))
+
         
     def startTCs(self):
         for instance in self.dist:
             if instance.runTC:
                 print("Starting TC %s:%d" % (instance.ip, id2TCPort(instance.gId)))
 
-    def runCC(self):
+    def stopTCs(self):
+        for instance in self.dist:
+            if instance.runTC:
+                print("Stopping TC %s:%d" % (instance.ip, id2TCPort(instance.gId)))
+
+    def createComponents(self):
         print("Running CC")
+        name='CC'
+        hostLogsDir=format("/var/jopamaTest/logs/%s/zookeeper" % name)
+        addresses=self.getAddresses()
+        subprocess.check_call('mkdir -p %s' % hostLogsDir, shell=True)
+        print("Starting CC")
+        subprocess.check_call(
+            'docker run --name %s --net host -v %s:/var/jopamaTest/logs jopama pl.rodia.jopama.integration.zookeeper.ZooKeeperComponentCreator CC %s %d %d %d'
+            %
+            (
+                name,
+                hostLogsDir,
+                addresses,
+                self.args.numClusters,
+                self.args.firstComp,
+                self.args.numComp    
+            ),
+            shell=True
+        )
+
 
     def runTV(self):
         print("Running TV")
@@ -199,6 +229,21 @@ class TestRunner(object):
         assert len(lines) > 0
         print('zoo ls result: %s' % lines[-1])
 
+    def prepareDirectories(self):
+        time.sleep(2)
+        clusters=[]
+        for i in range(self.args.numClusters):
+            clusters.append([])
+        for ins in self.dist:
+           clusters[ins.clId].append(ins) 
+        for i in range(self.args.numClusters):
+            assert len(clusters[i]) > 0
+            ins=clusters[i][0]
+            server=format('%s:%d' % (ins.ip, id2ZKPortExt(ins.gId)))
+            self.zkCli(server, 'create /Transactions a')
+            self.zkCli(server, 'create /Components a')
+            self.zkCli(server, 'create /StartFinish a')
+
     def getProcessedTransactionsNum(self):
         return 1000
 
@@ -212,7 +257,8 @@ class TestRunner(object):
         self.startZooKeepers()
         self.startTPs()
         self.startTCs()
-        self.runCC()
+        self.prepareDirectories()
+        self.createComponents()
         self.waitForReady()
         self.start = datetime.now()
         self.triggerStart()
@@ -223,6 +269,7 @@ class TestRunner(object):
         self.finish = datetime.now()
         self.runTV()
         self.printResult()
+        self.stopTCs()
         self.stopTPs()
         self.stopZooKeepers()
 

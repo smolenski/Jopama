@@ -34,6 +34,7 @@ function prepareDist()
     if [[ $? -ne 0 ]]; then echo "ant failed"; return 1; fi
     cp $(find $jopamaDir -name Jopama.jar) $distDir
     cp $zooDir/zookeeper*.jar $distLibDir
+    cp $zooDir/lib/*.jar $distLibDir
     cp $jopamaDir/lib/* $distLibDir
     cp $jopamaDir/log4j2.xml $distDir
     tar -czf $buildArch -C $distBaseDir $projectName
@@ -60,7 +61,7 @@ function runJopama()
     fi
     pushd $runDir
     set -x
-    java -classpath "$distDir:$distDir/*:$distDir/lib/*" $*
+    java -ea -classpath "$distDir:$distDir/*:$distDir/lib/*" $*
     set +x
     popd
 }
