@@ -4,6 +4,7 @@ import sys
 import subprocess
 import time
 import os
+import random
 from datetime import datetime
 
 def gId2Name(gId):
@@ -141,20 +142,25 @@ class TestRunner(object):
             )
 
     def zkCli(self, server, cmd):
-        return subprocess.check_output(
-            'docker run --network host --entrypoint /opt/ZooKeeper/zookeeper-3.4.9/bin/zkCli.sh zookeeper -server %s %s'
+        name=str(random.getrandbits(100))
+        output=subprocess.check_output(
+            'docker run --name %s --network host --entrypoint /opt/ZooKeeper/zookeeper-3.4.9/bin/zkCli.sh zookeeper -server %s %s'
             %
             (
+                name,
                 server,
                 cmd
             ),
             shell=True
         )
+        subprocess.check_output('docker rm %s' % (name), shell=True)
+        return output
 
     def stopZooKeepers(self):
         for ins in self.dist:
             name=gId2Name(ins.gId)
             subprocess.check_call('docker kill %s' % name, shell=True)
+            subprocess.check_call('docker rm %s' % name, shell=True)
 
     def startTPs(self):
         for instance in self.dist:
@@ -180,7 +186,7 @@ class TestRunner(object):
     def createComponents(self):
         print("Running CC")
         name='CC'
-        hostLogsDir=format("/var/jopamaTest/logs/%s/zookeeper" % name)
+        hostLogsDir=format("/var/jopamaTest/logs/%s" % name)
         addresses=self.getAddresses()
         subprocess.check_call('mkdir -p %s' % hostLogsDir, shell=True)
         print("Starting CC")
@@ -197,10 +203,35 @@ class TestRunner(object):
             ),
             shell=True
         )
-
+        subprocess.check_call(
+            'docker rm %s' % (name),
+            shell=True
+        )
 
     def runTV(self):
         print("Running TV")
+        name='TV'
+        hostLogsDir=format("/var/jopamaTest/logs/%s" % name)
+        addresses=self.getAddresses()
+        subprocess.check_call('mkdir -p %s' % hostLogsDir, shell=True)
+        print("Starting TV")
+        subprocess.check_call(
+            'docker run --name %s --net host -v %s:/var/jopamaTest/logs jopama pl.rodia.jopama.integration.zookeeper.ZooKeeperTestVerifier TV %s %d %d %d'
+            %
+            (
+                name,
+                hostLogsDir,
+                addresses,
+                self.args.numClusters,
+                self.args.firstComp,
+                self.args.numComp  
+            ),
+            shell=True
+        )
+        subprocess.check_call(
+            'docker rm %s' % (name),
+            shell=True
+        )
 
     def waitForReady(self):
         print("Waiting for ready")
@@ -240,9 +271,14 @@ class TestRunner(object):
             assert len(clusters[i]) > 0
             ins=clusters[i][0]
             server=format('%s:%d' % (ins.ip, id2ZKPortExt(ins.gId)))
+            time.sleep(5)
             self.zkCli(server, 'create /Transactions a')
             self.zkCli(server, 'create /Components a')
             self.zkCli(server, 'create /StartFinish a')
+            self.zkCli(server, 'create /TP_READY a')
+            self.zkCli(server, 'create /TP_DONE a')
+            self.zkCli(server, 'create /TC_READY a')
+            self.zkCli(server, 'create /TC_DONE a')
 
     def getProcessedTransactionsNum(self):
         return 1000
