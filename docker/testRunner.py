@@ -7,8 +7,17 @@ import os
 import random
 from datetime import datetime
 
-def gId2Name(gId):
-    return format('jopamaTest_%d' % gId)
+def getZooServerName(gId):
+    return format('ZOO_SERVER_%d' % gId)
+
+def getTCName(gId):
+    return format('TC_%d' % gId)
+
+def getTPName(gId):
+    return format('TP_%d' % gId)
+
+def getZooClientName():
+    return format('ZOO_CLIENT_%s' % str(random.getrandbits(100)))
 
 def id2ZKPortExt(id):
     return 10000 + 10 * id
@@ -113,7 +122,7 @@ class TestRunner(object):
 
     def startZooKeepers(self):
         for ins in self.dist:
-            name=gId2Name(ins.gId)
+            name=getZooServerName(ins.gId)
             hostStorageDir=format("/var/jopamaTest/storage/%d/zookeeper" % ins.gId)
             hostLogsDir=format("/var/jopamaTest/logs/%d/zookeeper" % ins.gId)
             extPort=id2ZKPortExt(ins.gId)
@@ -142,7 +151,7 @@ class TestRunner(object):
             )
 
     def zkCli(self, server, cmd):
-        name=str(random.getrandbits(100))
+        name=getZooClientName()
         output=subprocess.check_output(
             'docker run --name %s --network host --entrypoint /opt/ZooKeeper/zookeeper-3.4.9/bin/zkCli.sh zookeeper -server %s %s'
             %
@@ -158,7 +167,7 @@ class TestRunner(object):
 
     def stopZooKeepers(self):
         for ins in self.dist:
-            name=gId2Name(ins.gId)
+            name=getZooServerName(ins.gId)
             subprocess.check_call('docker kill %s' % name, shell=True)
             subprocess.check_call('docker rm %s' % name, shell=True)
 
@@ -197,7 +206,7 @@ class TestRunner(object):
                 name,
                 hostLogsDir,
                 addresses,
-                self.args.numClusters,
+                self.args.clusterSize,
                 self.args.firstComp,
                 self.args.numComp    
             ),
@@ -208,7 +217,7 @@ class TestRunner(object):
             shell=True
         )
 
-    def runTV(self):
+    def verifyComponents(self):
         print("Running TV")
         name='TV'
         hostLogsDir=format("/var/jopamaTest/logs/%s" % name)
@@ -222,9 +231,9 @@ class TestRunner(object):
                 name,
                 hostLogsDir,
                 addresses,
-                self.args.numClusters,
+                self.args.clusterSize,
                 self.args.firstComp,
-                self.args.numComp  
+                self.args.numComp
             ),
             shell=True
         )
@@ -249,36 +258,44 @@ class TestRunner(object):
         print("Wait desired duration")
         time.sleep(5)
 
-    def performLs(self):
-        print('Addresses: %s' % (self.getAddresses()))
-        print('Performing ls')
-        assert len(self.dist) > 0
-        ins=self.dist[0]
-        server=format('%s:%d' % (ins.ip, id2ZKPortExt(ins.gId)))
-        output=self.zkCli(server, 'ls /')
-        lines=output.splitlines()
-        assert len(lines) > 0
-        print('zoo ls result: %s' % lines[-1])
-
-    def prepareDirectories(self):
-        time.sleep(2)
+    def getConnStrForCluster(self, clusterId):
         clusters=[]
         for i in range(self.args.numClusters):
             clusters.append([])
         for ins in self.dist:
            clusters[ins.clId].append(ins) 
+        assert len(clusters) > 0
+        cluster=clusters[clusterId]
+        assert len(cluster) > 0
+        ins=cluster[0]
+        return format('%s:%d' % (ins.ip, id2ZKPortExt(ins.gId)))
+
+    def performLs(self):
+        print('Addresses: %s' % (self.getAddresses()))
+        print('Performing ls')
         for i in range(self.args.numClusters):
-            assert len(clusters[i]) > 0
-            ins=clusters[i][0]
-            server=format('%s:%d' % (ins.ip, id2ZKPortExt(ins.gId)))
-            time.sleep(5)
-            self.zkCli(server, 'create /Transactions a')
-            self.zkCli(server, 'create /Components a')
-            self.zkCli(server, 'create /StartFinish a')
-            self.zkCli(server, 'create /TP_READY a')
-            self.zkCli(server, 'create /TP_DONE a')
-            self.zkCli(server, 'create /TC_READY a')
-            self.zkCli(server, 'create /TC_DONE a')
+            output=self.zkCli(self.getConnStrForCluster(i), 'ls /')
+            lines=output.splitlines()
+            assert len(lines) > 0
+            print('zoo ls result: %s' % lines[-1])
+        for i in range(self.args.numClusters):
+            output=self.zkCli(self.getConnStrForCluster(i), 'ls /Components')
+            lines=output.splitlines()
+            assert len(lines) > 0
+            print('zoo ls result: %s' % lines[-1])
+
+    def prepareDirectories(self):
+        time.sleep(5)
+        for i in range(self.args.numClusters):
+            connStr=self.getConnStrForCluster(i)
+            self.zkCli(connStr, 'create /Transactions a')
+            self.zkCli(connStr, 'create /Components a')
+        connStr=self.getConnStrForCluster(0)
+        self.zkCli(connStr, 'create /StartFinish a')
+        self.zkCli(connStr, 'create /TP_READY a')
+        self.zkCli(connStr, 'create /TP_DONE a')
+        self.zkCli(connStr, 'create /TC_READY a')
+        self.zkCli(connStr, 'create /TC_DONE a')
 
     def getProcessedTransactionsNum(self):
         return 1000
@@ -303,7 +320,7 @@ class TestRunner(object):
         self.triggerFinish()
         self.waitForDone()
         self.finish = datetime.now()
-        self.runTV()
+        self.verifyComponents()
         self.printResult()
         self.stopTCs()
         self.stopTPs()

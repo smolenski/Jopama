@@ -50,6 +50,9 @@ public class ZooKeeperTestVerifier extends ZooKeeperActorBase
 	@Override
 	public void tryToPerform()
 	{
+		logger.info(
+				this.id + " tryToPerform, num ids to read: " + this.idsToRead.size() + " ids: " + this.idsToRead
+		);
 		for (Long cid : this.idsToRead)
 		{
 			assert cid <= Integer.MAX_VALUE;

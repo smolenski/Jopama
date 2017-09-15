@@ -45,11 +45,13 @@ public class ZooKeeperMultiProvider
 	}
 
 	ZooKeeperProvider getResponsibleProvider(
-			Integer id
+			Integer clusterId
 	)
 	{
+		assert (clusterId >= 0);
+		assert (clusterId < this.zooKeeperProvideers.size());
 		return this.zooKeeperProvideers.get(
-				Math.floorMod(id, this.zooKeeperProvideers.size())
+				clusterId
 		);
 	}
 	
