@@ -8,13 +8,13 @@ import random
 from datetime import datetime
 
 def getZooServerName(gId):
-    return format('ZOO_SERVER_%d' % gId)
+    return format('%d_ZOO_SERVER' % gId)
 
 def getTCName(gId):
-    return format('TC_%d' % gId)
+    return format('%d_TC' % gId)
 
 def getTPName(gId):
-    return format('TP_%d' % gId)
+    return format('%d_TP' % gId)
 
 def getZooClientName():
     return format('ZOO_CLIENT_%s' % str(random.getrandbits(100)))
@@ -123,8 +123,8 @@ class TestRunner(object):
     def startZooKeepers(self):
         for ins in self.dist:
             name=getZooServerName(ins.gId)
-            hostStorageDir=format("/var/jopamaTest/storage/%d/zookeeper" % ins.gId)
-            hostLogsDir=format("/var/jopamaTest/logs/%d/zookeeper" % ins.gId)
+            hostStorageDir=format("/var/jopamaTest/storage/%d/ZOOKEEPER" % ins.gId)
+            hostLogsDir=format("/var/jopamaTest/logs/%d/ZOOKEEPER" % ins.gId)
             extPort=id2ZKPortExt(ins.gId)
             intPort1=id2ZKPortInt1(ins.gId)
             intPort2=id2ZKPortInt2(ins.gId)
@@ -183,14 +183,37 @@ class TestRunner(object):
 
         
     def startTCs(self):
-        for instance in self.dist:
-            if instance.runTC:
-                print("Starting TC %s:%d" % (instance.ip, id2TCPort(instance.gId)))
+        for ins in self.dist:
+            if ins.runTC:
+                print("Starting TC %s" % (ins.gId))
+                name=getTCName(ins.gId)
+                hostLogsDir=format("/var/jopamaTest/logs/%d/TC" % ins.gId)
+                subprocess.check_call(
+                    'docker run -d --name %s --net host -v %s:/var/jopamaTest/logs jopama pl.rodia.jopama.integration.zookeeper.ZooKeeperTransactionCreatorRunner %s %s %d %s %d %d %d %d %d'
+                    %
+                    (
+                        name,
+                        hostLogsDir,
+                        name,
+                        self.getAddresses(),
+                        self.args.clusterSize,
+                        '/StartFinish',
+                        ins.clId, 
+                        self.args.outForTC,
+                        self.args.firstComp,
+                        self.args.numComp,
+                        self.args.compsInTra
+                    ),
+                    shell=True
+                )
 
     def stopTCs(self):
-        for instance in self.dist:
-            if instance.runTC:
-                print("Stopping TC %s:%d" % (instance.ip, id2TCPort(instance.gId)))
+        for ins in self.dist:
+            if ins.runTC:
+                print("Stopping TC %s" % (ins.ip))
+                name=getTCName(ins.gId)
+                subprocess.call('docker kill %s' % name, shell=True)
+                subprocess.check_call('docker rm %s' % name, shell=True)
 
     def createComponents(self):
         print("Running CC")
@@ -242,17 +265,33 @@ class TestRunner(object):
             shell=True
         )
 
+    def waitForFiles(self, clusterId, path, numFiles):
+        print("Waiting for files, clusterId: %d, path: %s, numFiles: %d" % (clusterId, path, numFiles))
+        while True:
+            print("Waiting ...")
+            files = self.performLs(clusterId, path)
+            if len(files) == numFiles:
+                break
+            time.sleep(1)
+        print("Waiting for files: done")
+
     def waitForReady(self):
         print("Waiting for ready")
+        self.waitForFiles(0, '/TC_READY', self.args.numTC * self.args.numClusters)
+        self.waitForFiles(0, '/TP_READY', 0)
 
     def waitForDone(self):
         print("Waiting for done")
+        self.waitForFiles(0, '/TP_DONE', 0)
+        self.waitForFiles(0, '/TC_DONE', self.args.numTC * self.args.numClusters)
 
     def triggerStart(self):
         print("Triggering start")
+        self.zkCli(self.getConnStrForCluster(0), 'create /StartFinish/START a')
 
     def triggerFinish(self):
         print("Triggering finish")
+        self.zkCli(self.getConnStrForCluster(0), 'create /StartFinish/FINISH a')
 
     def waitDesiredDuration(self):
         print("Wait desired duration")
@@ -270,19 +309,29 @@ class TestRunner(object):
         ins=cluster[0]
         return format('%s:%d' % (ins.ip, id2ZKPortExt(ins.gId)))
 
-    def performLs(self):
+    def performLs(self, clusterId, path):
+        output=self.zkCli(self.getConnStrForCluster(clusterId), 'ls %s' % (path))
+        lines=output.splitlines()
+        assert len(lines) > 0
+        line=lines[-1]
+        print('ls output: %s' % line)
+        assert len(line) > 1
+        if (line == '[]'):
+            return []
+        else:
+            return line[1:-1].split(',')
+
+    def listFiles(self):
         print('Addresses: %s' % (self.getAddresses()))
         print('Performing ls')
         for i in range(self.args.numClusters):
-            output=self.zkCli(self.getConnStrForCluster(i), 'ls /')
-            lines=output.splitlines()
-            assert len(lines) > 0
-            print('zoo ls result: %s' % lines[-1])
-        for i in range(self.args.numClusters):
-            output=self.zkCli(self.getConnStrForCluster(i), 'ls /Components')
-            lines=output.splitlines()
-            assert len(lines) > 0
-            print('zoo ls result: %s' % lines[-1])
+            print('Listing dirs/files for cluster: %d' % i)
+            for path in ['/', '/Components', '/Transactions']:
+                files=self.performLs(i, path)
+                print('%s => %s' % (path, str(files)))
+        for path in ['/TC_READY', '/TP_READY']:
+            files=self.performLs(0, path)
+            print('%s => %s' % (path, str(files)))
 
     def prepareDirectories(self):
         time.sleep(5)
@@ -308,15 +357,15 @@ class TestRunner(object):
     def run(self):
         self.rotateLogDir()
         self.startZooKeepers()
-        self.startTPs()
-        self.startTCs()
         self.prepareDirectories()
         self.createComponents()
+        self.startTPs()
+        self.startTCs()
         self.waitForReady()
         self.start = datetime.now()
         self.triggerStart()
         self.waitDesiredDuration()
-        self.performLs()
+        self.listFiles()
         self.triggerFinish()
         self.waitForDone()
         self.finish = datetime.now()
@@ -336,7 +385,7 @@ if __name__ == '__main__':
     parser.add_argument('-firstComp', type=int, required=True, dest='firstComp', help="First component")
     parser.add_argument('-numComp', type=int, required=True, dest='numComp', help="Number of components")
     parser.add_argument('-compsInTra', type=int, required=True, dest='compsInTra', help="Components in transaction")
-    parser.add_argument('-outForTC', type=int, required=True, dest='outcre', help="Outstanding transactions for creator")
+    parser.add_argument('-outForTC', type=int, required=True, dest='outForTC', help="Outstanding transactions for creator")
     parser.add_argument('-outForTP', type=int, required=True, dest='outForTP', help="Outstanding transactions for processor")
     parser.add_argument('-doctest', action='store_true', dest='doctest', help="Run doctests")
     args = parser.parse_args()
