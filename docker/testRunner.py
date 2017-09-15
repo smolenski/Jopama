@@ -172,14 +172,34 @@ class TestRunner(object):
             subprocess.check_call('docker rm %s' % name, shell=True)
 
     def startTPs(self):
-        for instance in self.dist:
-            if instance.runTP:
-                print("Starting TP %s:%d" % (instance.ip, id2TPPort(instance.gId)))
+        for ins in self.dist:
+            if ins.runTP:
+                print("Starting TP %s" % (ins.gId))
+                name=getTPName(ins.gId)
+                hostLogsDir=format("/var/jopamaTest/logs/%d/TP" % ins.gId)
+                subprocess.check_call(
+                    'docker run -d --name %s --net host -v %s:/var/jopamaTest/logs jopama pl.rodia.jopama.integration.zookeeper.ZooKeeperTransactionProcessorRunner %s %s %d %s %d %d'
+                    %
+                    (
+                        name,
+                        hostLogsDir,
+                        name,
+                        self.getAddresses(),
+                        self.args.clusterSize,
+                        '/StartFinish',
+                        ins.clId, 
+                        self.args.outForTP
+                    ),
+                    shell=True
+                )
 
     def stopTPs(self):
-        for instance in self.dist:
-            if instance.runTP:
-                print("Stopping TP %s:%d" % (instance.ip, id2TPPort(instance.gId)))
+        for ins in self.dist:
+            if ins.runTP:
+                print("Stopping TP %s" % (ins.gId))
+                name=getTPName(ins.gId)
+                subprocess.call('docker kill %s' % name, shell=True)
+                subprocess.check_call('docker rm %s' % name, shell=True)
 
         
     def startTCs(self):
@@ -210,7 +230,7 @@ class TestRunner(object):
     def stopTCs(self):
         for ins in self.dist:
             if ins.runTC:
-                print("Stopping TC %s" % (ins.ip))
+                print("Stopping TC %s" % (ins.gId))
                 name=getTCName(ins.gId)
                 subprocess.call('docker kill %s' % name, shell=True)
                 subprocess.check_call('docker rm %s' % name, shell=True)
@@ -277,13 +297,13 @@ class TestRunner(object):
 
     def waitForReady(self):
         print("Waiting for ready")
+        self.waitForFiles(0, '/TP_READY', self.args.numTP * self.args.numClusters)
         self.waitForFiles(0, '/TC_READY', self.args.numTC * self.args.numClusters)
-        self.waitForFiles(0, '/TP_READY', 0)
 
     def waitForDone(self):
         print("Waiting for done")
-        self.waitForFiles(0, '/TP_DONE', 0)
         self.waitForFiles(0, '/TC_DONE', self.args.numTC * self.args.numClusters)
+        self.waitForFiles(0, '/TP_DONE', self.args.numTP * self.args.numClusters)
 
     def triggerStart(self):
         print("Triggering start")
@@ -295,7 +315,7 @@ class TestRunner(object):
 
     def waitDesiredDuration(self):
         print("Wait desired duration")
-        time.sleep(5)
+        time.sleep(self.args.duration)
 
     def getConnStrForCluster(self, clusterId):
         clusters=[]
@@ -319,7 +339,7 @@ class TestRunner(object):
         if (line == '[]'):
             return []
         else:
-            return line[1:-1].split(',')
+            return line[1:-1].replace(',', '').split()
 
     def listFiles(self):
         print('Addresses: %s' % (self.getAddresses()))
@@ -346,13 +366,47 @@ class TestRunner(object):
         self.zkCli(connStr, 'create /TC_READY a')
         self.zkCli(connStr, 'create /TC_DONE a')
 
+    def getContent(self, clusterId, path):
+        print('getContent clusterId: %d path: %s' % (clusterId, path))
+        output=self.zkCli(self.getConnStrForCluster(clusterId), 'get %s' % (path))
+        lines=output.splitlines()
+        assert len(lines) > 0
+        line=lines[-1]
+        print('getContent output: %s' % line)
+        return line
+
     def getProcessedTransactionsNum(self):
-        return 1000
+        files=self.performLs(0, '/TC_DONE')
+        created={}
+        for name in files:
+            path = format('/TC_DONE/%s' % (name))
+            doneStr = self.getContent(0, path)
+            tokens = doneStr.split()
+            assert len(tokens) == 2
+            created[name]=int(tokens[1])
+        print('Created: %s' % str(created)) 
+        numCreated=0
+        for key in created: 
+            numCreated+=created[key]
+        print('NumCreated: %d' % numCreated)
+        existing={}
+        for clusterId in range(self.args.numClusters):
+            files=self.performLs(clusterId, '/Transactions')
+            existing[clusterId]=len(files)
+        print('Existing: %s' % str(existing)) 
+        numExisting=0
+        for key in existing: 
+            numExisting+=existing[key]
+        print('NumExisting: %d' % numExisting)
+        assert numCreated >= numExisting
+        numProcessed = numCreated - numExisting
+        print('NumProcessed: %d' % numProcessed)
+        return numProcessed
 
     def printResult(self):
         durSec = (self.finish - self.start).seconds
         num = self.getProcessedTransactionsNum()
-        print("Performance num: %d dur: %d speed: %d (T/s)" % (num, durSec, float(num) / durSec))
+        print("Performance num: %d dur: %d speed: %f (T/s)" % (num, durSec, float(num) / durSec))
         
     def run(self):
         self.rotateLogDir()
@@ -365,7 +419,7 @@ class TestRunner(object):
         self.start = datetime.now()
         self.triggerStart()
         self.waitDesiredDuration()
-        self.listFiles()
+        #self.listFiles()
         self.triggerFinish()
         self.waitForDone()
         self.finish = datetime.now()
@@ -387,6 +441,7 @@ if __name__ == '__main__':
     parser.add_argument('-compsInTra', type=int, required=True, dest='compsInTra', help="Components in transaction")
     parser.add_argument('-outForTC', type=int, required=True, dest='outForTC', help="Outstanding transactions for creator")
     parser.add_argument('-outForTP', type=int, required=True, dest='outForTP', help="Outstanding transactions for processor")
+    parser.add_argument('-duration', type=int, required=True, dest='duration', help="Test duration")
     parser.add_argument('-doctest', action='store_true', dest='doctest', help="Run doctests")
     args = parser.parse_args()
     if args.doctest:
