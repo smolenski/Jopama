@@ -76,12 +76,14 @@ public class PaceMakerImpl implements PaceMaker
 
 	void teardown() throws InterruptedException
 	{
+		logger.info("PaceMakerImpl teardown");
 		this.taskRunner.finish();
 		this.taskRunnerThread.join();
 	}
 
 	public void prepareToFinish() throws InterruptedException, ExecutionException
 	{
+		logger.info("PaceMakerImpl prepareToFinish");
 		CompletableFuture<Boolean> done = new CompletableFuture<Boolean>();
 		this.taskRunner.schedule(
 				new Task()
@@ -183,7 +185,7 @@ public class PaceMakerImpl implements PaceMaker
 			ObjectId transactionId
 	)
 	{
-		logger.debug(
+		logger.info(
 				this.name + "PaceMaker::scheduling: " + transactionId
 		);
 		this.transactionTaskRunner.schedule(
@@ -218,6 +220,9 @@ public class PaceMakerImpl implements PaceMaker
 
 					}
 				}
+		);
+		logger.info(
+				this.name + "PaceMaker::scheduling done: " + transactionId
 		);
 	}
 

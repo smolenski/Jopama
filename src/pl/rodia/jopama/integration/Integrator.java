@@ -59,20 +59,25 @@ public class Integrator
 
 	public void start()
 	{
+		logger.info("Integrator start");
 		this.taskRunnerThread.start();
 		this.paceMaker.start();
+		logger.info("Integrator start done");
 	}
 
 	public void prepareToFinish() throws InterruptedException, ExecutionException
 	{
+		logger.info("Integrator prepareToFinish");
 		this.paceMaker.prepareToFinish();
 	}
 	
 	public void finish() throws InterruptedException, ExecutionException
 	{
+		logger.info("Integrator finish");
 		this.paceMaker.finish();
 		this.taskRunner.finish();
 		this.taskRunnerThread.join();
+		logger.info("Integrator finish done");
 	}
 
 	TaskRunner taskRunner;

@@ -48,7 +48,7 @@ public class ZooKeeperTransactionCreatorRunner extends ZooKeeperSyncedRunner
 
 	void finishDetected()
 	{
-		logger.info(this.id + " finish detected - starting");
+		logger.info(this.id + " finish detected - finishting");
 		try
 		{
 			this.transactionCreator.finish();

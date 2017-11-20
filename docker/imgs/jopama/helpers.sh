@@ -44,13 +44,14 @@ function prepareDist()
 
 function runJopama()
 {
-    if [[ $# -lt 2 ]]; then
-        echo "${FUNCNAME[0]} arguments (distDir runDir javaArgs)"
+    if [[ $# -lt 3 ]]; then
+        echo "${FUNCNAME[0]} arguments (distDir runDir debugPort javaArgs)"
         return 1
     fi
     local distDir=$1
     local runDir=$2
-    shift 2
+    local debugPort=$3
+    shift 3
     if ! [[ -d $distDir ]]; then
         echo "${FUNCNAME[0]} dist dir $distDir does not exist"
         return 1
@@ -61,7 +62,7 @@ function runJopama()
     fi
     pushd $runDir
     set -x
-    java -ea -classpath "$distDir:$distDir/*:$distDir/lib/*" $*
+    java -agentlib:jdwp=transport=dt_socket,address=${debugPort},server=y,suspend=n -ea -classpath "$distDir:$distDir/*:$distDir/lib/*" $*
     set +x
     popd
 }

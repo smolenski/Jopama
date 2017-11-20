@@ -28,10 +28,10 @@ def id2ZKPortInt1(id):
 def id2ZKPortInt2(id):
     return 10002 + 10 * id
 
-def id2TPPort(id):
+def id2TPDebugPort(id):
     return 10003 + 10 * id
 
-def id2TCPort(id):
+def id2TCDebugPort(id):
     return 10004 + 10 * id
 
 def printIt(cmd, shell=None):
@@ -178,11 +178,12 @@ class TestRunner(object):
                 name=getTPName(ins.gId)
                 hostLogsDir=format("/var/jopamaTest/logs/%d/TP" % ins.gId)
                 subprocess.check_call(
-                    'docker run -d --name %s --net host -v %s:/var/jopamaTest/logs jopama pl.rodia.jopama.integration.zookeeper.ZooKeeperTransactionProcessorRunner %s %s %d %s %d %d'
+                    'docker run -d --name %s --net host -v %s:/var/jopamaTest/logs jopama %d pl.rodia.jopama.integration.zookeeper.ZooKeeperTransactionProcessorRunner %s %s %d %s %d %d'
                     %
                     (
                         name,
                         hostLogsDir,
+                        id2TPDebugPort(ins.gId),
                         name,
                         self.getAddresses(),
                         self.args.clusterSize,
@@ -209,11 +210,12 @@ class TestRunner(object):
                 name=getTCName(ins.gId)
                 hostLogsDir=format("/var/jopamaTest/logs/%d/TC" % ins.gId)
                 subprocess.check_call(
-                    'docker run -d --name %s --net host -v %s:/var/jopamaTest/logs jopama pl.rodia.jopama.integration.zookeeper.ZooKeeperTransactionCreatorRunner %s %s %d %s %d %d %d %d %d'
+                    'docker run -d --name %s --net host -v %s:/var/jopamaTest/logs jopama %d pl.rodia.jopama.integration.zookeeper.ZooKeeperTransactionCreatorRunner %s %s %d %s %d %d %d %d %d'
                     %
                     (
                         name,
                         hostLogsDir,
+                        id2TCDebugPort(ins.gId),
                         name,
                         self.getAddresses(),
                         self.args.clusterSize,
@@ -243,7 +245,7 @@ class TestRunner(object):
         subprocess.check_call('mkdir -p %s' % hostLogsDir, shell=True)
         print("Starting CC")
         subprocess.check_call(
-            'docker run --name %s --net host -v %s:/var/jopamaTest/logs jopama pl.rodia.jopama.integration.zookeeper.ZooKeeperComponentCreator CC %s %d %d %d'
+            'docker run --name %s --net host -v %s:/var/jopamaTest/logs jopama 25000 pl.rodia.jopama.integration.zookeeper.ZooKeeperComponentCreator CC %s %d %d %d'
             %
             (
                 name,
@@ -268,7 +270,7 @@ class TestRunner(object):
         subprocess.check_call('mkdir -p %s' % hostLogsDir, shell=True)
         print("Starting TV")
         subprocess.check_call(
-            'docker run --name %s --net host -v %s:/var/jopamaTest/logs jopama pl.rodia.jopama.integration.zookeeper.ZooKeeperTestVerifier TV %s %d %d %d'
+            'docker run --name %s --net host -v %s:/var/jopamaTest/logs jopama 25000 pl.rodia.jopama.integration.zookeeper.ZooKeeperTestVerifier TV %s %d %d %d'
             %
             (
                 name,

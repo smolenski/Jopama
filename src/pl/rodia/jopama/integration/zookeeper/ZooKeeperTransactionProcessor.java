@@ -7,6 +7,8 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import org.apache.zookeeper.AsyncCallback.Children2Callback;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooKeeper.States;
 import org.apache.zookeeper.data.Stat;
@@ -45,18 +47,22 @@ public class ZooKeeperTransactionProcessor extends ZooKeeperActorBase
 	@Override
 	public void start()
 	{
+		logger.info("transaction processor start");
 		super.start();
 		this.integratorZooKeeperMultiProvider.start();
 		this.integrator.start();
+		logger.info("transaction processor start done");
 	}
 
 	@Override
 	public void finish() throws InterruptedException, ExecutionException
 	{
+		logger.info("transaction processor finish");
 		this.integrator.prepareToFinish();
 		this.integrator.finish();
 		this.integratorZooKeeperMultiProvider.finish();
 		super.finish();
+		logger.info("transaction processor finish done");
 	}
 
 	@Override
@@ -132,4 +138,5 @@ public class ZooKeeperTransactionProcessor extends ZooKeeperActorBase
 	ZooKeeperMultiProvider integratorZooKeeperMultiProvider;
 	ZooKeeperStorageGateway integratorZooKeeperStorageGateway;
 	Integrator integrator;
+	static final Logger logger = LogManager.getLogger();
 }
