@@ -246,12 +246,15 @@ public class PaceMakerImpl implements PaceMaker
 			this.waitingTransactions.remove(
 					transactionId
 			);
-			this.runningTransactions.add(
-					transactionId
-			);
-			this.schedule(
-					transactionId
-			);
+                        if (!this.runningTransactions.contains(transactionId))
+                        {
+                                this.runningTransactions.add(
+                                        transactionId
+                                );
+                                this.schedule(
+                                        transactionId
+                                );
+                        }
 		}
 	}
 
@@ -259,7 +262,7 @@ public class PaceMakerImpl implements PaceMaker
 			ObjectId transactionId
 	)
 	{
-		logger.debug(
+		logger.info(
 				this.name + "PaceMaker::onTransactionDone: " + transactionId
 		);
 		assert this.runningTransactions.contains(
