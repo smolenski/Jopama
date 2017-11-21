@@ -124,6 +124,7 @@ public class ZooKeeperTransactionCreatorRunner extends ZooKeeperSyncedRunner
 		Long numComponentsInTransaction = Long.parseLong(
 				args[8]
 		);
+		ThreadExceptionHandlerSetter.setHandler();
 		ZooKeeperTransactionCreatorRunner transactionCreatorRunner = new ZooKeeperTransactionCreatorRunner(
 				id,
 				addresses,

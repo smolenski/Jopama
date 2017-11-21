@@ -213,6 +213,7 @@ public class ZooKeeperTestVerifier extends ZooKeeperActorBase
 		Long numComponents = Long.parseLong(
 				args[4]
 		);
+		ThreadExceptionHandlerSetter.setHandler();
 		ZooKeeperTestVerifier testVerifier = new ZooKeeperTestVerifier(
 				id,
 				addresses,

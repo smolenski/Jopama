@@ -181,6 +181,7 @@ public class ZooKeeperComponentCreator extends ZooKeeperActorBase
 		Long numComponents = Long.parseLong(
 				args[4]
 		);
+		ThreadExceptionHandlerSetter.setHandler();
 		ZooKeeperComponentCreator componentCreator = new ZooKeeperComponentCreator(
 				id,
 				addresses,

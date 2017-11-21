@@ -1,6 +1,5 @@
 package pl.rodia.jopama.integration.zookeeper;
 
-import java.util.Random;
 import java.util.concurrent.ExecutionException;
 
 import org.apache.logging.log4j.LogManager;
@@ -100,6 +99,7 @@ public class ZooKeeperTransactionProcessorRunner extends ZooKeeperSyncedRunner
 		Integer numOutstanding = Integer.parseInt(
 				args[5]
 		);
+		ThreadExceptionHandlerSetter.setHandler();
 		ZooKeeperTransactionProcessorRunner transactionCreatorRunner = new ZooKeeperTransactionProcessorRunner(
 				id,
 				addresses,
