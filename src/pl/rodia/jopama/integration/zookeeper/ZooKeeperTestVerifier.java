@@ -28,7 +28,12 @@ public class ZooKeeperTestVerifier extends ZooKeeperActorBase
 		);
 		this.firstComponentId = firstComponentId;
 		this.numComponents = numComponents;
-		this.done = new Boolean(false);
+		this.numOutstanding = new Long(
+				0
+		);
+		this.done = new Boolean(
+				false
+		);
 		this.idsToRead = new TreeSet<Long>();
 		for (Long cid = this.firstComponentId; cid < firstComponentId + this.numComponents; ++cid)
 		{
@@ -43,13 +48,29 @@ public class ZooKeeperTestVerifier extends ZooKeeperActorBase
 	public Long getRetryDelay()
 	{
 		return new Long(
-				2000
+				3000
 		);
 	}
 
 	@Override
 	public void tryToPerform()
 	{
+		logger.info(
+				"tryToPerform"
+		);
+		if (
+			this.numOutstanding.compareTo(
+					new Long(
+							0
+					)
+			) > 0
+		)
+		{
+			logger.info(
+					"tryToPerform, not performing because there are outstanding operations, numOutstanding: " + this.numOutstanding
+			);
+			return;
+		}
 		logger.info(
 				this.id + " tryToPerform, num ids to read: " + this.idsToRead.size() + " ids: " + this.idsToRead
 		);
@@ -79,6 +100,7 @@ public class ZooKeeperTestVerifier extends ZooKeeperActorBase
 				}
 				else
 				{
+					this.numOutstanding += 1;
 					zooKeeperProvider.zooKeeper.getData(
 							ZooKeeperHelpers.getComponentPath(
 									zooKeeperObjectId
@@ -91,32 +113,21 @@ public class ZooKeeperTestVerifier extends ZooKeeperActorBase
 										int rc, String path, Object ctx, byte[] data, Stat stat
 								)
 								{
-									assert(rc != KeeperException.Code.NONODE.intValue());
-									if (
-										rc == KeeperException.Code.OK.intValue()
-									)
-									{
-										ZooKeeperObjectId objectId = ZooKeeperHelpers.getIdFromPath(
-												path
-										);
-										Long key = objectId.getId();
-										Component component = ZooKeeperHelpers.deserializeComponent(
-												data
-										);
-										Long value = new Long(
-												component.value
-										);
-										schedule(
-												new Task()
+									assert (rc != KeeperException.Code.NONODE.intValue());
+									schedule(
+											new Task()
+											{
+												@Override
+												public void execute()
 												{
-													@Override
-													public void execute()
-													{
-														onComponentValueRetrieved(key, value);
-													}
+													processGetDataResult(
+															rc == KeeperException.Code.OK.intValue(),
+															path,
+															data
+													);
+												}
 											}
-										);
-									}
+									);
 								}
 							},
 							null
@@ -125,51 +136,108 @@ public class ZooKeeperTestVerifier extends ZooKeeperActorBase
 			}
 		}
 	}
-	
-	void onComponentValueRetrieved(Long key, Long value)
+
+	void processGetDataResult(
+			Boolean success, String path, byte[] data
+	)
 	{
-		this.mapping.put(key, value);
-		this.idsToRead.remove(key);
-		if (this.idsToRead.isEmpty())
+		this.numOutstanding -= 1;
+		if (
+			success
+		)
+		{
+			ZooKeeperObjectId objectId = ZooKeeperHelpers.getIdFromPath(
+					path
+			);
+			Long key = objectId.getId();
+			Component component = ZooKeeperHelpers.deserializeComponent(
+					data
+			);
+			Long value = new Long(
+					component.value
+			);
+			this.onComponentValueRetrieved(
+					key,
+					value
+			);
+		}
+	}
+
+	void onComponentValueRetrieved(
+			Long key, Long value
+	)
+	{
+		this.mapping.put(
+				key,
+				value
+		);
+		this.idsToRead.remove(
+				key
+		);
+		if (
+			this.idsToRead.isEmpty()
+		)
 		{
 			assert (this.mapping.size() == this.numComponents);
 			this.printState();
 			this.verifyState();
 			synchronized (this)
 			{
-				this.done = new Boolean(true);
+				this.done = new Boolean(
+						true
+				);
 			}
 		}
 	}
-	
+
 	void printState()
 	{
-		logger.info("MAPPING BEGIN");
+		logger.info(
+				"MAPPING BEGIN"
+		);
 		for (Map.Entry<Long, Long> entry : this.mapping.entrySet())
 		{
-			logger.info(entry.getKey() + "  => " + entry.getValue());
-		}		
-		logger.info("MAPPING END");
+			logger.info(
+					entry.getKey() + "  => " + entry.getValue()
+			);
+		}
+		logger.info(
+				"MAPPING END"
+		);
 	}
-	
+
 	void verifyState()
 	{
 		Set<Long> values = new TreeSet<Long>();
 		for (Map.Entry<Long, Long> entry : this.mapping.entrySet())
 		{
 			Long value = entry.getValue();
-			if (value < this.firstComponentId || value >= (this.firstComponentId + this.numComponents))
+			if (
+				value < this.firstComponentId || value >= (this.firstComponentId + this.numComponents)
+			)
 			{
-				throw new IllegalStateException("Unexpected value, value: " + value);
+				throw new IllegalStateException(
+						"Unexpected value, value: " + value
+				);
 			}
-			values.add(value);
+			values.add(
+					value
+			);
 		}
-		if (!this.numComponents.equals(new Long(values.size())))
+		if (
+			!this.numComponents.equals(
+					new Long(
+							values.size()
+					)
+			)
+		)
 		{
-			throw new IllegalStateException("Unexpected number of values, number: " + values.size());
+			throw new IllegalStateException(
+					"Unexpected number of values, number: " + values.size()
+			);
 		}
 	}
-	
+
 	void waitUntilDone() throws InterruptedException
 	{
 		synchronized (this)
@@ -193,6 +261,7 @@ public class ZooKeeperTestVerifier extends ZooKeeperActorBase
 
 	Long firstComponentId;
 	Long numComponents;
+	Long numOutstanding;
 	Boolean done;
 	Set<Long> idsToRead;
 	Map<Long, Long> mapping;
