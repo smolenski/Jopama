@@ -1,5 +1,7 @@
 package pl.rodia.jopama.integration.zookeeper;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import org.apache.zookeeper.AsyncCallback.StringCallback;
@@ -27,9 +29,8 @@ public class ZooKeeperComponentCreator extends ZooKeeperActorBase
 				addresses,
 				clusterSize
 		);
-		this.numFilesCreated = new Long(
-				0
-		);
+		this.createdComponents = new HashSet<ZooKeeperObjectId>();
+		this.numOutstanding = new Long(0);
 		this.firstComponentId = firstComponentId;
 		this.numComponents = numComponents;
 		this.done = new Boolean(
@@ -49,6 +50,11 @@ public class ZooKeeperComponentCreator extends ZooKeeperActorBase
 	public void tryToPerform()
 	{
 		logger.info("tryToPerform");
+		if (this.numOutstanding.compareTo(new Long(0)) > 0)
+		{
+			logger.info("tryToPerform, not performing because there are outstanding operations, numOutstanding: " + this.numOutstanding);
+			return;
+		}
 		for (long i = this.firstComponentId; i < this.firstComponentId + this.numComponents; ++i)
 		{
 			assert i <= Integer.MAX_VALUE;
@@ -75,6 +81,7 @@ public class ZooKeeperComponentCreator extends ZooKeeperActorBase
 				{
 					Component component = new Component(new Integer(0), null, new Integer(id), null);
 					byte[] serializedComponent = ZooKeeperHelpers.serializeComponent(component);
+					this.numOutstanding += 1;
 					zooKeeperProvider.zooKeeper.create(
 							ZooKeeperHelpers.getComponentPath(zooKeeperObjectId),
 							serializedComponent,
@@ -98,6 +105,7 @@ public class ZooKeeperComponentCreator extends ZooKeeperActorBase
 												public void execute()
 												{
 													fileCreationFinished(
+															zooKeeperObjectId,
 															rc == KeeperException.Code.OK.intValue()
 													);
 												}
@@ -113,9 +121,11 @@ public class ZooKeeperComponentCreator extends ZooKeeperActorBase
 	}
 
 	void fileCreationFinished(
+			ZooKeeperObjectId zooKeeperObjectId,
 			Boolean success
 	)
 	{
+		this.numOutstanding -= 1;
 		if (
 			success.equals(
 					new Boolean(
@@ -124,9 +134,9 @@ public class ZooKeeperComponentCreator extends ZooKeeperActorBase
 			)
 		)
 		{
-			this.numFilesCreated = this.numFilesCreated + 1;
+			this.createdComponents.add(zooKeeperObjectId);
 			if (
-				this.numFilesCreated == this.numComponents
+				this.createdComponents.size() == this.numComponents
 			)
 			{
 				synchronized (this)
@@ -160,7 +170,8 @@ public class ZooKeeperComponentCreator extends ZooKeeperActorBase
 		}
 	}
 
-	Long numFilesCreated;
+	Set<ZooKeeperObjectId> createdComponents;
+	Long numOutstanding;
 	Long firstComponentId;
 	Long numComponents;
 	Boolean done;
