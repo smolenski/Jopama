@@ -79,7 +79,7 @@ public class ZooKeeperProvider implements Watcher
 		{
 			this.scheduleCreateZooKeeper(
 					new Long(
-							1000
+							5000
 					)
 			);
 		}

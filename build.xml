@@ -42,7 +42,9 @@
 		<mkdir dir="${tests.integration.basic.dir}" />
 		<mkdir dir="${tests.integration.nonConfPerf.dir}" />
 		<mkdir dir="${tests.integration.confPerf.dir}" />
-		<javac srcdir="${src.dir}" destdir="${classes.dir}" classpathref="libraries" includeantruntime="true" debug="true" />
+		<javac srcdir="${src.dir}" destdir="${classes.dir}" classpathref="libraries" includeantruntime="true" debug="true" fork="true">
+                        <compilerarg line="-g"/>
+                </javac>
 	</target>
 
 	<target name="jar" depends="compile">

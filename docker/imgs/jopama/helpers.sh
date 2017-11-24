@@ -62,7 +62,11 @@ function runJopama()
     fi
     pushd $runDir
     set -x
-    java -agentlib:jdwp=transport=dt_socket,address=${debugPort},server=y,suspend=n -ea -classpath "$distDir:$distDir/*:$distDir/lib/*" $*
+    #java -agentlib:jdwp=transport=dt_socket,address=${debugPort},server=y,suspend=n -ea -classpath "$distDir:$distDir/*:$distDir/lib/*" $*
+    #java -agentlib:hprof=cpu=samples,thread=y,depth=10 -agentlib:jdwp=transport=dt_socket,address=${debugPort},server=y,suspend=n -ea -classpath "$distDir:$distDir/*:$distDir/lib/*" $*
+    #java -agentlib:hprof=cpu=samples,thread=y,depth=10 -ea -classpath "$distDir:$distDir/*:$distDir/lib/*" $*
+    java -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=${debugPort} -Dcom.sun.management.jmxremote.local.only=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -ea -classpath "$distDir:$distDir/*:$distDir/lib/*" $*
+    #java -ea -classpath "$distDir:$distDir/*:$distDir/lib/*" $*
     set +x
     popd
 }

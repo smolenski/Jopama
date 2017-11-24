@@ -177,9 +177,11 @@ public class TaskRunner implements Runnable, StatsSyncSource
 					{
 						try
 						{
-							this.wait(
-									this.timeTasks.firstKey() - System.currentTimeMillis()
-							);
+                                                        Long waitDuration = this.timeTasks.firstKey() - new Long(System.currentTimeMillis());
+                                                        if (waitDuration.compareTo(new Long(0)) > 0)
+                                                        {
+							        this.wait(waitDuration.longValue());
+                                                        }
 						}
 						catch (InterruptedException e)
 						{

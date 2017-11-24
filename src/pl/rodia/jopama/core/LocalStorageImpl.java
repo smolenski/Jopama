@@ -56,7 +56,7 @@ public class LocalStorageImpl extends LocalStorage
 				componentId,
 				extendedComponent
 		);
-		logger.info(
+		logger.debug(
 				"putComponent, updating(" + (!extendedComponent.equals(
 						oldExtendedComponent
 				)) + ") componentId: " + componentId + " component: " + extendedComponent
@@ -77,7 +77,7 @@ public class LocalStorageImpl extends LocalStorage
 				transactionId,
 				extendedTransaction
 		);
-		logger.info(
+		logger.debug(
 				"putTransaction, updating(" + (!extendedTransaction.equals(
 						oldExtendedTransaction
 				)) + ") transactionId: " + transactionId + " transaction: " + extendedTransaction

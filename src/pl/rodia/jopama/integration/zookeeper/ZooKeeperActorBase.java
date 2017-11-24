@@ -28,7 +28,7 @@ public abstract class ZooKeeperActorBase
 				clusterSize
 		);
 		this.taskRunner = new TaskRunner(
-				"ZooKeeperDirChangesDetector"
+				"ZooKeeperActorBase"
 		);
 		this.taskRunnerThread = new Thread(
 				this.taskRunner
