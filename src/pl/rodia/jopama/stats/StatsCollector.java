@@ -42,22 +42,22 @@ public class StatsCollector
 			public void execute()
 			{
 				stopRequested = new Boolean(true);
+				if (scheduledPeriodicTaskId != null)
+				{
+					if (taskRunner.cancelTask(scheduledPeriodicTaskId).equals(new Boolean(true)))
+					{
+						scheduledPeriodicTaskId = null;
+					}
+				}
 				done.complete(new Boolean(true));
 			}
 		});
 		Boolean result = done.get();
 		assert result.equals(new Boolean(true));
 	}
-
+	
 	public void finish() throws InterruptedException
 	{
-		if (this.scheduledPeriodicTaskId != null)
-		{
-			if (this.taskRunner.cancelTask(this.scheduledPeriodicTaskId).equals(new Boolean(true)))
-			{
-				this.scheduledPeriodicTaskId = null;
-			}
-		}
 		this.taskRunner.finish();
 		this.taskRunnerThread.join();
 	}
@@ -81,7 +81,6 @@ public class StatsCollector
 	public void tick()
 	{
 		this.scheduledPeriodicTaskId = null;
-		/*
 		for (StatsAsyncSource statsSource : this.sources)
 		{
 			statsSource.scheduleGetStats(
@@ -101,7 +100,6 @@ public class StatsCollector
 					}
 			);
 		}
-		*/
 		if (this.stopRequested.equals(new Boolean(false)))
 		{
 			this.scheduleTick();
