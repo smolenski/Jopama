@@ -9,7 +9,7 @@ function runOnce()
     local id=$1
     echo "Running: $id"
     sudo rm -fr /var/jopamaTest/storage/ /var/jopamaTest/logs
-    python testRunner.py -ips 127.0.0.1 -numClusters 1 -clusterSize 1 -numTP 1 -numTC 1 -firstComp 100 -numComp 100 -compsInTra 2 -outForTC 10 -outForTP 2 -duration 30
+    python testRunner.py -ips 127.0.0.1 -numClusters 1 -clusterSize 1 -numTP 1 -numTC 1 -firstComp 100 -numComp 100 -compsInTra 10 -outForTC 10 -outForTP 1 -duration 30
     local retVal=$?
     echo "python finished with $retVal"
     return $retVal

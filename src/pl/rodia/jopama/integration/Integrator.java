@@ -1,5 +1,6 @@
 package pl.rodia.jopama.integration;
 
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -15,6 +16,7 @@ import pl.rodia.jopama.core.TransactionProcessor;
 import pl.rodia.jopama.core.TransactionProcessorImpl;
 import pl.rodia.jopama.data.ObjectId;
 import pl.rodia.jopama.gateway.RemoteStorageGateway;
+import pl.rodia.jopama.stats.StatsAsyncSource;
 import pl.rodia.mpf.TaskRunner;
 
 public class Integrator
@@ -78,6 +80,26 @@ public class Integrator
 		this.taskRunner.finish();
 		this.taskRunnerThread.join();
 		logger.info("Integrator finish done");
+	}
+	
+	public List<StatsAsyncSource> getStatsSources()
+	{
+		List<StatsAsyncSource> statsSources = new LinkedList<StatsAsyncSource>();
+		StatsAsyncSource taskRunnerStatsSource = new StatsAsyncSource(
+				this.taskRunner,
+				this.taskRunner
+		);
+		statsSources.add(
+				taskRunnerStatsSource
+		);
+		StatsAsyncSource remoteStorageGatewayStatsSource = new StatsAsyncSource(
+				this.taskRunner,
+				this.remoteStorageGatewayWrapper
+		);
+		statsSources.add(
+				remoteStorageGatewayStatsSource
+		);
+		return statsSources;
 	}
 
 	TaskRunner taskRunner;

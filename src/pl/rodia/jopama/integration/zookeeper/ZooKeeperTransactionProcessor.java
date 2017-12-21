@@ -15,6 +15,8 @@ import org.apache.zookeeper.data.Stat;
 
 import pl.rodia.jopama.data.ObjectId;
 import pl.rodia.jopama.integration.Integrator;
+import pl.rodia.jopama.stats.StatsAsyncSource;
+import pl.rodia.jopama.stats.StatsCollector;
 import pl.rodia.mpf.Task;
 
 public class ZooKeeperTransactionProcessor extends ZooKeeperActorBase
@@ -42,6 +44,10 @@ public class ZooKeeperTransactionProcessor extends ZooKeeperActorBase
 				zooKeeperMultiProvider
 		);
 		this.integrator = new Integrator("Integrator", this.integratorZooKeeperStorageGateway, new LinkedList<ObjectId>(), numOutstanding);
+		
+		this.statsCollector = new StatsCollector(
+				this.integrator.getStatsSources()
+		);
 	}
 	
 	@Override
@@ -51,6 +57,7 @@ public class ZooKeeperTransactionProcessor extends ZooKeeperActorBase
 		super.start();
 		this.integratorZooKeeperMultiProvider.start();
 		this.integrator.start();
+		this.statsCollector.start();
 		logger.info("transaction processor start done");
 	}
 
@@ -58,7 +65,9 @@ public class ZooKeeperTransactionProcessor extends ZooKeeperActorBase
 	public void finish() throws InterruptedException, ExecutionException
 	{
 		logger.info("transaction processor finish");
+		this.statsCollector.prepareToFinish();
 		this.integrator.prepareToFinish();
+		this.statsCollector.finish();
 		this.integrator.finish();
 		this.integratorZooKeeperMultiProvider.finish();
 		super.finish();
@@ -137,6 +146,7 @@ public class ZooKeeperTransactionProcessor extends ZooKeeperActorBase
 	Integer clusterId;
 	ZooKeeperMultiProvider integratorZooKeeperMultiProvider;
 	ZooKeeperStorageGateway integratorZooKeeperStorageGateway;
+	StatsCollector statsCollector;
 	Integrator integrator;
 	static final Logger logger = LogManager.getLogger();
 }

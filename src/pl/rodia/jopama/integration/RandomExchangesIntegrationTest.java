@@ -123,8 +123,6 @@ public class RandomExchangesIntegrationTest
 			transactionIds.add(transactionId);
 		}
 
-		List<StatsAsyncSource> statsSources = new LinkedList<StatsAsyncSource>();
-
 		Map<Integer, List<ObjectId>> integratorTransactions = new HashMap<Integer, List<ObjectId>>();
 		for (int ii = 0; ii < NUM_INTEGRATORS; ++ii)
 		{
@@ -178,23 +176,13 @@ public class RandomExchangesIntegrationTest
 			integrator.start();
 		}
 
+		List<StatsAsyncSource> statsSources = new LinkedList<StatsAsyncSource>();
 		for (Integrator integrator : integrators)
 		{
-			StatsAsyncSource taskRunnerStatsSource = new StatsAsyncSource(
-					integrator.taskRunner,
-					integrator.taskRunner
+			statsSources.addAll(
+					integrator.getStatsSources()
 			);
-			statsSources.add(
-					taskRunnerStatsSource
-			);
-			StatsAsyncSource remoteStorageGatewayStatsSource = new StatsAsyncSource(
-					integrator.taskRunner,
-					integrator.remoteStorageGatewayWrapper
-			);
-			statsSources.add(
-					remoteStorageGatewayStatsSource
-			);
-		}
+		}		
 		StatsCollector statsCollector = new StatsCollector(
 				statsSources
 		);

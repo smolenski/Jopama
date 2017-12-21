@@ -137,19 +137,8 @@ public class BasicIntegrationTest
 		List<StatsAsyncSource> statsSources = new LinkedList<StatsAsyncSource>();
 		for (Integrator integrator : integrators)
 		{
-			StatsAsyncSource taskRunnerStatsSource = new StatsAsyncSource(
-					integrator.taskRunner,
-					integrator.taskRunner
-			);
-			statsSources.add(
-					taskRunnerStatsSource
-			);
-			StatsAsyncSource remoteStorageGatewayStatsSource = new StatsAsyncSource(
-					integrator.taskRunner,
-					integrator.remoteStorageGatewayWrapper
-			);
-			statsSources.add(
-					remoteStorageGatewayStatsSource
+			statsSources.addAll(
+					integrator.getStatsSources()
 			);
 		}
 		StatsCollector statsCollector = new StatsCollector(
