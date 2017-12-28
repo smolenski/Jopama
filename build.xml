@@ -57,7 +57,8 @@
 	</target>
 
 	<target name="unitTests" depends="jar">
-		<junit printsummary="yes" dir="${tests.unit.dir}" showoutput="true" timeout="20000">
+		<junit printsummary="yes" dir="${tests.unit.dir}" showoutput="true" timeout="30000">
+			<jvmarg value="-ea" />
 			<classpath>
 				<path refid="libraries" />
 				<path refid="application" />

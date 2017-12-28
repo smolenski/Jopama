@@ -9,16 +9,16 @@ public class StatsResult
 	public StatsResult()
 	{
 		super();
-		this.samples = new TreeMap<String, Long>();
+		this.samples = new TreeMap<String, Double>();
 	}
 
 	public void addSample(
-			String name, Long value
+			String name, Double value
 	)
 	{
 		this.samples.put(
 				name,
-				new Long(value)
+				new Double(value)
 		);
 	}
 
@@ -26,11 +26,12 @@ public class StatsResult
 			StatsResult subResult
 	)
 	{
-		for (Map.Entry<String, Long> entry : subResult.samples.entrySet())
+		for (Map.Entry<String, Double> entry : subResult.samples.entrySet())
 		{
+			assert(!this.samples.containsKey(entry.getKey()));
 			this.samples.put(
 					entry.getKey(),
-					new Long(entry.getValue())
+					new Double(entry.getValue())
 			);
 		}
 	}
@@ -42,10 +43,10 @@ public class StatsResult
 		builder.append(
 				"("
 		);
-		for (Map.Entry<String, Long> entry : this.samples.entrySet())
+		for (Map.Entry<String, Double> entry : this.samples.entrySet())
 		{
 			builder.append(
-					entry.getKey() + "=" + entry.getValue() + ", "
+					entry.getKey() + "=" + String.format("%.2f", entry.getValue()) + ", "
 			);
 		}
 		builder.append(
@@ -54,5 +55,5 @@ public class StatsResult
 		return builder.toString();
 	}
 
-	SortedMap<String, Long> samples;
+	SortedMap<String, Double> samples;
 }
