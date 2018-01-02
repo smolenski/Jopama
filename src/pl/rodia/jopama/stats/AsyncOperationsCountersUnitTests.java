@@ -111,6 +111,7 @@ public class AsyncOperationsCountersUnitTests
 		this.assertStatValueEqual(statsResult, "maxDuration", new Double(0));
 		this.assertStatValueEqual(statsResult, "avgOutstanding", new Double(0));
 		this.assertStatValueEqual(statsResult, "anyOutstanding", new Double(0));
+		this.assertStatValueEqual(statsResult, "numFinishedDiff", new Double(0));
 		this.assertStatValueEqual(statsResult, "periodDuration", new Double(1 * this.TIME_UNIT_MS));
 	}
 
@@ -134,6 +135,7 @@ public class AsyncOperationsCountersUnitTests
 		this.assertStatValueEqual(statsResult, "maxDuration", new Double(1 * this.TIME_UNIT_MS));
 		this.assertStatValueEqual(statsResult, "avgOutstanding", new Double(0.5));
 		this.assertStatValueEqual(statsResult, "anyOutstanding", new Double(1 * this.TIME_UNIT_MS));
+		this.assertStatValueEqual(statsResult, "numFinishedDiff", new Double(1) / (2 * new Double(this.TIME_UNIT_MS) / 1000));
 		this.assertStatValueEqual(statsResult, "periodDuration", new Double(2 * this.TIME_UNIT_MS));
 	}
 
@@ -159,6 +161,7 @@ public class AsyncOperationsCountersUnitTests
 		this.assertStatValueEqual(statsResult, "maxDuration", new Double(1 * this.TIME_UNIT_MS));
 		this.assertStatValueEqual(statsResult, "avgOutstanding", new Double(1));
 		this.assertStatValueEqual(statsResult, "anyOutstanding", new Double(2 * this.TIME_UNIT_MS));
+		this.assertStatValueEqual(statsResult, "numFinishedDiff", new Double(2) / (2 * new Double(this.TIME_UNIT_MS) / 1000));
 		this.assertStatValueEqual(statsResult, "periodDuration", new Double(2 * this.TIME_UNIT_MS));
 	}
 
@@ -184,6 +187,7 @@ public class AsyncOperationsCountersUnitTests
 		this.assertStatValueEqual(statsResult, "maxDuration", new Double(1 * this.TIME_UNIT_MS));
 		this.assertStatValueEqual(statsResult, "avgOutstanding", new Double(1));
 		this.assertStatValueEqual(statsResult, "anyOutstanding", new Double(1 * this.TIME_UNIT_MS));
+		this.assertStatValueEqual(statsResult, "numFinishedDiff", new Double(2) / (2 * new Double(this.TIME_UNIT_MS) / 1000));
 		this.assertStatValueEqual(statsResult, "periodDuration", new Double(2 * this.TIME_UNIT_MS));
 	}
 
@@ -208,6 +212,7 @@ public class AsyncOperationsCountersUnitTests
 		this.assertStatValueEqual(statsResult, "maxDuration", new Double(1 * this.TIME_UNIT_MS));
 		this.assertStatValueEqual(statsResult, "avgOutstanding", new Double(0.5));
 		this.assertStatValueEqual(statsResult, "anyOutstanding", new Double(1 * this.TIME_UNIT_MS));
+		this.assertStatValueEqual(statsResult, "numFinishedDiff", new Double(1) / (2 * new Double(this.TIME_UNIT_MS) / 1000));
 		this.assertStatValueEqual(statsResult, "periodDuration", new Double(2 * this.TIME_UNIT_MS));
 		counters.onRequestFinished(new Long(2 * this.TIME_UNIT_MS));
 	}
@@ -229,6 +234,7 @@ public class AsyncOperationsCountersUnitTests
 		this.assertStatValueEqual(statsResult, "maxDuration", new Double(1 * this.TIME_UNIT_MS));
 		this.assertStatValueEqual(statsResult, "avgOutstanding", new Double(1));
 		this.assertStatValueEqual(statsResult, "anyOutstanding", new Double(1 * this.TIME_UNIT_MS));
+		this.assertStatValueEqual(statsResult, "numFinishedDiff", new Double(1) / (new Double(this.TIME_UNIT_MS) / 1000));
 		this.assertStatValueEqual(statsResult, "periodDuration", new Double(1 * this.TIME_UNIT_MS));
 		
 		Thread.sleep(
@@ -248,6 +254,7 @@ public class AsyncOperationsCountersUnitTests
 		this.assertStatValueEqual(statsResult, "maxDuration", new Double(2 * this.TIME_UNIT_MS));
 		this.assertStatValueEqual(statsResult, "avgOutstanding", new Double(0.66));
 		this.assertStatValueEqual(statsResult, "anyOutstanding", new Double(2 * this.TIME_UNIT_MS));
+		this.assertStatValueEqual(statsResult, "numFinishedDiff", new Double(1) / (3 * new Double(this.TIME_UNIT_MS) / 1000));
 		this.assertStatValueEqual(statsResult, "periodDuration", new Double(3 * this.TIME_UNIT_MS));
 	}
 	
@@ -324,6 +331,13 @@ public class AsyncOperationsCountersUnitTests
 			Boolean biggerThanLower = this.isStatValueBigger(value, new Double(1 * this.TIME_UNIT_MS));
 			Boolean lowerThanUpper = this.isStatValueLower(value, new Double(5 * this.TIME_UNIT_MS));
 			Assert.assertTrue("stat: anyOutstanding value: " + value, biggerThanLower && lowerThanUpper);
+		}
+		for (StatsResult singleResult : results)
+		{
+			Double value = this.getStatValue(singleResult, "numFinishedDiff");
+			Boolean equalLower = this.isStatValueEqual(value, new Double(1) / (5 * new Double(this.TIME_UNIT_MS) / 1000));
+			Boolean equalUpper = this.isStatValueEqual(value, new Double(2) / (5 * new Double(this.TIME_UNIT_MS) / 1000));
+			Assert.assertTrue("stat: numFinishedDiff value: " + value, equalLower || equalUpper);
 		}
 		for (StatsResult singleResult : results)
 		{

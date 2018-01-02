@@ -45,10 +45,12 @@ public class AsyncOperationsCounters implements StatsSyncSource
 		if (!periodDuration.equals(new Long(0)))
 		{
 			result.addSample(this.prefix + "::avgOutstanding", new Double(this.totalDuration) / periodDuration);
+			result.addSample(this.prefix + "::numFinishedDiff", new Double(numFinishedRecently) / (new Double(periodDuration) / 1000));
 		}
 		else
 		{
 			result.addSample(this.prefix + "::avgOutstanding", new Double(0));
+			result.addSample(this.prefix + "::numFinishedDiff", new Double(0));
 		}
 		result.addSample(this.prefix + "::anyOutstanding", new Double(this.anyOutstanding));
 		result.addSample(this.prefix + "::periodDuration", new Double(periodDuration));
