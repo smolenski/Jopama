@@ -15,10 +15,12 @@ import pl.rodia.jopama.gateway.NewComponentVersionFeedback;
 import pl.rodia.jopama.gateway.NewTransactionVersionFeedback;
 import pl.rodia.jopama.gateway.RemoteStorageGateway;
 import pl.rodia.jopama.stats.AsyncOperationsCounters;
+import pl.rodia.jopama.stats.StatsResult;
+import pl.rodia.jopama.stats.StatsSyncSource;
 import pl.rodia.mpf.Task;
 import pl.rodia.mpf.TaskRunner;
 
-public class TransactionProcessorImpl extends TransactionProcessor
+public class TransactionProcessorImpl extends TransactionProcessor implements StatsSyncSource
 {
 	
 	class TransactionEntry
@@ -324,6 +326,12 @@ public class TransactionProcessorImpl extends TransactionProcessor
 		};
 	}
 
+	@Override
+	public StatsResult getStats()
+	{
+		return this.transactionProcessingCounters.getStats();
+	}
+	
 	TaskRunner taskRunner;
 	TransactionAnalyzer transactionAnalyzer;
 	LocalStorage storage;

@@ -99,6 +99,13 @@ public class Integrator
 		statsSources.add(
 				remoteStorageGatewayStatsSource
 		);
+		StatsAsyncSource transactionProcessorStatsSource = new StatsAsyncSource(
+				this.taskRunner,
+				this.transactionProcessor
+		);
+		statsSources.add(
+				transactionProcessorStatsSource
+		);
 		return statsSources;
 	}
 
@@ -108,7 +115,7 @@ public class Integrator
 	RemoteStorageGatewayImpl remoteStorageGatewayWrapper;
 	LocalStorage localStorage;
 	TransactionAnalyzer transactionAnalyzer;
-	TransactionProcessor transactionProcessor;
+	TransactionProcessorImpl transactionProcessor;
 	public PaceMaker paceMaker;
 	static final Logger logger = LogManager.getLogger();
 }
