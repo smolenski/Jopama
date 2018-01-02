@@ -14,11 +14,26 @@ import pl.rodia.jopama.gateway.ErrorCode;
 import pl.rodia.jopama.gateway.NewComponentVersionFeedback;
 import pl.rodia.jopama.gateway.NewTransactionVersionFeedback;
 import pl.rodia.jopama.gateway.RemoteStorageGateway;
+import pl.rodia.jopama.stats.AsyncOperationsCounters;
 import pl.rodia.mpf.Task;
 import pl.rodia.mpf.TaskRunner;
 
 public class TransactionProcessorImpl extends TransactionProcessor
 {
+	
+	class TransactionEntry
+	{
+		public TransactionEntry(
+				Task done, Long startTimeMs
+		)
+		{
+			super();
+			this.done = done;
+			this.startTimeMs = startTimeMs;
+		}
+		Task done;
+		Long startTimeMs;
+	};
 
 	public TransactionProcessorImpl(
 			TaskRunner taskRunner,
@@ -32,8 +47,9 @@ public class TransactionProcessorImpl extends TransactionProcessor
 		this.transactionAnalyzer = transactionAnalyzer;
 		this.storage = storage;
 		this.storageGateway = storageGateway;
-		this.transactions = new HashMap<ObjectId, Task>();
+		this.transactions = new HashMap<ObjectId, TransactionEntry>();
 		this.scheduledProcessingTaskId = null;
+		this.transactionProcessingCounters = new AsyncOperationsCounters(this.taskRunner.name + "::TransactionProcessing");
 		this.scheduleProcessing();
 	}
 
@@ -42,9 +58,13 @@ public class TransactionProcessorImpl extends TransactionProcessor
 			Task transactionDone
 	)
 	{
+		this.transactionProcessingCounters.onRequestStarted();
 		this.transactions.put(
 				transactionId,
-				transactionDone
+				new TransactionEntry(
+					transactionDone,
+					System.currentTimeMillis()
+				)
 		);
 		if (
 			this.scheduledProcessingTaskId == null
@@ -61,11 +81,11 @@ public class TransactionProcessorImpl extends TransactionProcessor
 			ObjectId transactionId
 	)
 	{
-		Task task = this.transactions.remove(
+		TransactionEntry transactionEntry = this.transactions.remove(
 				transactionId
 		);
 		if (
-			task != null
+			transactionEntry != null
 		)
 		{
 			if (
@@ -88,7 +108,9 @@ public class TransactionProcessorImpl extends TransactionProcessor
 					this.scheduledProcessingTaskId = null;
 				}
 			}
-			task.execute();
+			Long transactionDuration = System.currentTimeMillis() - transactionEntry.startTimeMs;
+			this.transactionProcessingCounters.onRequestFinished(transactionDuration);
+			transactionEntry.done.execute();
 		}
 	}
 
@@ -98,7 +120,7 @@ public class TransactionProcessorImpl extends TransactionProcessor
 				"executeScheduledProcessing"
 		);
 		this.scheduledProcessingTaskId = null;
-		for (Map.Entry<ObjectId, Task> entry : this.transactions.entrySet())
+		for (Map.Entry<ObjectId, TransactionEntry> entry : this.transactions.entrySet())
 		{
 			this.processTransaction(
 					entry.getKey()
@@ -306,7 +328,8 @@ public class TransactionProcessorImpl extends TransactionProcessor
 	TransactionAnalyzer transactionAnalyzer;
 	LocalStorage storage;
 	RemoteStorageGateway storageGateway;
-	Map<ObjectId, Task> transactions;
+	Map<ObjectId, TransactionEntry> transactions;
 	Integer scheduledProcessingTaskId;
+	AsyncOperationsCounters transactionProcessingCounters;
 	static final Logger logger = LogManager.getLogger();
 }
