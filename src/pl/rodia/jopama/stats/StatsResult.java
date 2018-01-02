@@ -41,17 +41,17 @@ public class StatsResult
 	{
 		StringBuilder builder = new StringBuilder();
 		builder.append(
-				"("
+				"STATS_DUMP:\n"
 		);
 		for (Map.Entry<String, Double> entry : this.samples.entrySet())
 		{
 			builder.append(
-					entry.getKey() + "=" + String.format("%.2f", entry.getValue()) + ", "
+					entry.getKey() + ": " + String.format("%.2f", entry.getValue())
+			);
+			builder.append(
+					"\n"
 			);
 		}
-		builder.append(
-				")"
-		);
 		return builder.toString();
 	}
 
