@@ -332,7 +332,10 @@ public class TransactionProcessorImpl extends TransactionProcessor implements St
 	@Override
 	public StatsResult getStats()
 	{
-		return this.transactionProcessingCounters.getStats();
+		StatsResult result = new StatsResult();
+		result.addSamples(this.transactionProcessingCounters.getStats());
+		result.addSamples(this.noActionCounter.getStats());
+		return result;
 	}
 	
 	TaskRunner taskRunner;
