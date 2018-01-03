@@ -14,6 +14,7 @@ public class OperationStats implements StatsSyncSource
 		this.requestTransaction = new AsyncOperationsCounters(prefix + "::requestTransaction");
 		this.updateComponent = new AsyncOperationsCounters(prefix + "::updateComponent");
 		this.updateTransaction = new AsyncOperationsCounters(prefix + "::updateTransaction");
+		this.total = new AsyncOperationsCounters(prefix + "::total");
 	}
 	
 	@Override
@@ -24,6 +25,7 @@ public class OperationStats implements StatsSyncSource
 		result.addSamples(this.requestTransaction.getStats());
 		result.addSamples(this.updateComponent.getStats());
 		result.addSamples(this.updateTransaction.getStats());
+		result.addSamples(this.total.getStats());
 		return result;
 	}
 	
@@ -31,5 +33,6 @@ public class OperationStats implements StatsSyncSource
 	public AsyncOperationsCounters requestTransaction;
 	public AsyncOperationsCounters updateComponent;
 	public AsyncOperationsCounters updateTransaction;
+	public AsyncOperationsCounters total;
 	
 }

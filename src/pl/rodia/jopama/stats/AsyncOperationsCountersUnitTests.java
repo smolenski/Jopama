@@ -21,73 +21,19 @@ public class AsyncOperationsCountersUnitTests
 		);
 		this.counters = new AsyncOperationsCounters(
 				STATS_BASE_NAME
-		);		
-	}
-	
-	public Boolean isStatValueEqual(Double value, Double expectedValue, Long tolerancePercent)
-	{
-		return 
-		this.isStatValueBigger(value, expectedValue, tolerancePercent)
-		&&
-		this.isStatValueLower(value, expectedValue, tolerancePercent)
-		;
-	}
-	
-	public Boolean isStatValueBigger(Double value, Double expectedValue, Long tolerancePercent)
-	{
-		assert (tolerancePercent.compareTo(new Long(0)) >= 0);
-		assert (tolerancePercent.compareTo(new Long(100)) <= 0);
-		return 
-		(value.compareTo(expectedValue * (100 - tolerancePercent) / 100) >= 0)
-		;
-	}
-	
-	public Boolean isStatValueLower(Double value, Double expectedValue, Long tolerancePercent)
-	{
-		assert (tolerancePercent.compareTo(new Long(0)) >= 0);
-		assert (tolerancePercent.compareTo(new Long(100)) <= 0);
-		return 
-		(value.compareTo(expectedValue * (100 + tolerancePercent) / 100) <= 0)
-		;
-	}
-	
-	public Boolean isStatValueEqual(Double value, Double expectedValue)
-	{
-		return this.isStatValueEqual(value, expectedValue, new Long(10));
-	}
-	
-	public Boolean isStatValueBigger(Double value, Double expectedValue)
-	{
-		return this.isStatValueBigger(value, expectedValue, new Long(10));
-	}
-	
-	public Boolean isStatValueLower(Double value, Double expectedValue)
-	{
-		return this.isStatValueLower(value, expectedValue, new Long(10));
+		);
 	}
 
-	public void assertStatValueEqual(String whatComparingStr, Double value, Double expectedValue, Long tolerancePercent)
-	{
-		Assert.assertTrue(
-				"Comparing " + whatComparingStr + " value: " + value + " expectedValue: " + expectedValue + " tolerancePercent: " + tolerancePercent,
-				this.isStatValueEqual(value, expectedValue, tolerancePercent)
-		);		
-	}
-
-	public void assertStatValueEqual(String whatComparingStr, Double value, Double expectedValue)
-	{
-		this.assertStatValueEqual(whatComparingStr, value, expectedValue, new Long(10));
-	}
-	
 	public void assertStatValueEqual(StatsResult statsResult, String name, Double expectedValue, Long tolerancePercent)
 	{
-		this.assertStatValueEqual("stat" + name, this.getStatValue(statsResult, name), expectedValue, tolerancePercent);
+		StatsUnitTestsHelpers.assertStatValueEqual("stat" + name, this.getStatValue(statsResult, name), expectedValue, tolerancePercent);
 	}
 	
 	public void assertStatValueEqual(StatsResult statsResult, String name, Double value)
 	{
 		this.assertStatValueEqual(statsResult, name, value, new Long(10));
 	}
+
 	
 	public Double getStatValue(StatsResult statsResult, String statName)
 	{
@@ -293,8 +239,8 @@ public class AsyncOperationsCountersUnitTests
 		for (StatsResult singleResult : results)
 		{
 			Double value = this.getStatValue(singleResult, "maxOutstanding");
-			Boolean equalLower = this.isStatValueEqual(value, new Double(1));
-			Boolean equalUpper = this.isStatValueEqual(value, new Double(2));
+			Boolean equalLower = StatsUnitTestsHelpers.isStatValueEqual(value, new Double(1));
+			Boolean equalUpper = StatsUnitTestsHelpers.isStatValueEqual(value, new Double(2));
 			Assert.assertTrue("stat: maxOutstanding value: " + value, equalLower || equalUpper);
 		}
 		Double totalDurationSum = new Double(0);
@@ -302,47 +248,47 @@ public class AsyncOperationsCountersUnitTests
 		{
 			totalDurationSum += singleResult.samples.get(STATS_BASE_NAME + "::totalDuration");
 		}
-		this.assertStatValueEqual("totalDuration sum", totalDurationSum, new Double(90 * this.TIME_UNIT_MS));
+		StatsUnitTestsHelpers.assertStatValueEqual("totalDuration sum", totalDurationSum, new Double(90 * this.TIME_UNIT_MS));
 		for (StatsResult singleResult : results)
 		{
 			Double value = this.getStatValue(singleResult, "avgDuration");
-			Boolean equalLower = this.isStatValueEqual(value, new Double(1 * this.TIME_UNIT_MS));
-			Boolean equalMiddle = this.isStatValueEqual(value, new Double(3 * this.TIME_UNIT_MS));
-			Boolean equalUpper = this.isStatValueEqual(value, new Double(5 * this.TIME_UNIT_MS));
+			Boolean equalLower = StatsUnitTestsHelpers.isStatValueEqual(value, new Double(1 * this.TIME_UNIT_MS));
+			Boolean equalMiddle = StatsUnitTestsHelpers.isStatValueEqual(value, new Double(3 * this.TIME_UNIT_MS));
+			Boolean equalUpper = StatsUnitTestsHelpers.isStatValueEqual(value, new Double(5 * this.TIME_UNIT_MS));
 			Assert.assertTrue("stat: avgDuration value: " + value, equalLower || equalMiddle || equalUpper);
 		}
 		for (StatsResult singleResult : results)
 		{
 			Double value = this.getStatValue(singleResult, "maxDuration");
-			Boolean equalLower = this.isStatValueEqual(value, new Double(1 * this.TIME_UNIT_MS));
-			Boolean equalUpper = this.isStatValueEqual(value, new Double(5 * this.TIME_UNIT_MS));
+			Boolean equalLower = StatsUnitTestsHelpers.isStatValueEqual(value, new Double(1 * this.TIME_UNIT_MS));
+			Boolean equalUpper = StatsUnitTestsHelpers.isStatValueEqual(value, new Double(5 * this.TIME_UNIT_MS));
 			Assert.assertTrue("stat: maxDuration value: " + value, equalLower || equalUpper);
 		}
 		for (StatsResult singleResult : results)
 		{
 			Double value = this.getStatValue(singleResult, "avgOutstanding");
-			Boolean biggerThanLower = this.isStatValueBigger(value, new Double(0.2));
-			Boolean lowerThanUpper = this.isStatValueLower(value, new Double(1.2));
+			Boolean biggerThanLower = StatsUnitTestsHelpers.isStatValueBigger(value, new Double(0.2));
+			Boolean lowerThanUpper = StatsUnitTestsHelpers.isStatValueLower(value, new Double(1.2));
 			Assert.assertTrue("stat: avgOutstanding value: " + value, biggerThanLower && lowerThanUpper);
 		}
 		for (StatsResult singleResult : results)
 		{
 			Double value = this.getStatValue(singleResult, "anyOutstanding");
-			Boolean biggerThanLower = this.isStatValueBigger(value, new Double(1 * this.TIME_UNIT_MS));
-			Boolean lowerThanUpper = this.isStatValueLower(value, new Double(5 * this.TIME_UNIT_MS));
+			Boolean biggerThanLower = StatsUnitTestsHelpers.isStatValueBigger(value, new Double(1 * this.TIME_UNIT_MS));
+			Boolean lowerThanUpper = StatsUnitTestsHelpers.isStatValueLower(value, new Double(5 * this.TIME_UNIT_MS));
 			Assert.assertTrue("stat: anyOutstanding value: " + value, biggerThanLower && lowerThanUpper);
 		}
 		for (StatsResult singleResult : results)
 		{
 			Double value = this.getStatValue(singleResult, "numFinishedDiff");
-			Boolean equalLower = this.isStatValueEqual(value, new Double(1) / (5 * new Double(this.TIME_UNIT_MS) / 1000));
-			Boolean equalUpper = this.isStatValueEqual(value, new Double(2) / (5 * new Double(this.TIME_UNIT_MS) / 1000));
+			Boolean equalLower = StatsUnitTestsHelpers.isStatValueEqual(value, new Double(1) / (5 * new Double(this.TIME_UNIT_MS) / 1000));
+			Boolean equalUpper = StatsUnitTestsHelpers.isStatValueEqual(value, new Double(2) / (5 * new Double(this.TIME_UNIT_MS) / 1000));
 			Assert.assertTrue("stat: numFinishedDiff value: " + value, equalLower || equalUpper);
 		}
 		for (StatsResult singleResult : results)
 		{
 			Double value = this.getStatValue(singleResult, "periodDuration");
-			Assert.assertTrue("stat: periodDuration value: " + value, this.isStatValueEqual(value, new Double(5 * this.TIME_UNIT_MS)));
+			Assert.assertTrue("stat: periodDuration value: " + value, StatsUnitTestsHelpers.isStatValueEqual(value, new Double(5 * this.TIME_UNIT_MS)));
 		}
 	}
 	

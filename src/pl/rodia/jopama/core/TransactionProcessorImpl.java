@@ -15,6 +15,7 @@ import pl.rodia.jopama.gateway.NewComponentVersionFeedback;
 import pl.rodia.jopama.gateway.NewTransactionVersionFeedback;
 import pl.rodia.jopama.gateway.RemoteStorageGateway;
 import pl.rodia.jopama.stats.AsyncOperationsCounters;
+import pl.rodia.jopama.stats.OperationCounter;
 import pl.rodia.jopama.stats.StatsResult;
 import pl.rodia.jopama.stats.StatsSyncSource;
 import pl.rodia.mpf.Task;
@@ -51,6 +52,7 @@ public class TransactionProcessorImpl extends TransactionProcessor implements St
 		this.storageGateway = storageGateway;
 		this.transactions = new HashMap<ObjectId, TransactionEntry>();
 		this.scheduledProcessingTaskId = null;
+		this.noActionCounter = new OperationCounter(this.taskRunner.name + "::NoActionCounter");
 		this.transactionProcessingCounters = new AsyncOperationsCounters(this.taskRunner.name + "::TransactionProcessing");
 		this.scheduleProcessing();
 	}
@@ -244,6 +246,7 @@ public class TransactionProcessorImpl extends TransactionProcessor implements St
 		}
 		else
 		{
+			this.noActionCounter.increase();
 			logger.debug(
 					this.taskRunner.name + ":getChange - null"
 			);
@@ -338,6 +341,7 @@ public class TransactionProcessorImpl extends TransactionProcessor implements St
 	RemoteStorageGateway storageGateway;
 	Map<ObjectId, TransactionEntry> transactions;
 	Integer scheduledProcessingTaskId;
+	OperationCounter noActionCounter;
 	AsyncOperationsCounters transactionProcessingCounters;
 	static final Logger logger = LogManager.getLogger();
 }

@@ -39,6 +39,7 @@ public class RemoteStorageGatewayImpl extends RemoteStorageGateway implements St
 	)
 	{
 		Long startTime = System.currentTimeMillis();
+		this.operationsStats.total.onRequestStarted();
 		this.operationsStats.requestTransaction.onRequestStarted();
 		this.targetStorageGateway.requestTransaction(
 				transactionId,
@@ -57,6 +58,9 @@ public class RemoteStorageGatewayImpl extends RemoteStorageGateway implements St
 									{
 										Long finishTime = System.currentTimeMillis();
 										operationsStats.requestTransaction.onRequestFinished(
+												finishTime - startTime
+										);
+										operationsStats.total.onRequestFinished(
 												finishTime - startTime
 										);
 										feedback.success(
@@ -83,6 +87,9 @@ public class RemoteStorageGatewayImpl extends RemoteStorageGateway implements St
 										operationsStats.requestTransaction.onRequestFinished(
 												finishTime - startTime
 										);
+										operationsStats.total.onRequestFinished(
+												finishTime - startTime
+										);
 										feedback.failure(
 												errorCode
 										);
@@ -100,6 +107,7 @@ public class RemoteStorageGatewayImpl extends RemoteStorageGateway implements St
 	)
 	{
 		Long startTime = System.currentTimeMillis();
+		this.operationsStats.total.onRequestStarted();
 		this.operationsStats.requestComponent.onRequestStarted();
 		this.targetStorageGateway.requestComponent(
 				componentId,
@@ -120,6 +128,9 @@ public class RemoteStorageGatewayImpl extends RemoteStorageGateway implements St
 									{
 										Long finishTime = System.currentTimeMillis();
 										operationsStats.requestComponent.onRequestFinished(
+												finishTime - startTime
+										);
+										operationsStats.total.onRequestFinished(
 												finishTime - startTime
 										);
 										feedback.success(
@@ -146,6 +157,9 @@ public class RemoteStorageGatewayImpl extends RemoteStorageGateway implements St
 										operationsStats.requestComponent.onRequestFinished(
 												finishTime - startTime
 										);
+										operationsStats.total.onRequestFinished(
+												finishTime - startTime
+										);
 										feedback.failure(
 												errorCode
 										);
@@ -163,6 +177,7 @@ public class RemoteStorageGatewayImpl extends RemoteStorageGateway implements St
 	)
 	{
 		Long startTime = System.currentTimeMillis();
+		this.operationsStats.total.onRequestStarted();
 		this.operationsStats.updateTransaction.onRequestStarted();
 		this.targetStorageGateway.changeTransaction(
 				transactionChange,
@@ -189,6 +204,9 @@ public class RemoteStorageGatewayImpl extends RemoteStorageGateway implements St
 										{
 											Long finishTime = System.currentTimeMillis();
 											operationsStats.updateTransaction.onRequestFinished(
+													finishTime - startTime
+											);
+											operationsStats.total.onRequestFinished(
 													finishTime - startTime
 											);
 											feedback.success(
@@ -241,6 +259,9 @@ public class RemoteStorageGatewayImpl extends RemoteStorageGateway implements St
 											operationsStats.updateTransaction.onRequestFinished(
 													finishTime - startTime
 											);
+											operationsStats.total.onRequestFinished(
+													finishTime - startTime
+											);
 											requestTransaction(
 													transactionChange.transactionId,
 													feedback
@@ -280,6 +301,7 @@ public class RemoteStorageGatewayImpl extends RemoteStorageGateway implements St
 	)
 	{
 		Long startTime = System.currentTimeMillis();
+		this.operationsStats.total.onRequestStarted();
 		this.operationsStats.updateComponent.onRequestStarted();
 		this.targetStorageGateway.changeComponent(
 				componentChange,
@@ -309,6 +331,9 @@ public class RemoteStorageGatewayImpl extends RemoteStorageGateway implements St
 											operationsStats.updateComponent.onRequestFinished(
 													finishTime - startTime
 											);
+											operationsStats.total.onRequestFinished(
+													finishTime - startTime
+											);
 											feedback.success(
 													extendedComponent
 											);
@@ -326,6 +351,9 @@ public class RemoteStorageGatewayImpl extends RemoteStorageGateway implements St
 										{
 											Long finishTime = System.currentTimeMillis();
 											operationsStats.updateComponent.onRequestFinished(
+													finishTime - startTime
+											);
+											operationsStats.total.onRequestFinished(
 													finishTime - startTime
 											);
 											requestComponent(
@@ -355,6 +383,9 @@ public class RemoteStorageGatewayImpl extends RemoteStorageGateway implements St
 										{
 											Long finishTime = System.currentTimeMillis();
 											operationsStats.updateComponent.onRequestFinished(
+													finishTime - startTime
+											);
+											operationsStats.total.onRequestFinished(
 													finishTime - startTime
 											);
 											requestComponent(
