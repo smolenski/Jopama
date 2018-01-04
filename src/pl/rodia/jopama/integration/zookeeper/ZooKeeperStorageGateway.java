@@ -47,6 +47,7 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 						zooKeeperProvider.zooKeeper.getState() != States.CONNECTED
 			)
 			{
+				feedback.failure(ErrorCode.NOT_AVAILABLE);
 				return;
 			}
 			zooKeeperProvider.zooKeeper.getData(
@@ -75,10 +76,9 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 										)
 								);
 							}
-							else if (
-								rc == KeeperException.Code.NONODE.intValue()
-							)
+							else
 							{
+								assert (rc == KeeperException.Code.NONODE.intValue());
 								feedback.failure(
 										ErrorCode.NOT_EXISTS
 								);
@@ -109,6 +109,7 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 						zooKeeperProvider.zooKeeper.getState() != States.CONNECTED
 			)
 			{
+				feedback.failure(ErrorCode.NOT_AVAILABLE);
 				return;
 			}
 			zooKeeperProvider.zooKeeper.getData(
@@ -137,10 +138,9 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 										)
 								);
 							}
-							else if (
-								rc == KeeperException.Code.NONODE.intValue()
-							)
+							else
 							{
+								assert (rc == KeeperException.Code.NONODE.intValue());
 								feedback.failure(
 										ErrorCode.NOT_EXISTS
 								);
@@ -167,10 +167,11 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 		{
 			if (
 				zooKeeperProvider == null
-						||
-						zooKeeperProvider.zooKeeper.getState() != States.CONNECTED
+				||
+				zooKeeperProvider.zooKeeper.getState() != States.CONNECTED
 			)
 			{
+				feedback.failure(ErrorCode.NOT_AVAILABLE);
 				return;
 			}
 			if (
@@ -213,10 +214,9 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 											ErrorCode.NOT_EXISTS
 									);
 								}
-								else if (
-									rc == KeeperException.Code.BADVERSION.intValue()
-								)
+								else
 								{
+									assert (rc == KeeperException.Code.BADVERSION.intValue());
 									feedback.failure(
 											ErrorCode.BASE_VERSION_NOT_EQUAL
 									);
@@ -249,21 +249,13 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 											null
 									);
 								}
-								else if (
-									rc == KeeperException.Code.NONODE.intValue()
-								)
+								else
 								{
+									assert (rc == KeeperException.Code.NONODE.intValue());
 									feedback.failure(
 											ErrorCode.NOT_EXISTS
 									);
 								}
-								else
-								{
-									throw new IllegalStateException(
-											"Unexpected returned value, rc: " + rc
-									);
-								}
-
 							}
 						},
 						null
@@ -291,6 +283,7 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 						zooKeeperProvider.zooKeeper.getState() != States.CONNECTED
 			)
 			{
+				feedback.failure(ErrorCode.NOT_AVAILABLE);
 				return;
 			}
 			if (
@@ -333,10 +326,9 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 											ErrorCode.NOT_EXISTS
 									);
 								}
-								else if (
-									rc == KeeperException.Code.BADVERSION.intValue()
-								)
+								else
 								{
+									assert (rc == KeeperException.Code.BADVERSION.intValue());
 									feedback.failure(
 											ErrorCode.BASE_VERSION_NOT_EQUAL
 									);
@@ -369,21 +361,13 @@ public class ZooKeeperStorageGateway extends RemoteStorageGateway
 											null
 									);
 								}
-								else if (
-									rc == KeeperException.Code.NONODE.intValue()
-								)
+								else
 								{
+									assert (rc == KeeperException.Code.NONODE.intValue());
 									feedback.failure(
 											ErrorCode.NOT_EXISTS
 									);
 								}
-								else
-								{
-									throw new IllegalStateException(
-											"Unexpected returned value, rc: " + rc
-									);
-								}
-
 							}
 						},
 						null

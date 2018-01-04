@@ -54,6 +54,8 @@ public class TransactionProcessorImpl extends TransactionProcessor implements St
 		this.scheduledProcessingTaskId = null;
 		this.noActionCounter = new OperationCounter(this.taskRunner.name + "::NoActionCounter");
 		this.transactionProcessingCounters = new AsyncOperationsCounters(this.taskRunner.name + "::TransactionProcessing");
+		this.transactionUpdated = new SuccessFailureCounter(this.taskRunner.name + "::TransactionUpdated");
+		this.componentUpdated = new SuccessFailureCounter(this.taskRunner.name + "::ComponentUpdated");
 		this.scheduleProcessing();
 	}
 
@@ -254,7 +256,8 @@ public class TransactionProcessorImpl extends TransactionProcessor implements St
 	}
 
 	private NewComponentVersionFeedback createNewComponentVersionHandler(
-			ObjectId transactionId, ObjectId componentId
+		ObjectId transactionId,
+		ObjectId componentId
 	)
 	{
 		return new NewComponentVersionFeedback()
@@ -264,6 +267,7 @@ public class TransactionProcessorImpl extends TransactionProcessor implements St
 					ExtendedComponent extendedComponent
 			)
 			{
+				assert (extendedComponent != null);
 				if (
 					storage.putComponent(
 							componentId,
@@ -271,9 +275,14 @@ public class TransactionProcessorImpl extends TransactionProcessor implements St
 					)
 				)
 				{
+					componentUpdated.noticeSuccess();
 					processTransaction(
 							transactionId
 					);
+				}
+				else
+				{
+					componentUpdated.noticeFailure();
 				}
 			}
 
@@ -282,7 +291,8 @@ public class TransactionProcessorImpl extends TransactionProcessor implements St
 					ErrorCode errorCode
 			)
 			{
-				logger.debug("Failure, transactionId: " + transactionId + " componentId: " + componentId + " errorCode: " + errorCode);
+				componentUpdated.noticeFailure();
+				logger.info("Failure, transactionId: " + transactionId + " componentId: " + componentId + " errorCode: " + errorCode);
 				assert errorCode != ErrorCode.NOT_EXISTS;
 			}
 		};
@@ -299,6 +309,7 @@ public class TransactionProcessorImpl extends TransactionProcessor implements St
 					ExtendedTransaction extendedTransaction
 			)
 			{
+				assert (extendedTransaction != null);
 				if (
 					storage.putTransaction(
 							transactionId,
@@ -306,9 +317,14 @@ public class TransactionProcessorImpl extends TransactionProcessor implements St
 					)
 				)
 				{
+					transactionUpdated.noticeSuccess();
 					processTransaction(
 							transactionId
 					);
+				}
+				else
+				{
+					transactionUpdated.noticeFailure();
 				}
 			}
 
@@ -317,6 +333,7 @@ public class TransactionProcessorImpl extends TransactionProcessor implements St
 					ErrorCode errorCode
 			)
 			{
+				transactionUpdated.noticeFailure();
 				if (
 					errorCode == ErrorCode.NOT_EXISTS
 				)
@@ -335,6 +352,8 @@ public class TransactionProcessorImpl extends TransactionProcessor implements St
 		StatsResult result = new StatsResult();
 		result.addSamples(this.transactionProcessingCounters.getStats());
 		result.addSamples(this.noActionCounter.getStats());
+		result.addSamples(this.transactionUpdated.getStats());
+		result.addSamples(this.componentUpdated.getStats());
 		return result;
 	}
 	
@@ -346,5 +365,7 @@ public class TransactionProcessorImpl extends TransactionProcessor implements St
 	Integer scheduledProcessingTaskId;
 	OperationCounter noActionCounter;
 	AsyncOperationsCounters transactionProcessingCounters;
+	SuccessFailureCounter transactionUpdated;
+	SuccessFailureCounter componentUpdated;
 	static final Logger logger = LogManager.getLogger();
 }
