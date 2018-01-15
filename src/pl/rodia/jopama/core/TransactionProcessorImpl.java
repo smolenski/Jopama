@@ -41,21 +41,25 @@ public class TransactionProcessorImpl extends TransactionProcessor implements St
 	public TransactionProcessorImpl(
 			TaskRunner taskRunner,
 			TransactionAnalyzer transactionAnalyzer,
-			LocalStorage storage,
+			ProcessingCache processingCache,
 			RemoteStorageGateway storageGateway
 	)
 	{
 		super();
 		this.taskRunner = taskRunner;
 		this.transactionAnalyzer = transactionAnalyzer;
-		this.storage = storage;
+		this.processingCache = processingCache;
 		this.storageGateway = storageGateway;
 		this.transactions = new HashMap<ObjectId, TransactionEntry>();
 		this.scheduledProcessingTaskId = null;
 		this.noActionCounter = new OperationCounter(this.taskRunner.name + "::NoActionCounter");
 		this.transactionProcessingCounters = new AsyncOperationsCounters(this.taskRunner.name + "::TransactionProcessing");
-		this.transactionUpdated = new SuccessFailureCounter(this.taskRunner.name + "::TransactionUpdated");
-		this.componentUpdated = new SuccessFailureCounter(this.taskRunner.name + "::ComponentUpdated");
+		this.transactionUpdated = new OperationCounter(this.taskRunner.name + "::TransactionUpdated");
+		this.transactionNotUpdated = new OperationCounter(this.taskRunner.name + "::TransactionNotUpdated");
+		this.transactionUpdateFailed = new OperationCounter(this.taskRunner.name + "::TransactionUpdateFailed");
+		this.componentUpdated = new OperationCounter(this.taskRunner.name + "::ComponentUpdated");
+		this.componentNotUpdated = new OperationCounter(this.taskRunner.name + "::ComponentNotUpdated");
+		this.componentUpdateFailed = new OperationCounter(this.taskRunner.name + "::ComponentUpdateFailed");
 		this.scheduleProcessing();
 	}
 
@@ -72,6 +76,7 @@ public class TransactionProcessorImpl extends TransactionProcessor implements St
 					System.currentTimeMillis()
 				)
 		);
+		this.processingCache.add(transactionId);
 		if (
 			this.scheduledProcessingTaskId == null
 		)
@@ -94,6 +99,7 @@ public class TransactionProcessorImpl extends TransactionProcessor implements St
 			transactionEntry != null
 		)
 		{
+			this.processingCache.remove(transactionId);
 			if (
 				this.transactions.isEmpty()
 			)
@@ -268,21 +274,27 @@ public class TransactionProcessorImpl extends TransactionProcessor implements St
 			)
 			{
 				assert (extendedComponent != null);
+				if (transactions.get(transactionId) == null)
+				{
+					componentNotUpdated.increase();
+					return;
+				}
+				LocalStorage localStorage = processingCache.get(transactionId);
 				if (
-					storage.putComponent(
+					localStorage.putComponent(
 							componentId,
 							extendedComponent
 					)
 				)
 				{
-					componentUpdated.noticeSuccess();
+					componentUpdated.increase();
 					processTransaction(
 							transactionId
 					);
 				}
 				else
 				{
-					componentUpdated.noticeFailure();
+					componentNotUpdated.increase();
 				}
 			}
 
@@ -291,7 +303,7 @@ public class TransactionProcessorImpl extends TransactionProcessor implements St
 					ErrorCode errorCode
 			)
 			{
-				componentUpdated.noticeFailure();
+				componentUpdateFailed.increase();
 				logger.info("Failure, transactionId: " + transactionId + " componentId: " + componentId + " errorCode: " + errorCode);
 				assert errorCode != ErrorCode.NOT_EXISTS;
 			}
@@ -310,21 +322,27 @@ public class TransactionProcessorImpl extends TransactionProcessor implements St
 			)
 			{
 				assert (extendedTransaction != null);
+				if (transactions.get(transactionId) == null)
+				{
+					transactionNotUpdated.increase();
+					return;
+				}
+				LocalStorage localStorage = processingCache.get(transactionId);
 				if (
-					storage.putTransaction(
+					localStorage.putTransaction(
 							transactionId,
 							extendedTransaction
 					)
 				)
 				{
-					transactionUpdated.noticeSuccess();
+					transactionUpdated.increase();
 					processTransaction(
 							transactionId
 					);
 				}
 				else
 				{
-					transactionUpdated.noticeFailure();
+					transactionNotUpdated.increase();
 				}
 			}
 
@@ -333,7 +351,7 @@ public class TransactionProcessorImpl extends TransactionProcessor implements St
 					ErrorCode errorCode
 			)
 			{
-				transactionUpdated.noticeFailure();
+				transactionUpdateFailed.increase();
 				if (
 					errorCode == ErrorCode.NOT_EXISTS
 				)
@@ -359,13 +377,17 @@ public class TransactionProcessorImpl extends TransactionProcessor implements St
 	
 	TaskRunner taskRunner;
 	TransactionAnalyzer transactionAnalyzer;
-	LocalStorage storage;
+	ProcessingCache processingCache;
 	RemoteStorageGateway storageGateway;
 	Map<ObjectId, TransactionEntry> transactions;
 	Integer scheduledProcessingTaskId;
 	OperationCounter noActionCounter;
 	AsyncOperationsCounters transactionProcessingCounters;
-	SuccessFailureCounter transactionUpdated;
-	SuccessFailureCounter componentUpdated;
+	OperationCounter transactionUpdated;
+	OperationCounter transactionNotUpdated;
+	OperationCounter transactionUpdateFailed;
+	OperationCounter componentUpdated;
+	OperationCounter componentNotUpdated;
+	OperationCounter componentUpdateFailed;
 	static final Logger logger = LogManager.getLogger();
 }

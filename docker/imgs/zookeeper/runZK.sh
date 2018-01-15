@@ -70,6 +70,7 @@ function _runZooKeeper()
     done
     echo "$myId" >$myIdPath
     pushd $logDir
+    #export JMXPORT=29800
     $zooServerExec "start"
     popd
     while true; do

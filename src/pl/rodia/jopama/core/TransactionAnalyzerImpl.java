@@ -25,11 +25,11 @@ public class TransactionAnalyzerImpl implements TransactionAnalyzer
 {
 
 	public TransactionAnalyzerImpl(
-			LocalStorage proxyStorage
+			ProcessingCache processingCache
 	)
 	{
 		super();
-		this.proxyStorage = proxyStorage;
+		this.processingCache = processingCache;
 	}
 
 	@Override
@@ -37,7 +37,8 @@ public class TransactionAnalyzerImpl implements TransactionAnalyzer
 			ObjectId transactionId
 	)
 	{
-		ExtendedTransaction extendedTransaction = this.proxyStorage.getTransaction(
+		LocalStorage localStorage = processingCache.get(transactionId);
+		ExtendedTransaction extendedTransaction = localStorage.getTransaction(
 				transactionId
 		);
 		if (
@@ -55,7 +56,7 @@ public class TransactionAnalyzerImpl implements TransactionAnalyzer
 					.entrySet()
 		)
 		{
-			ExtendedComponent extendedComponent = this.proxyStorage.getComponent(
+			ExtendedComponent extendedComponent = localStorage.getComponent(
 					transactionComponentEntry.getKey()
 			);
 			if (
@@ -120,7 +121,7 @@ public class TransactionAnalyzerImpl implements TransactionAnalyzer
 				{
 					ComponentPhase componentPhase = transactionComponentEntry.getValue().componentPhase;
 					assert componentPhase == ComponentPhase.NOT_UPDATED || componentPhase == ComponentPhase.UPDATED;
-					ExtendedComponent extendedComponent = this.proxyStorage.getComponent(
+					ExtendedComponent extendedComponent = localStorage.getComponent(
 							transactionComponentEntry.getKey()
 					);
 					if (
@@ -231,7 +232,8 @@ public class TransactionAnalyzerImpl implements TransactionAnalyzer
 				componentId
 		);
 		assert transactionComponent != null;
-		ExtendedComponent extendedComponent = proxyStorage.getComponent(
+		LocalStorage localStorage = processingCache.get(transactionId);
+		ExtendedComponent extendedComponent = localStorage.getComponent(
 				componentId
 		);
 		assert extendedComponent != null;
@@ -318,7 +320,8 @@ public class TransactionAnalyzerImpl implements TransactionAnalyzer
 				componentId
 		);
 		assert transactionComponent != null;
-		ExtendedComponent extendedComponent = proxyStorage.getComponent(
+		LocalStorage localStorage = processingCache.get(transactionId);
+		ExtendedComponent extendedComponent = localStorage.getComponent(
 				componentId
 		);
 		assert extendedComponent != null;
@@ -386,7 +389,8 @@ public class TransactionAnalyzerImpl implements TransactionAnalyzer
 		{
 			ComponentPhase componentPhase = transactionComponentEntry.getValue().componentPhase;
 			assert componentPhase == ComponentPhase.NOT_UPDATED || componentPhase == ComponentPhase.UPDATED;
-			ExtendedComponent extendedComponent = this.proxyStorage.getComponent(
+			LocalStorage localStorage = processingCache.get(transactionId);
+			ExtendedComponent extendedComponent = localStorage.getComponent(
 					transactionComponentEntry.getKey()
 			);
 			assert transactionId.equals(
@@ -418,7 +422,8 @@ public class TransactionAnalyzerImpl implements TransactionAnalyzer
 				componentId
 		);
 		assert transactionComponent != null;
-		ExtendedComponent extendedComponent = proxyStorage.getComponent(
+		LocalStorage localStorage = processingCache.get(transactionId);
+		ExtendedComponent extendedComponent = localStorage.getComponent(
 				componentId
 		);
 		assert extendedComponent != null;
@@ -477,7 +482,7 @@ public class TransactionAnalyzerImpl implements TransactionAnalyzer
 		}
 	}
 
-	LocalStorage proxyStorage;
+	ProcessingCache processingCache;
 	static final Logger logger = LogManager.getLogger();
 
 }

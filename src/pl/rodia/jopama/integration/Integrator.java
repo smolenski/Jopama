@@ -7,12 +7,11 @@ import java.util.concurrent.ExecutionException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import pl.rodia.jopama.core.LocalStorage;
-import pl.rodia.jopama.core.LocalStorageImpl;
+import pl.rodia.jopama.core.ProcessingCache;
+import pl.rodia.jopama.core.ProcessingCacheImpl;
 import pl.rodia.jopama.core.RemoteStorageGatewayImpl;
 import pl.rodia.jopama.core.TransactionAnalyzer;
 import pl.rodia.jopama.core.TransactionAnalyzerImpl;
-import pl.rodia.jopama.core.TransactionProcessor;
 import pl.rodia.jopama.core.TransactionProcessorImpl;
 import pl.rodia.jopama.data.ObjectId;
 import pl.rodia.jopama.gateway.RemoteStorageGateway;
@@ -40,14 +39,14 @@ public class Integrator
 				this.taskRunner,
 				this.targetRemoteStorageGateway
 		);
-		this.localStorage = new LocalStorageImpl();
+		this.processingCache = new ProcessingCacheImpl();
 		this.transactionAnalyzer = new TransactionAnalyzerImpl(
-				this.localStorage
+				this.processingCache
 		);
 		this.transactionProcessor = new TransactionProcessorImpl(
 				this.taskRunner,
 				this.transactionAnalyzer,
-				this.localStorage,
+				this.processingCache,
 				this.remoteStorageGatewayWrapper
 		);
 		this.paceMaker = new PaceMakerImpl(
@@ -113,7 +112,7 @@ public class Integrator
 	Thread taskRunnerThread;
 	RemoteStorageGateway targetRemoteStorageGateway;
 	RemoteStorageGatewayImpl remoteStorageGatewayWrapper;
-	LocalStorage localStorage;
+	ProcessingCache processingCache;
 	TransactionAnalyzer transactionAnalyzer;
 	TransactionProcessorImpl transactionProcessor;
 	public PaceMaker paceMaker;
