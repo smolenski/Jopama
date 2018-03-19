@@ -7,6 +7,96 @@ import os
 import random
 from datetime import datetime
 
+def getDockerRunnerTypeAndConfigStr(dockerRunnerArg):
+    """
+    >>> getDockerRunnerTypeAndConfigStr('drType:drConfig')
+    ('drType', 'drConfig')
+    """
+    idx = dockerRunnerArg.find(":")
+    assert idx != -1
+    drType = dockerRunnerArg[:idx]
+    drConfig = dockerRunnerArg[idx + 1:]
+    return (drType, drConfig)
+
+class DockerRunner(object):
+    def __init__(self, configStr, args):
+        self._configStr = configStr
+        self._args = args
+
+    """
+    Prepare environment
+    Returns list of hostIds
+    """
+    def prepare(self):
+        raise NotImplementedError
+
+    """
+    Get ips for hosts (ordered - with respect to hostId)
+    """
+    def getHostIps(self):
+        raise NotImplementedError
+
+    """
+    Run process on hostId
+    Returns processId
+    """
+    def runDockerCmd(self, hostId, cmd): 
+        raise NotImplementedError
+
+    """
+    Cleanup environment
+    """
+    def cleanup(self):
+        raise NotImplementedError
+
+class NativeDockerRunner(DockerRunner):
+    def __init__(self, configStr, args):
+        super(NativeDockerRunner, self).__init__(configStr, args)
+
+    def prepare(self):
+        self.cleanup()
+        subprocess.check_call('rm -fr /var/jopamaTest/*', shell=True)
+        for gId in range(self._args.numClusters * self._args.clusterSize):
+            zkStorageDir=format("/var/jopamaTest/storage/%d/ZOOKEEPER" % gId)
+            zkLogsDir=format("/var/jopamaTest/logs/%d/ZOOKEEPER" % gId)
+            tpLogsDir=format("/var/jopamaTest/logs/%d/TP" % gId)
+            tcLogsDir=format("/var/jopamaTest/logs/%d/TC" % gId)
+            for dirToCreate in [zkStorageDir, zkLogsDir, tpLogsDir, tcLogsDir]:
+                subprocess.check_call('mkdir -p %s' % dirToCreate, shell=True)
+        ccLogsDir=format("/var/jopamaTest/logs/CC")
+        tvLogsDir=format("/var/jopamaTest/logs/TV")
+        for dirToCreate in [ccLogsDir, tvLogsDir]:
+            subprocess.check_call('mkdir -p %s' % dirToCreate, shell=True)
+
+    def getHostIps(self):
+        return ['127.0.0.1'] * self._args.numHosts
+
+    def runDockerCmd(self, hostId, cmd):
+        return subprocess.check_output(cmd, shell=True)
+
+    def cleanup(self):
+        subprocess.check_call("docker ps -aq | while read line; do docker kill $line; docker rm $line; done", shell=True)
+        subprocess.check_call("rm -fr /var/jopamaTest/*", shell=True)
+
+class ScopedDockerRunnerWrapper(object):
+    def __init__(self, dockerRunner):
+        self._dockerRunner = dockerRunner
+
+    def __enter__(self):
+        self._dockerRunner.prepare()
+        return self._dockerRunner
+
+    def __exit__(self, excType, excVal, excTb):
+        self._dockerRunner.cleanup()
+        
+
+def createDockerRunner(args):
+    drType, drConfig = getDockerRunnerTypeAndConfigStr(args.dockerRunnerArg) 
+    if drType == "NATIVE":
+        return NativeDockerRunner(drConfig, args)
+    else:
+        raise NotImplementedError
+
 def getZooServerName(gId):
     return format('%d_ZOO_SERVER' % gId)
 
@@ -40,48 +130,46 @@ def printIt(cmd, shell=None):
 #subprocess.check_call=printIt
 
 class Instance(object):
-    def __init__(self, gId, clId, coId, ip, runTP, runTC):
+    def __init__(self, gId, clId, coId, hostId, runTP, runTC):
         self.gId = gId
         self.clId = clId
         self.coId = coId
-        self.ip = ip
+        self.hostId = hostId
         self.runTP = runTP
         self.runTC = runTC
     def __str__(self):
-        return "gId: %d clId: %d coId: %d ip: %s runTP: %s runTC: %s" % (self.gId, self.clId, self.coId, self.ip, self.runTP, self.runTC)
+        return "gId: %d clId: %d coId: %d hostId: %s runTP: %s runTC: %s" % (self.gId, self.clId, self.coId, self.hostId, self.runTP, self.runTC)
 
 class ConfigGenerator(object):
     def __init__(self, args):
         self.args=args
         self.dist=[]
     def generate(self):
-        numTPOnIp={}
-        numTCOnIp={}
-        for ip in args.ips:
-            numTPOnIp[ip]=0
-            numTCOnIp[ip]=0    
+        numTPOnHostId = [0] * args.numHosts
+        numTCOnHostId = [0] * args.numHosts
         for cid in range(args.numClusters):
             gIdAndNumP=[]
             gIdAndNumC=[]
             for rid in range(args.clusterSize):
                 gId = cid * args.clusterSize + rid
-                ip = args.ips[gId % len(args.ips)]
-                gIdAndNumP.append((gId, numTPOnIp[ip]))
-                gIdAndNumC.append((gId, numTCOnIp[ip]))
+                hostId = gId % args.numHosts
+                gIdAndNumP.append((gId, numTPOnHostId[hostId]))
+                gIdAndNumC.append((gId, numTCOnHostId[hostId]))
             tpss=[a[0] for a in sorted(gIdAndNumP, key=lambda x: x[1])][:args.numTP]
             tcss=[a[0] for a in sorted(gIdAndNumC, key=lambda x: x[1])][:args.numTC]
             for rid in range(args.clusterSize):
                 gId = cid * args.clusterSize + rid
-                ip = args.ips[gId % len(args.ips)]
+                hostId = gId % args.numHosts
                 if gId in tpss:
-                    numTPOnIp[ip] = numTPOnIp[ip] + 1
+                    numTPOnHostId[hostId] = numTPOnHostId[hostId] + 1
                 if gId in tcss:
-                    numTCOnIp[ip] = numTCOnIp[ip] + 1
-                inst = Instance(gId, cid, rid, ip, gId in tpss, gId in tcss)
+                    numTCOnHostId[hostId] = numTCOnHostId[hostId] + 1
+                inst = Instance(gId, cid, rid, hostId, gId in tpss, gId in tcss)
                 self.dist.append(inst)
-        assert max(numTPOnIp.values()) - min(numTPOnIp.values()) <= 1
-        assert max(numTCOnIp.values()) - min(numTCOnIp.values()) <= 1
-    def getZKServersConf(self, gId):
+        assert max(numTPOnHostId) - min(numTPOnHostId) <= 1
+        assert max(numTCOnHostId) - min(numTCOnHostId) <= 1
+    def getZKServersConf(self, gId, hostIps = None):
+        assert hostIps is not None
         startId=gId - (gId % self.args.clusterSize)
         stopId=startId + self.args.clusterSize
         assert len(self.dist) >= stopId
@@ -92,23 +180,22 @@ class ConfigGenerator(object):
             intPort1=id2ZKPortInt1(mId)
             intPort2=id2ZKPortInt2(mId)
             mInst = self.dist[mId]
-            servers.append(mInst.ip + ':' + str(intPort1) + ':' + str(intPort2))
+            servers.append(hostIps[mInst.hostId] + ':' + str(intPort1) + ':' + str(intPort2))
         return ','.join(servers)
     def getZKServerId(self, gId):
         return gId % self.args.clusterSize 
 
 class TestRunner(object):
-    def __init__(self, args, gen):
+    def __init__(self, args, gen, dockerRunner):
         self.args = args
         self.gen = gen
         self.dist = self.gen.dist
+        self.dockerRunner = dockerRunner 
         self.start = None
         self.finish = None
 
-    def rotateLogDir(self):
-        print("Rotating log directory (not impl yet)")
-
     def getAddresses(self):
+        hostIps = self.dockerRunner.getHostIps()
         clId2Member={}
         for i in range(self.args.numClusters):
             clId2Member[i]=[]
@@ -117,7 +204,7 @@ class TestRunner(object):
         addresses=[]
         for clId in sorted(clId2Member):
             for ins in clId2Member[clId]:
-                addresses.append(format('%s:%d' % (ins.ip, id2ZKPortExt(ins.gId))))
+                addresses.append(format('%s:%d' % (hostIps[ins.hostId], id2ZKPortExt(ins.gId))))
         return ','.join(addresses)
 
     def startZooKeepers(self):
@@ -128,13 +215,12 @@ class TestRunner(object):
             extPort=id2ZKPortExt(ins.gId)
             intPort1=id2ZKPortInt1(ins.gId)
             intPort2=id2ZKPortInt2(ins.gId)
-            peers=self.gen.getZKServersConf(ins.gId)
+            peers=self.gen.getZKServersConf(ins.gId, self.dockerRunner.getHostIps())
             zkId=self.gen.getZKServerId(ins.gId)
-            subprocess.check_call('mkdir -p %s' % hostStorageDir, shell=True)
-            subprocess.check_call('mkdir -p %s' % hostLogsDir, shell=True)
             print("Starting ZooKeeper, ins: %d, extport: %d" % (ins.gId, extPort))
-            subprocess.check_call(
-                'docker run -d --name %s --net host -v %s:/var/jopamaTest/storage -v %s:/var/jopamaTest/logs -p %d -p %d -p %d zookeeper %s %d %d'
+            self.dockerRunner.runDockerCmd(
+                hostId = ins.hostId,
+                cmd = 'docker run -d --name %s --net host -v %s:/var/jopamaTest/storage -v %s:/var/jopamaTest/logs -p %d -p %d -p %d smolenski/zookeeper %s %d %d'
                 %
                 (
                     name,
@@ -146,30 +232,23 @@ class TestRunner(object):
                     peers,
                     extPort,
                     zkId
-                ),
-                shell=True
+                )
             )
 
-    def zkCli(self, server, cmd):
+    def zkCli(self, server, zkCliCmd):
         name=getZooClientName()
-        output=subprocess.check_output(
-            'docker run --name %s --network host --entrypoint /opt/ZooKeeper/zookeeper-3.4.9/bin/zkCli.sh zookeeper -server %s %s'
+        assert self.args.numHosts > 0
+        output=self.dockerRunner.runDockerCmd(
+            hostId = 0,
+            cmd = 'docker run --name %s --network host --entrypoint /opt/ZooKeeper/zookeeper-3.4.9/bin/zkCli.sh smolenski/zookeeper -server %s %s'
             %
             (
                 name,
                 server,
-                cmd
+                zkCliCmd
             ),
-            shell=True
         )
-        subprocess.check_output('docker rm %s' % (name), shell=True)
         return output
-
-    def stopZooKeepers(self):
-        for ins in self.dist:
-            name=getZooServerName(ins.gId)
-            subprocess.check_call('docker kill %s' % name, shell=True)
-            subprocess.check_call('docker rm %s' % name, shell=True)
 
     def startTPs(self):
         for ins in self.dist:
@@ -177,8 +256,9 @@ class TestRunner(object):
                 print("Starting TP %s" % (ins.gId))
                 name=getTPName(ins.gId)
                 hostLogsDir=format("/var/jopamaTest/logs/%d/TP" % ins.gId)
-                subprocess.check_call(
-                    'docker run -d --name %s --net host -v %s:/var/jopamaTest/logs jopama %d pl.rodia.jopama.integration.zookeeper.ZooKeeperTransactionProcessorRunner %s %s %d %s %d %d'
+                self.dockerRunner.runDockerCmd(
+                    hostId = ins.hostId,
+                    cmd = 'docker run -d --name %s --net host -v %s:/var/jopamaTest/logs smolenski/jopama %d pl.rodia.jopama.integration.zookeeper.ZooKeeperTransactionProcessorRunner %s %s %d %s %d %d'
                     %
                     (
                         name,
@@ -188,29 +268,20 @@ class TestRunner(object):
                         self.getAddresses(),
                         self.args.clusterSize,
                         '/StartFinish',
-                        ins.clId, 
+                        ins.clId,
                         self.args.outForTP
                     ),
-                    shell=True
                 )
 
-    def stopTPs(self):
-        for ins in self.dist:
-            if ins.runTP:
-                print("Stopping TP %s" % (ins.gId))
-                name=getTPName(ins.gId)
-                subprocess.call('docker kill %s' % name, shell=True)
-                subprocess.check_call('docker rm %s' % name, shell=True)
-
-        
     def startTCs(self):
         for ins in self.dist:
             if ins.runTC:
                 print("Starting TC %s" % (ins.gId))
                 name=getTCName(ins.gId)
                 hostLogsDir=format("/var/jopamaTest/logs/%d/TC" % ins.gId)
-                subprocess.check_call(
-                    'docker run -d --name %s --net host -v %s:/var/jopamaTest/logs jopama %d pl.rodia.jopama.integration.zookeeper.ZooKeeperTransactionCreatorRunner %s %s %d %s %d %d %d %d %d'
+                self.dockerRunner.runDockerCmd(
+                    hostId = ins.hostId,
+                    cmd = 'docker run -d --name %s --net host -v %s:/var/jopamaTest/logs smolenski/jopama %d pl.rodia.jopama.integration.zookeeper.ZooKeeperTransactionCreatorRunner %s %s %d %s %d %d %d %d %d'
                     %
                     (
                         name,
@@ -226,26 +297,18 @@ class TestRunner(object):
                         self.args.numComp,
                         self.args.compsInTra
                     ),
-                    shell=True
                 )
-
-    def stopTCs(self):
-        for ins in self.dist:
-            if ins.runTC:
-                print("Stopping TC %s" % (ins.gId))
-                name=getTCName(ins.gId)
-                subprocess.call('docker kill %s' % name, shell=True)
-                subprocess.check_call('docker rm %s' % name, shell=True)
 
     def createComponents(self):
         print("Running CC")
         name='CC'
         hostLogsDir=format("/var/jopamaTest/logs/%s" % name)
         addresses=self.getAddresses()
-        subprocess.check_call('mkdir -p %s' % hostLogsDir, shell=True)
         print("Starting CC")
-        subprocess.check_call(
-            'docker run --name %s --net host -v %s:/var/jopamaTest/logs jopama 25000 pl.rodia.jopama.integration.zookeeper.ZooKeeperComponentCreator CC %s %d %d %d'
+        assert self.args.numHosts > 0
+        self.dockerRunner.runDockerCmd(
+            hostId = 0,
+            cmd = 'docker run --name %s --net host -v %s:/var/jopamaTest/logs smolenski/jopama 25000 pl.rodia.jopama.integration.zookeeper.ZooKeeperComponentCreator CC %s %d %d %d'
             %
             (
                 name,
@@ -255,11 +318,6 @@ class TestRunner(object):
                 self.args.firstComp,
                 self.args.numComp    
             ),
-            shell=True
-        )
-        subprocess.check_call(
-            'docker rm %s' % (name),
-            shell=True
         )
 
     def verifyComponents(self):
@@ -267,10 +325,11 @@ class TestRunner(object):
         name='TV'
         hostLogsDir=format("/var/jopamaTest/logs/%s" % name)
         addresses=self.getAddresses()
-        subprocess.check_call('mkdir -p %s' % hostLogsDir, shell=True)
         print("Starting TV")
-        subprocess.check_call(
-            'docker run --name %s --net host -v %s:/var/jopamaTest/logs jopama 25000 pl.rodia.jopama.integration.zookeeper.ZooKeeperTestVerifier TV %s %d %d %d'
+        assert self.args.numHosts > 0
+        self.dockerRunner.runDockerCmd(
+            hostId = 0,
+            cmd = 'docker run --name %s --net host -v %s:/var/jopamaTest/logs smolenski/jopama 25000 pl.rodia.jopama.integration.zookeeper.ZooKeeperTestVerifier TV %s %d %d %d'
             %
             (
                 name,
@@ -280,10 +339,6 @@ class TestRunner(object):
                 self.args.firstComp,
                 self.args.numComp
             ),
-            shell=True
-        )
-        subprocess.check_call(
-            'docker rm %s' % (name),
             shell=True
         )
 
@@ -329,7 +384,7 @@ class TestRunner(object):
         cluster=clusters[clusterId]
         assert len(cluster) > 0
         ins=cluster[0]
-        return format('%s:%d' % (ins.ip, id2ZKPortExt(ins.gId)))
+        return format('%s:%d' % (self.dockerRunner.getHostIps()[ins.hostId], id2ZKPortExt(ins.gId)))
 
     def performLs(self, clusterId, path):
         output=self.zkCli(self.getConnStrForCluster(clusterId), 'ls %s' % (path))
@@ -411,7 +466,6 @@ class TestRunner(object):
         print("Performance num: %d dur: %d speed: %f (T/s)" % (num, durSec, float(num) / durSec))
         
     def run(self):
-        self.rotateLogDir()
         self.startZooKeepers()
         self.prepareDirectories()
         self.createComponents()
@@ -427,13 +481,11 @@ class TestRunner(object):
         self.finish = datetime.now()
         self.verifyComponents()
         self.printResult()
-        self.stopTCs()
-        self.stopTPs()
-        self.stopZooKeepers()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Generate jopama docker cluster configuration')
-    parser.add_argument('-ips', type=str, nargs='+', required=True, dest='ips')
+    parser.add_argument('-dockerRunnerArg', type=str, required=True, dest='dockerRunnerArg')
+    parser.add_argument('-numHosts', type=int, required=True, dest='numHosts')
     parser.add_argument('-numClusters', type=int, required=True, dest='numClusters')
     parser.add_argument('-clusterSize', type=int, required=True, dest='clusterSize')
     parser.add_argument('-numTP', type=int, required=True, dest='numTP', help='Num transaction processors per cluster')
@@ -449,8 +501,8 @@ if __name__ == '__main__':
     if args.doctest:
         doctest.testmod()
         sys.exit(0) 
-    if (args.numClusters * args.clusterSize) % len(args.ips) != 0:
-        print('Arguments, numClusters * clusterSize should be multiplication of num ips, numClusters: %d, clusterSize: %d num ips: %d' % (args.numClusters, args.clusterSize, len(args.ips)))
+    if (args.numClusters * args.clusterSize) % args.numHosts != 0:
+        print('Arguments, numClusters * clusterSize should be multiplication of numHosts, numClusters: %d, clusterSize: %d numHosts: %d' % (args.numClusters, args.clusterSize, args.numHosts))
         sys.exit(1)
     assert args.numTP > 0
     assert args.numTP <= args.clusterSize
@@ -463,6 +515,7 @@ if __name__ == '__main__':
     for inst in gen.dist:
         print('%s' % str(inst))
     print('DIST END')
-    test = TestRunner(args, gen)
-    test.run()
+    with ScopedDockerRunnerWrapper(createDockerRunner(args)) as dockerRunner:
+        test = TestRunner(args, gen, dockerRunner)
+        test.run()
     sys.exit(0)

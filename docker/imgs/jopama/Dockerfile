@@ -1,4 +1,4 @@
-FROM java8
+FROM openjdk:8
 MAINTAINER Maciej Smolenski <jezdnia@gmail.com>
 RUN mkdir /opt/Jopama
 ADD Jopama.tar.gz /opt/Jopama/ 

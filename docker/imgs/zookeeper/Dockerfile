@@ -1,4 +1,4 @@
-FROM java
+FROM openjdk:8
 MAINTAINER Maciej Smolenski <jezdnia@gmail.com>
 RUN mkdir /opt/ZooKeeper
 ADD zookeeper-3.4.9.tar.gz /opt/ZooKeeper/ 
