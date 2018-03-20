@@ -4,6 +4,7 @@ import sys
 import subprocess
 import time
 import os
+import os.path
 import random
 from datetime import datetime
 
@@ -19,9 +20,10 @@ def getDockerRunnerTypeAndConfigStr(dockerRunnerArg):
     return (drType, drConfig)
 
 class DockerRunner(object):
-    def __init__(self, configStr, args):
+    def __init__(self, configStr, args, dist):
         self._configStr = configStr
         self._args = args
+        self._dist = dist
 
     """
     Prepare environment
@@ -50,19 +52,23 @@ class DockerRunner(object):
         raise NotImplementedError
 
 class NativeDockerRunner(DockerRunner):
-    def __init__(self, configStr, args):
-        super(NativeDockerRunner, self).__init__(configStr, args)
+    def __init__(self, configStr, args, dist):
+        super(NativeDockerRunner, self).__init__(configStr, args, dist)
 
     def prepare(self):
-        self.cleanup()
+        self._cleanup()
         subprocess.check_call('rm -fr /var/jopamaTest/*', shell=True)
-        for gId in range(self._args.numClusters * self._args.clusterSize):
-            zkStorageDir=format("/var/jopamaTest/storage/%d/ZOOKEEPER" % gId)
-            zkLogsDir=format("/var/jopamaTest/logs/%d/ZOOKEEPER" % gId)
-            tpLogsDir=format("/var/jopamaTest/logs/%d/TP" % gId)
-            tcLogsDir=format("/var/jopamaTest/logs/%d/TC" % gId)
-            for dirToCreate in [zkStorageDir, zkLogsDir, tpLogsDir, tcLogsDir]:
-                subprocess.check_call('mkdir -p %s' % dirToCreate, shell=True)
+        for ins in self._dist:
+            zkStorageDir=format("/var/jopamaTest/storage/%d/ZOOKEEPER" % ins.gId)
+            subprocess.check_call('mkdir -p %s' % zkStorageDir, shell=True)
+            zkLogsDir=format("/var/jopamaTest/logs/%d/ZOOKEEPER" % ins.gId)
+            subprocess.check_call('mkdir -p %s' % zkLogsDir, shell=True)
+            if ins.runTP:
+                tpLogsDir=format("/var/jopamaTest/logs/%d/TP" % ins.gId)
+                subprocess.check_call('mkdir -p %s' % tpLogsDir, shell=True)
+            if ins.runTC:
+                tcLogsDir=format("/var/jopamaTest/logs/%d/TC" % ins.gId)
+                subprocess.check_call('mkdir -p %s' % tcLogsDir, shell=True)
         ccLogsDir=format("/var/jopamaTest/logs/CC")
         tvLogsDir=format("/var/jopamaTest/logs/TV")
         for dirToCreate in [ccLogsDir, tvLogsDir]:
@@ -72,11 +78,24 @@ class NativeDockerRunner(DockerRunner):
         return ['127.0.0.1'] * self._args.numHosts
 
     def runDockerCmd(self, hostId, cmd):
+        print('NDR::runDockerCmd, hostId: %d cmd: %s' % (hostId, cmd, ))
         return subprocess.check_output(cmd, shell=True)
 
     def cleanup(self):
+        self._saveResults()
+        self._cleanup()
+
+    def _saveResults(self):
+        for ins in self._dist:
+            if ins.runTP:
+                tpStatsPath=format("/var/jopamaTest/logs/%d/TP/stats.log" % ins.gId)
+                tpTargetDirPath=format("%s/%d/TP" % (self._args.outputDir, ins.gId))
+                subprocess.check_call('mkdir -p %s' % tpTargetDirPath, shell=True)
+                subprocess.check_call('cp -r %s %s' % (tpStatsPath, tpTargetDirPath), shell=True)
+
+    def _cleanup(self):
         subprocess.check_call("docker ps -aq | while read line; do docker kill $line; docker rm $line; done", shell=True)
-        subprocess.check_call("rm -fr /var/jopamaTest/*", shell=True)
+        subprocess.check_call("sudo rm -fr /var/jopamaTest/*", shell=True)
 
 class ScopedDockerRunnerWrapper(object):
     def __init__(self, dockerRunner):
@@ -90,10 +109,10 @@ class ScopedDockerRunnerWrapper(object):
         self._dockerRunner.cleanup()
         
 
-def createDockerRunner(args):
+def createDockerRunner(args, dist):
     drType, drConfig = getDockerRunnerTypeAndConfigStr(args.dockerRunnerArg) 
     if drType == "NATIVE":
-        return NativeDockerRunner(drConfig, args)
+        return NativeDockerRunner(drConfig, args, dist)
     else:
         raise NotImplementedError
 
@@ -339,7 +358,6 @@ class TestRunner(object):
                 self.args.firstComp,
                 self.args.numComp
             ),
-            shell=True
         )
 
     def waitForFiles(self, clusterId, path, numFiles):
@@ -485,6 +503,7 @@ class TestRunner(object):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Generate jopama docker cluster configuration')
     parser.add_argument('-dockerRunnerArg', type=str, required=True, dest='dockerRunnerArg')
+    parser.add_argument('-outputDir', type=str, required=True, dest='outputDir')
     parser.add_argument('-numHosts', type=int, required=True, dest='numHosts')
     parser.add_argument('-numClusters', type=int, required=True, dest='numClusters')
     parser.add_argument('-clusterSize', type=int, required=True, dest='clusterSize')
@@ -508,6 +527,7 @@ if __name__ == '__main__':
     assert args.numTP <= args.clusterSize
     assert args.numTC > 0
     assert args.numTC <= args.clusterSize
+    assert not os.path.exists(args.outputDir)
     print("args: %s" % args)
     gen = ConfigGenerator(args)
     gen.generate()
@@ -515,7 +535,7 @@ if __name__ == '__main__':
     for inst in gen.dist:
         print('%s' % str(inst))
     print('DIST END')
-    with ScopedDockerRunnerWrapper(createDockerRunner(args)) as dockerRunner:
+    with ScopedDockerRunnerWrapper(createDockerRunner(args, gen.dist)) as dockerRunner:
         test = TestRunner(args, gen, dockerRunner)
         test.run()
     sys.exit(0)

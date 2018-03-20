@@ -9,8 +9,7 @@ function runOnce()
     local id=$1
     echo "Running: $id"
     #python testRunner.py -dockerRunnerArg NATIVE: -numHosts 3 -numClusters 2 -clusterSize 3 -numTP 1 -numTC 1 -firstComp 100 -numComp 10000 -compsInTra 10 -outForTC 100 -outForTP 20 -duration 180
-    #python testRunner.py -dockerRunnerArg NATIVE: -numHosts 1 -numClusters 1 -clusterSize 1 -numTP 1 -numTC 1 -firstComp 100 -numComp 10000 -compsInTra 10 -outForTC 100 -outForTP 20 -duration 180
-    python testRunner.py -dockerRunnerArg NATIVE: -numHosts 1 -numClusters 1 -clusterSize 1 -numTP 1 -numTC 1 -firstComp 100 -numComp 1000 -compsInTra 10 -outForTC 100 -outForTP 20 -duration 20
+    python testRunner.py -dockerRunnerArg NATIVE: -outputDir /tmp/jopamaResults -numHosts 1 -numClusters 1 -clusterSize 1 -numTP 1 -numTC 1 -firstComp 100 -numComp 10000 -compsInTra 10 -outForTC 100 -outForTP 20 -duration 180
     local retVal=$?
     echo "python finished with $retVal"
     return $retVal
