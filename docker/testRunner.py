@@ -20,22 +20,22 @@ def getDockerRunnerTypeAndConfigStr(dockerRunnerArg):
     return (drType, drConfig)
 
 class DockerRunner(object):
-    def __init__(self, configStr, args, dist):
+    def __init__(self, configStr, args):
         self._configStr = configStr
         self._args = args
-        self._dist = dist
-
-    """
-    Prepare environment
-    Returns list of hostIds
-    """
-    def prepare(self):
-        raise NotImplementedError
+        self._dist = None 
 
     """
     Get ips for hosts (ordered - with respect to hostId)
     """
     def getHostIps(self):
+        raise NotImplementedError
+
+    """
+    Prepare environment
+    Returns list of hostIds
+    """
+    def prepare(self, dist):
         raise NotImplementedError
 
     """
@@ -52,10 +52,15 @@ class DockerRunner(object):
         raise NotImplementedError
 
 class NativeDockerRunner(DockerRunner):
-    def __init__(self, configStr, args, dist):
-        super(NativeDockerRunner, self).__init__(configStr, args, dist)
+    def __init__(self, configStr, args):
+        super(NativeDockerRunner, self).__init__(configStr, args)
+        self._numHosts = int(self._configStr)
 
-    def prepare(self):
+    def getHostIps(self):
+        return ['127.0.0.1'] * self._numHosts
+
+    def prepare(self, dist):
+        self._dist = dist
         self._cleanup()
         subprocess.check_call('rm -fr /var/jopamaTest/*', shell=True)
         for ins in self._dist:
@@ -73,9 +78,6 @@ class NativeDockerRunner(DockerRunner):
         tvLogsDir=format("/var/jopamaTest/logs/TV")
         for dirToCreate in [ccLogsDir, tvLogsDir]:
             subprocess.check_call('mkdir -p %s' % dirToCreate, shell=True)
-
-    def getHostIps(self):
-        return ['127.0.0.1'] * self._args.numHosts
 
     def runDockerCmd(self, hostId, cmd):
         print('NDR::runDockerCmd, hostId: %d cmd: %s' % (hostId, cmd, ))
@@ -98,21 +100,22 @@ class NativeDockerRunner(DockerRunner):
         subprocess.check_call("sudo rm -fr /var/jopamaTest/*", shell=True)
 
 class ScopedDockerRunnerWrapper(object):
-    def __init__(self, dockerRunner):
+    def __init__(self, dockerRunner, dist):
         self._dockerRunner = dockerRunner
+        self._dist = dist
 
     def __enter__(self):
-        self._dockerRunner.prepare()
+        self._dockerRunner.prepare(self._dist)
         return self._dockerRunner
 
     def __exit__(self, excType, excVal, excTb):
         self._dockerRunner.cleanup()
         
 
-def createDockerRunner(args, dist):
+def createDockerRunner(args):
     drType, drConfig = getDockerRunnerTypeAndConfigStr(args.dockerRunnerArg) 
     if drType == "NATIVE":
-        return NativeDockerRunner(drConfig, args, dist)
+        return NativeDockerRunner(drConfig, args)
     else:
         raise NotImplementedError
 
@@ -160,25 +163,26 @@ class Instance(object):
         return "gId: %d clId: %d coId: %d hostId: %s runTP: %s runTC: %s" % (self.gId, self.clId, self.coId, self.hostId, self.runTP, self.runTC)
 
 class ConfigGenerator(object):
-    def __init__(self, args):
+    def __init__(self, args, numHosts):
         self.args=args
+        self.numHosts = numHosts
         self.dist=[]
     def generate(self):
-        numTPOnHostId = [0] * args.numHosts
-        numTCOnHostId = [0] * args.numHosts
+        numTPOnHostId = [0] * self.numHosts
+        numTCOnHostId = [0] * self.numHosts
         for cid in range(args.numClusters):
             gIdAndNumP=[]
             gIdAndNumC=[]
             for rid in range(args.clusterSize):
                 gId = cid * args.clusterSize + rid
-                hostId = gId % args.numHosts
+                hostId = gId % self.numHosts
                 gIdAndNumP.append((gId, numTPOnHostId[hostId]))
                 gIdAndNumC.append((gId, numTCOnHostId[hostId]))
             tpss=[a[0] for a in sorted(gIdAndNumP, key=lambda x: x[1])][:args.numTP]
             tcss=[a[0] for a in sorted(gIdAndNumC, key=lambda x: x[1])][:args.numTC]
             for rid in range(args.clusterSize):
                 gId = cid * args.clusterSize + rid
-                hostId = gId % args.numHosts
+                hostId = gId % self.numHosts
                 if gId in tpss:
                     numTPOnHostId[hostId] = numTPOnHostId[hostId] + 1
                 if gId in tcss:
@@ -256,7 +260,6 @@ class TestRunner(object):
 
     def zkCli(self, server, zkCliCmd):
         name=getZooClientName()
-        assert self.args.numHosts > 0
         output=self.dockerRunner.runDockerCmd(
             hostId = 0,
             cmd = 'docker run --name %s --network host --entrypoint /opt/ZooKeeper/zookeeper-3.4.9/bin/zkCli.sh smolenski/zookeeper -server %s %s'
@@ -324,7 +327,6 @@ class TestRunner(object):
         hostLogsDir=format("/var/jopamaTest/logs/%s" % name)
         addresses=self.getAddresses()
         print("Starting CC")
-        assert self.args.numHosts > 0
         self.dockerRunner.runDockerCmd(
             hostId = 0,
             cmd = 'docker run --name %s --net host -v %s:/var/jopamaTest/logs smolenski/jopama 25000 pl.rodia.jopama.integration.zookeeper.ZooKeeperComponentCreator CC %s %d %d %d'
@@ -345,7 +347,6 @@ class TestRunner(object):
         hostLogsDir=format("/var/jopamaTest/logs/%s" % name)
         addresses=self.getAddresses()
         print("Starting TV")
-        assert self.args.numHosts > 0
         self.dockerRunner.runDockerCmd(
             hostId = 0,
             cmd = 'docker run --name %s --net host -v %s:/var/jopamaTest/logs smolenski/jopama 25000 pl.rodia.jopama.integration.zookeeper.ZooKeeperTestVerifier TV %s %d %d %d'
@@ -504,7 +505,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Generate jopama docker cluster configuration')
     parser.add_argument('-dockerRunnerArg', type=str, required=True, dest='dockerRunnerArg')
     parser.add_argument('-outputDir', type=str, required=True, dest='outputDir')
-    parser.add_argument('-numHosts', type=int, required=True, dest='numHosts')
     parser.add_argument('-numClusters', type=int, required=True, dest='numClusters')
     parser.add_argument('-clusterSize', type=int, required=True, dest='clusterSize')
     parser.add_argument('-numTP', type=int, required=True, dest='numTP', help='Num transaction processors per cluster')
@@ -520,8 +520,11 @@ if __name__ == '__main__':
     if args.doctest:
         doctest.testmod()
         sys.exit(0) 
-    if (args.numClusters * args.clusterSize) % args.numHosts != 0:
-        print('Arguments, numClusters * clusterSize should be multiplication of numHosts, numClusters: %d, clusterSize: %d numHosts: %d' % (args.numClusters, args.clusterSize, args.numHosts))
+    dockerRunner = createDockerRunner(args)
+    numHosts = len(dockerRunner.getHostIps())
+    assert numHosts > 0
+    if (args.numClusters * args.clusterSize) % numHosts != 0:
+        print('Arguments, numClusters * clusterSize should be multiplication of numHosts, numClusters: %d, clusterSize: %d numHosts: %d' % (args.numClusters, args.clusterSize, numHosts))
         sys.exit(1)
     assert args.numTP > 0
     assert args.numTP <= args.clusterSize
@@ -529,13 +532,13 @@ if __name__ == '__main__':
     assert args.numTC <= args.clusterSize
     assert not os.path.exists(args.outputDir)
     print("args: %s" % args)
-    gen = ConfigGenerator(args)
+    gen = ConfigGenerator(args, numHosts)
     gen.generate()
     print('DIST BEGIN')
     for inst in gen.dist:
         print('%s' % str(inst))
     print('DIST END')
-    with ScopedDockerRunnerWrapper(createDockerRunner(args, gen.dist)) as dockerRunner:
+    with ScopedDockerRunnerWrapper(dockerRunner, gen.dist) as dockerRunner:
         test = TestRunner(args, gen, dockerRunner)
         test.run()
     sys.exit(0)
