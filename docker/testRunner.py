@@ -33,7 +33,6 @@ class DockerRunner(object):
 
     """
     Prepare environment
-    Returns list of hostIds
     """
     def prepare(self, dist):
         raise NotImplementedError
@@ -62,7 +61,6 @@ class NativeDockerRunner(DockerRunner):
     def prepare(self, dist):
         self._dist = dist
         self._cleanup()
-        subprocess.check_call('rm -fr /var/jopamaTest/*', shell=True)
         for ins in self._dist:
             zkStorageDir=format("/var/jopamaTest/storage/%d/ZOOKEEPER" % ins.gId)
             subprocess.check_call('mkdir -p %s' % zkStorageDir, shell=True)
@@ -98,6 +96,50 @@ class NativeDockerRunner(DockerRunner):
     def _cleanup(self):
         subprocess.check_call("docker ps -aq | while read line; do docker kill $line; docker rm $line; done", shell=True)
         subprocess.check_call("sudo rm -fr /var/jopamaTest/*", shell=True)
+
+class DockerMachineDockerRunner(object):
+    def __init__(self, configStr, args):
+        super(DockerMachineDockerRunner, self).__init__(configStr, args)
+        args = self._configStr.split(';')
+        assert len(args) == 2
+        self._ifName = args[0]
+        self._dmNames = args[1].split(',')
+        self._dmIps = []
+        for dmName in self._dmNames:
+            ip = subprocess.check_output('docker-machine ssh %s ip -4 -o addr show dev %s | cut -d" " -f7 | cut -d"/" -f1' % (dmName, self._ifName), shell=True)
+            self._dmIps.append(ip)
+
+    def getHostIps(self):
+        return ['127.0.0.1'] * self._numHosts
+
+    def prepare(self, dist):
+        self._dist = dist
+        self._cleanup()
+        subprocess.check_call('rm -fr /var/jopamaTest/*', shell=True)
+        for ins in self._dist:
+            zkStorageDir=format("/var/jopamaTest/storage/%d/ZOOKEEPER" % ins.gId)
+            subprocess.check_call('mkdir -p %s' % zkStorageDir, shell=True)
+            zkLogsDir=format("/var/jopamaTest/logs/%d/ZOOKEEPER" % ins.gId)
+            subprocess.check_call('mkdir -p %s' % zkLogsDir, shell=True)
+            if ins.runTP:
+                tpLogsDir=format("/var/jopamaTest/logs/%d/TP" % ins.gId)
+                subprocess.check_call('mkdir -p %s' % tpLogsDir, shell=True)
+            if ins.runTC:
+                tcLogsDir=format("/var/jopamaTest/logs/%d/TC" % ins.gId)
+                subprocess.check_call('mkdir -p %s' % tcLogsDir, shell=True)
+        ccLogsDir=format("/var/jopamaTest/logs/CC")
+        tvLogsDir=format("/var/jopamaTest/logs/TV")
+        for dirToCreate in [ccLogsDir, tvLogsDir]:
+            subprocess.check_call('mkdir -p %s' % dirToCreate, shell=True)
+
+    def runDockerCmd(self, hostId, cmd):
+        print('NDR::runDockerCmd, hostId: %d cmd: %s' % (hostId, cmd, ))
+        return subprocess.check_output(cmd, shell=True)
+
+    def cleanup(self):
+        self._saveResults()
+        self._cleanup()
+    
 
 class ScopedDockerRunnerWrapper(object):
     def __init__(self, dockerRunner, dist):
