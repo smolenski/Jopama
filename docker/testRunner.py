@@ -97,7 +97,7 @@ class NativeDockerRunner(DockerRunner):
         subprocess.check_call("docker ps -aq | while read line; do docker kill $line; docker rm $line; done", shell=True)
         subprocess.check_call("sudo rm -fr /var/jopamaTest/*", shell=True)
 
-class DockerMachineDockerRunner(object):
+class DockerMachineDockerRunner(DockerRunner):
     def __init__(self, configStr, args):
         super(DockerMachineDockerRunner, self).__init__(configStr, args)
         args = self._configStr.split(';')
@@ -110,35 +110,17 @@ class DockerMachineDockerRunner(object):
             self._dmIps.append(ip)
 
     def getHostIps(self):
-        return ['127.0.0.1'] * self._numHosts
+        return self._dmIps
 
     def prepare(self, dist):
         self._dist = dist
-        self._cleanup()
-        subprocess.check_call('rm -fr /var/jopamaTest/*', shell=True)
-        for ins in self._dist:
-            zkStorageDir=format("/var/jopamaTest/storage/%d/ZOOKEEPER" % ins.gId)
-            subprocess.check_call('mkdir -p %s' % zkStorageDir, shell=True)
-            zkLogsDir=format("/var/jopamaTest/logs/%d/ZOOKEEPER" % ins.gId)
-            subprocess.check_call('mkdir -p %s' % zkLogsDir, shell=True)
-            if ins.runTP:
-                tpLogsDir=format("/var/jopamaTest/logs/%d/TP" % ins.gId)
-                subprocess.check_call('mkdir -p %s' % tpLogsDir, shell=True)
-            if ins.runTC:
-                tcLogsDir=format("/var/jopamaTest/logs/%d/TC" % ins.gId)
-                subprocess.check_call('mkdir -p %s' % tcLogsDir, shell=True)
-        ccLogsDir=format("/var/jopamaTest/logs/CC")
-        tvLogsDir=format("/var/jopamaTest/logs/TV")
-        for dirToCreate in [ccLogsDir, tvLogsDir]:
-            subprocess.check_call('mkdir -p %s' % dirToCreate, shell=True)
+        print('DockerMachineDockerRunner::prepare, ips: %s' % (str(self.getHostIps())))
 
     def runDockerCmd(self, hostId, cmd):
-        print('NDR::runDockerCmd, hostId: %d cmd: %s' % (hostId, cmd, ))
-        return subprocess.check_output(cmd, shell=True)
+        raise NotImplementedError
 
     def cleanup(self):
-        self._saveResults()
-        self._cleanup()
+        print('DockerMachineDockerRunner::cleanup, ips: %s' % (str(self.getHostIps())))
     
 
 class ScopedDockerRunnerWrapper(object):
@@ -156,8 +138,10 @@ class ScopedDockerRunnerWrapper(object):
 
 def createDockerRunner(args):
     drType, drConfig = getDockerRunnerTypeAndConfigStr(args.dockerRunnerArg) 
-    if drType == "NATIVE":
+    if drType == 'NATIVE':
         return NativeDockerRunner(drConfig, args)
+    elif drType == 'DOCKERMACHINE':
+        return DockerMachineDockerRunner(drConfig, args)
     else:
         raise NotImplementedError
 
@@ -581,6 +565,7 @@ if __name__ == '__main__':
         print('%s' % str(inst))
     print('DIST END')
     with ScopedDockerRunnerWrapper(dockerRunner, gen.dist) as dockerRunner:
-        test = TestRunner(args, gen, dockerRunner)
-        test.run()
+        pass
+        #test = TestRunner(args, gen, dockerRunner)
+        #test.run()
     sys.exit(0)
