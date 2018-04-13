@@ -114,14 +114,44 @@ class DockerMachineDockerRunner(DockerRunner):
 
     def prepare(self, dist):
         self._dist = dist
-        print('DockerMachineDockerRunner::prepare, ips: %s' % (str(self.getHostIps())))
+        self._cleanup()
+        for ins in self._dist:
+            zkStorageDir=format("/var/jopamaTest/storage/%d/ZOOKEEPER" % ins.gId)
+            subprocess.check_call("docker-machine ssh %s sh -c 'mkdir -p %s'" % (self._dmNames[ins.hostId], zkStorageDir), shell=True)
+            zkLogsDir=format("/var/jopamaTest/logs/%d/ZOOKEEPER" % ins.gId)
+            subprocess.check_call("docker-machine ssh %s sh -c 'mkdir -p %s'" % (self._dmNames[ins.hostId], zkLogsDir), shell=True)
+            if ins.runTP:
+                tpLogsDir=format("/var/jopamaTest/logs/%d/TP" % ins.gId)
+                subprocess.check_call("docker-machine ssh %s sh -c 'mkdir -p %s'" % (self._dmNames[ins.hostId], tpLogsDir), shell=True)
+            if ins.runTC:
+                tcLogsDir=format("/var/jopamaTest/logs/%d/TC" % ins.gId)
+                subprocess.check_call("docker-machine ssh %s sh -c 'mkdir -p %s'" % (self._dmNames[ins.hostId], tcLogsDir), shell=True)
+        ccLogsDir=format("/var/jopamaTest/logs/CC")
+        tvLogsDir=format("/var/jopamaTest/logs/TV")
+        for dirToCreate in [ccLogsDir, tvLogsDir]:
+            subprocess.check_call("docker-machine ssh %s sh -c 'mkdir -p %s'" % (self._dmNames[ins.hostId], dirToCreate), shell=True)
 
     def runDockerCmd(self, hostId, cmd):
-        raise NotImplementedError
+        print('DMDR::runDockerCmd, hostId: %d cmd: %s' % (hostId, cmd, ))
+        return subprocess.check_output("docker-machine ssh %s sh -c '%s'" % (self._dmNames[hostId], cmd), shell=True)
 
     def cleanup(self):
-        print('DockerMachineDockerRunner::cleanup, ips: %s' % (str(self.getHostIps())))
+        self._saveResults()
+        self._cleanup()
     
+    def _saveResults(self):
+        for ins in self._dist:
+            if ins.runTP:
+                dmName = self._dmNames[ins._hostId]
+                tpStatsPath=format("/var/jopamaTest/logs/%d/TP/stats.log" % ins.gId)
+                tpTargetDirPath=format("%s/%d/TP" % (self._args.outputDir, ins.gId))
+                subprocess.check_call('mkdir -p %s' % tpTargetDirPath, shell=True)
+                subprocess.check_call('docker-machine scp %s %s %s' % (self._dmNames[ins.hostId], tpStatsPath, tpTargetDirPath), shell=True)
+
+    def _cleanup(self):
+        for dmName in self._dmNames:
+            subprocess.check_call("docker-machine ssh %s sh -c 'docker ps -aq | while read line; do docker kill $line; docker rm $line; done'" % (dmName), shell=True)
+            subprocess.check_call("docker-machine ssh %s sh -c 'sudo rm -fr /var/jopamaTest/*'" % (dmName), shell=True)
 
 class ScopedDockerRunnerWrapper(object):
     def __init__(self, dockerRunner, dist):
