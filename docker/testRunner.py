@@ -103,7 +103,7 @@ class DockerMachineDockerRunner(DockerRunner):
         self._dmIps = []
         for dmName in self._dmNames:
             ip = subprocess.check_output('docker-machine ssh %s ip -4 -o addr show dev %s | cut -d" " -f7 | cut -d"/" -f1' % (dmName, self._ifName), shell=True)
-            self._dmIps.append(ip)
+            self._dmIps.append(ip.strip())
 
     def getHostIps(self):
         return self._dmIps
@@ -320,6 +320,7 @@ class TestRunner(object):
             )
 
     def zkCli(self, server, zkCliCmd):
+        print("zkCli, server: %s zkCli: %s" % (server, zkCliCmd))
         name=getZooClientName()
         output=self.dockerRunner.runDockerCmd(
             hostId = 0,
@@ -503,6 +504,11 @@ class TestRunner(object):
         self.zkCli(connStr, 'create /TC_READY a')
         self.zkCli(connStr, 'create /TC_DONE a')
 
+    def printDirectories(self):
+        connStr=self.getConnStrForCluster(0)
+        dirC = self.zkCli(connStr, 'ls /')
+        print('dirC: %s' % dirC)
+
     def getContent(self, clusterId, path):
         print('getContent clusterId: %d path: %s' % (clusterId, path))
         output=self.zkCli(self.getConnStrForCluster(clusterId), 'get %s' % (path))
@@ -555,7 +561,7 @@ class TestRunner(object):
         self.start = datetime.now()
         self.triggerStart()
         self.waitDesiredDuration()
-        #self.listFiles()
+        self.listFiles()
         self.triggerFinish()
         self.waitForDone()
         self.finish = datetime.now()
@@ -601,11 +607,7 @@ if __name__ == '__main__':
         print('%s' % str(inst))
     print('DIST END')
     with ScopedDockerRunnerWrapper(dockerRunner, gen.dist) as dockerRunner:
-        pass
-        for i in range(5):
-            output = dockerRunner.runDockerCmd(0, 'docker run --entrypoint /bin/ls smolenski/zookeeper /opt')
-            print('output: %s' % (output))
-        #test = TestRunner(args, gen, dockerRunner)
-        #test.run()
+        test = TestRunner(args, gen, dockerRunner)
+        test.run()
         #dockerRunner.saveResults()
     sys.exit(0)
