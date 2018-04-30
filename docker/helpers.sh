@@ -10,7 +10,8 @@ function runOnce()
     #python testRunner.py -dockerRunnerArg NATIVE:3 -numClusters 2 -clusterSize 3 -numTP 1 -numTC 1 -firstComp 100 -numComp 10000 -compsInTra 10 -outForTC 100 -outForTP 20 -duration 180
     #python testRunner.py -dockerRunnerArg NATIVE:1 -outputDir /tmp/jopamaResults -numClusters 1 -clusterSize 1 -numTP 1 -numTC 1 -firstComp 100 -numComp 10000 -compsInTra 10 -outForTC 400 -outForTP 200 -duration 180
     #python testRunner.py -dockerRunnerArg NATIVE:1 -outputDir /tmp/jopamaResults -numClusters 1 -clusterSize 1 -numTP 1 -numTC 1 -firstComp 100 -numComp 10000 -compsInTra 10 -outForTC 100 -outForTP 20 -duration 180
-    python testRunner.py -dockerRunnerArg "DOCKERMACHINE:eth0;myengine000" -outputDir /tmp/jopamaResults -numClusters 1 -clusterSize 1 -numTP 1 -numTC 1 -firstComp 100 -numComp 10000 -compsInTra 10 -outForTC 100 -outForTP 20 -duration 180
+    #python testRunner.py -dockerRunnerArg "DOCKERMACHINE:eth0;myengine000" -outputDir /tmp/jopamaResults -numClusters 1 -clusterSize 1 -numTP 1 -numTC 1 -firstComp 100 -numComp 10000 -compsInTra 10 -outForTC 100 -outForTP 20 -duration 180
+    python testRunner.py -dockerRunnerArg "DOCKERMACHINE:ens5;myengine000" -outputDir /tmp/jopamaResults -numClusters 1 -clusterSize 1 -numTP 1 -numTC 1 -firstComp 100 -numComp 10000 -compsInTra 10 -outForTC 100 -outForTP 20 -duration 180
     local retVal=$?
     echo "python finished with $retVal"
     return $retVal
@@ -36,6 +37,10 @@ function runNumTimes()
 
 NUM_MACHINES=1
 JOPAMA_DIR=/var/jopamaTest
+#DM_DRIVER=kvm
+DM_DRIVER=amazonec2
+
+source ~/docker-machine-aws
 
 function getMachineName()
 {
@@ -59,11 +64,11 @@ function setUpMachine()
     docker-machine ssh $name sudo chmod 777 ${JOPAMA_DIR}
 }
 
-function setUpMachines()
+function setUpMachinesSaveLoad()
 {
-    imgs=(smolenski/zookeeper smolenski/jopama)
-    archives=( $(for img in ${imgs[*]}; do echo ${img//\//_}.tar; done) )
-    numImages=${#imgs[*]}
+    local imgs=(smolenski/zookeeper smolenski/jopama)
+    local archives=( $(for img in ${imgs[*]}; do echo ${img//\//_}.tar; done) )
+    local numImages=${#imgs[*]}
     for ((i=0;i<$numImages;i++)); do
         docker save -o ${archives[$i]} ${imgs[$i]}
     done
@@ -78,10 +83,25 @@ function setUpMachines()
     done
 }
 
+function setUpMachinesPull()
+{
+    local imgs=(smolenski/zookeeper smolenski/jopama)
+    local numImages=${#imgs[*]}
+    for ((i=0;i<${NUM_MACHINES};++i)); do
+        setUpMachine $i
+        local name=$(getMachineName $i)
+        eval $(docker-machine env $name)
+        for ((j=0;j<$numImages;j++)); do
+            docker pull ${imgs[$j]}
+        done
+        eval $(docker-machine env -u)
+    done
+}
+
 function createMachines()
 {
     for ((i=0;i<${NUM_MACHINES};++i)); do
-        docker-machine create --driver kvm $(getMachineName $i) 
+        docker-machine create --driver $DM_DRIVER $(getMachineName $i)
     done
 }
 
