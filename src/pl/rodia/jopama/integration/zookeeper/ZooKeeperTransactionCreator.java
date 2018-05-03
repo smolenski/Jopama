@@ -3,6 +3,7 @@ package pl.rodia.jopama.integration.zookeeper;
 import java.util.List;
 import java.util.Random;
 import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -55,6 +56,7 @@ public class ZooKeeperTransactionCreator extends ZooKeeperActorBase
 		this.firstComponentId = firstComponentId;
 		this.numComponents = numComponents;
 		this.numComponentsInTransaction = numComponentsInTransaction;
+        this.numAtomicAsyncOperations = new AtomicInteger(0);
 		this.numCreated = new Long(0);
 	}
 
@@ -82,6 +84,11 @@ public class ZooKeeperTransactionCreator extends ZooKeeperActorBase
 				return;
 			}
 
+            if (this.numAtomicAsyncOperations.get() > 0)
+            {
+                return;
+            }
+            this.numAtomicAsyncOperations.set(1);
 			zooKeeperProvider.zooKeeper.getChildren(
 					ZooKeeperHelpers.getTransactionBasePath(),
 					null,
@@ -116,6 +123,11 @@ public class ZooKeeperTransactionCreator extends ZooKeeperActorBase
 										}
 								);
 							}
+                            else
+                            {
+                                assert numAtomicAsyncOperations.get() == 1;
+                                numAtomicAsyncOperations.set(0);
+                            }
 						}
 					},
 					null
@@ -163,6 +175,7 @@ public class ZooKeeperTransactionCreator extends ZooKeeperActorBase
 			Integer numExistingFiles
 	)
 	{
+        assert this.numAtomicAsyncOperations.get() == 1;
 		logger.info(
 				"numExisitingFiles: " + numExistingFiles
 		);
@@ -175,6 +188,7 @@ public class ZooKeeperTransactionCreator extends ZooKeeperActorBase
 				"ZooKeeperTransactionCreator::createFilesUpToTheTreshold, numFilesToCreate: " + numFilesToCreate
 		);
 
+        this.numAtomicAsyncOperations.set(numFilesToCreate);
 		for (int i = 0; i < numFilesToCreate; ++i)
 		{
 			Long transactionId = ZooKeeperObjectId.getRandomIdForCluster(
@@ -205,6 +219,8 @@ public class ZooKeeperTransactionCreator extends ZooKeeperActorBase
 							zooKeeperProvider.zooKeeper.getState() != States.CONNECTED
 				)
 				{
+                    Integer numAsyncBefore = new Integer(this.numAtomicAsyncOperations.getAndDecrement());
+                    assert numAsyncBefore.compareTo(new Integer(0)) > 0;
 					continue;
 				}
 				else
@@ -229,6 +245,8 @@ public class ZooKeeperTransactionCreator extends ZooKeeperActorBase
 										int rc, String path, Object ctx, String name
 								)
 								{
+                                    Integer numAsyncBefore = new Integer(numAtomicAsyncOperations.getAndDecrement());
+                                    assert numAsyncBefore.compareTo(new Integer(0)) > 0;
 									if (rc == KeeperException.Code.OK.intValue())
 									{
 										logger.debug(
@@ -259,5 +277,6 @@ public class ZooKeeperTransactionCreator extends ZooKeeperActorBase
 	Long numComponents;
 	Long numComponentsInTransaction;
 	Long numCreated;
+    AtomicInteger numAtomicAsyncOperations;
 	static final Logger logger = LogManager.getLogger();
 }

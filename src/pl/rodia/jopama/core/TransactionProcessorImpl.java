@@ -181,7 +181,7 @@ public class TransactionProcessorImpl extends TransactionProcessor implements St
 			return;
 		}
 		logger.debug(
-				this.taskRunner.name + ":getting change"
+				this.taskRunner.name + ":getting change, transactionId: " + transactionId
 		);
 		UnifiedAction change = this.transactionAnalyzer.getChange(
 				transactionId
@@ -198,6 +198,7 @@ public class TransactionProcessorImpl extends TransactionProcessor implements St
 						this.taskRunner.name + ":changeComponent, componentId: " + change.componentChange.componentId + " CURRENT: "
 								+ change.componentChange.currentVersion + " NEXT: "
 								+ change.componentChange.nextVersion
+                                + " transactionId: " + transactionId
 				);
 				this.storageGateway.changeComponent(
 						change.componentChange,

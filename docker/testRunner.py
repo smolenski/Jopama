@@ -84,10 +84,10 @@ class NativeDockerRunner(DockerRunner):
     def saveResults(self):
         for ins in self._dist:
             if ins.runTP:
-                tpStatsPath=format("/var/jopamaTest/logs/%d/TP/stats.log" % ins.gId)
-                tpTargetDirPath=format("%s/%d/TP" % (self._args.outputDir, ins.gId))
+                tpLogsPath=format("/var/jopamaTest/logs/%d/TP" % ins.gId)
+                tpTargetDirPath=format("%s/%d" % (self._args.outputDir, ins.gId))
                 subprocess.check_call('mkdir -p %s' % tpTargetDirPath, shell=True)
-                subprocess.check_call('cp -r %s %s' % (tpStatsPath, tpTargetDirPath), shell=True)
+                subprocess.check_call('cp -r %s %s' % (tpLogsPath, tpTargetDirPath), shell=True)
 
     def cleanup(self):
         subprocess.check_call("docker ps -aq | while read line; do docker kill $line; docker rm $line; done", shell=True)
@@ -144,11 +144,10 @@ class DockerMachineDockerRunner(DockerRunner):
     def saveResults(self):
         for ins in self._dist:
             if ins.runTP:
-                dmName = self._dmNames[ins._hostId]
-                tpStatsPath=format("/var/jopamaTest/logs/%d/TP/stats.log" % ins.gId)
-                tpTargetDirPath=format("%s/%d/TP" % (self._args.outputDir, ins.gId))
+                tpLogsPath=format("/var/jopamaTest/logs/%d/TP" % ins.gId)
+                tpTargetDirPath=format("%s/%d" % (self._args.outputDir, ins.gId))
                 subprocess.check_call('mkdir -p %s' % tpTargetDirPath, shell=True)
-                subprocess.check_call('docker-machine scp %s:%s %s' % (self._dmNames[ins.hostId], tpStatsPath, tpTargetDirPath), shell=True)
+                subprocess.check_call('docker-machine scp -r %s:%s %s' % (self._dmNames[ins.hostId], tpLogsPath, tpTargetDirPath), shell=True)
 
     def cleanup(self):
         for hostId in range(len(self._dmNames)):
@@ -609,5 +608,5 @@ if __name__ == '__main__':
     with ScopedDockerRunnerWrapper(dockerRunner, gen.dist) as dockerRunner:
         test = TestRunner(args, gen, dockerRunner)
         test.run()
-        #dockerRunner.saveResults()
+        dockerRunner.saveResults()
     sys.exit(0)
