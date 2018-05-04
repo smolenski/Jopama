@@ -65,7 +65,7 @@ public class RandomExchangeFunction extends Function implements Serializable
 		Random random = new Random(
 				this.seed
 		);
-		Map<ObjectId, Integer> result = new TreeMap<ObjectId, Integer>();
+		TreeMap<ObjectId, Integer> result = new TreeMap<ObjectId, Integer>();
 		for (Map.Entry<ObjectId, Integer> entry : oldValues.entrySet())
 		{
 			result.put(
@@ -81,6 +81,21 @@ public class RandomExchangeFunction extends Function implements Serializable
 		{
 			return result;
 		}
+        if (
+            result.size() == 2
+        )
+        {
+            ObjectId[] rKeys = result.keySet().toArray(new ObjectId[result.size()]);
+            Integer[] rValues = result.values().toArray(new Integer[result.size()]);
+            result.clear();
+            assert rKeys.length == 2;
+            assert rValues.length == 2;
+            assert result.size() == 0;
+            result.put(rKeys[0], rValues[1]);
+            result.put(rKeys[1], rValues[0]);
+            assert result.size() == 2;
+            return result;
+        }
 		for (int i = 0; i < result.size(); ++i)
 		{
 			int indexToExchangeWith = random.nextInt(
