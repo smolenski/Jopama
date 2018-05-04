@@ -84,10 +84,19 @@ class NativeDockerRunner(DockerRunner):
     def saveResults(self):
         for ins in self._dist:
             if ins.runTP:
-                tpLogsPath=format("/var/jopamaTest/logs/%d/TP" % ins.gId)
-                tpTargetDirPath=format("%s/%d" % (self._args.outputDir, ins.gId))
-                subprocess.check_call('mkdir -p %s' % tpTargetDirPath, shell=True)
-                subprocess.check_call('cp -r %s %s' % (tpLogsPath, tpTargetDirPath), shell=True)
+                remoteStatsPath=format("/var/jopamaTest/logs/%d/TP/stats.log" % ins.gId)
+                statsTargetDir=format("%s/stats/%d/TP" % (self._args.outputDir, ins.gId))
+                subprocess.check_call('mkdir -p %s' % statsTargetDir, shell=True)
+                subprocess.check_call('cp %s %s' % (remoteStatsPath, statsTargetDir), shell=True)
+            if self._args.alllogs:
+                if ins.runTP:
+                    tpLogsPath=format("/var/jopamaTest/logs/%d/TP" % ins.gId)
+                    tpTargetDirPath=format("%s/%d" % (self._args.outputDir, ins.gId))
+                    subprocess.check_call('mkdir -p %s' % tpTargetDirPath, shell=True)
+                    subprocess.check_call('cp -r %s %s' % (tpLogsPath, tpTargetDirPath), shell=True)
+                tvLogsPath="/var/jopamaTest/logs/TV"
+                tvTargetDirPath=self._args.outputDir
+                subprocess.check_call('cp -r %s %s' % (tvLogsPath, tvTargetDirPath), shell=True)
 
     def cleanup(self):
         subprocess.check_call("docker ps -aq | while read line; do docker kill $line; docker rm $line; done", shell=True)
@@ -144,10 +153,19 @@ class DockerMachineDockerRunner(DockerRunner):
     def saveResults(self):
         for ins in self._dist:
             if ins.runTP:
-                tpLogsPath=format("/var/jopamaTest/logs/%d/TP" % ins.gId)
-                tpTargetDirPath=format("%s/%d" % (self._args.outputDir, ins.gId))
-                subprocess.check_call('mkdir -p %s' % tpTargetDirPath, shell=True)
-                subprocess.check_call('docker-machine scp -r %s:%s %s' % (self._dmNames[ins.hostId], tpLogsPath, tpTargetDirPath), shell=True)
+                remoteStatsPath=format("/var/jopamaTest/logs/%d/TP/stats.log" % ins.gId)
+                statsTargetDir=format("%s/stats/%d/TP" % (self._args.outputDir, ins.gId))
+                subprocess.check_call('mkdir -p %s' % statsTargetDir, shell=True)
+                subprocess.check_call('docker-machine scp %s:%s %s' % (self._dmNames[ins.hostId], remoteStatsPath, statsTargetDir), shell=True)
+            if self._args.alllogs:
+                if ins.runTP:
+                    tpLogsPath=format("/var/jopamaTest/logs/%d/TP" % ins.gId)
+                    tpTargetDirPath=format("%s/%d" % (self._args.outputDir, ins.gId))
+                    subprocess.check_call('mkdir -p %s' % tpTargetDirPath, shell=True)
+                    subprocess.check_call('docker-machine scp -r %s:%s %s' % (self._dmNames[ins.hostId], tpLogsPath, tpTargetDirPath), shell=True)
+                tvLogsPath="/var/jopamaTest/logs/TV"
+                tvTargetDirPath=self._args.outputDir
+                subprocess.check_call('docker-machine scp -r %s:%s %s' % (self._dmNames[0], tvLogsPath, tvTargetDirPath), shell=True)
 
     def cleanup(self):
         for hostId in range(len(self._dmNames)):
@@ -583,6 +601,7 @@ if __name__ == '__main__':
     parser.add_argument('-outForTP', type=int, required=True, dest='outForTP', help="Outstanding transactions for processor")
     parser.add_argument('-duration', type=int, required=True, dest='duration', help="Test duration")
     parser.add_argument('-doctest', action='store_true', dest='doctest', help="Run doctests")
+    parser.add_argument('-alllogs', action='store_true', dest='alllogs', help="Save all logs")
     args = parser.parse_args()
     if args.doctest:
         doctest.testmod()

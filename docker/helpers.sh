@@ -9,7 +9,7 @@ function runOnce()
     local id=$1
     #python testRunner.py -dockerRunnerArg NATIVE:3 -numClusters 2 -clusterSize 3 -numTP 1 -numTC 1 -firstComp 100 -numComp 10000 -compsInTra 10 -outForTC 100 -outForTP 20 -duration 180
     #python testRunner.py -dockerRunnerArg NATIVE:1 -outputDir /tmp/jopamaResults -numClusters 1 -clusterSize 1 -numTP 1 -numTC 1 -firstComp 100 -numComp 10000 -compsInTra 10 -outForTC 400 -outForTP 200 -duration 180
-    python testRunner.py -dockerRunnerArg NATIVE:1 -outputDir /tmp/jopamaResults -numClusters 1 -clusterSize 3 -numTP 3 -numTC 1 -firstComp 100 -numComp 100000 -compsInTra 3 -outForTC 100 -outForTP 10 -duration 180
+    python testRunner.py -dockerRunnerArg NATIVE:1 -outputDir /tmp/jopamaResults -numClusters 1 -clusterSize 3 -numTP 3 -numTC 1 -firstComp 100 -numComp 100000 -compsInTra 2 -outForTC 100 -outForTP 10 -duration 180
     #python testRunner.py -dockerRunnerArg "DOCKERMACHINE:eth0;myengine000" -outputDir /tmp/jopamaResults -numClusters 1 -clusterSize 1 -numTP 1 -numTC 1 -firstComp 100 -numComp 10000 -compsInTra 10 -outForTC 100 -outForTP 20 -duration 180
     #python testRunner.py -dockerRunnerArg "DOCKERMACHINE:ens5;myengine000" -outputDir /tmp/jopamaResults -numClusters 1 -clusterSize 3 -numTP 1 -numTC 1 -firstComp 100 -numComp 100000 -compsInTra 10 -outForTC 100 -outForTP 10 -duration 180
     local retVal=$?
