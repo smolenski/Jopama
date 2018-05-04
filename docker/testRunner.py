@@ -169,10 +169,7 @@ class DockerMachineDockerRunner(DockerRunner):
 
     def cleanup(self):
         for hostId in range(len(self._dmNames)):
-            lines = self.runDockerCmd(hostId, "docker ps -aq").splitlines()
-            for line in lines:
-                self.runDockerCmd(hostId, "docker kill %s; true" % (line))
-                self.runDockerCmd(hostId, "docker rm %s" % (line))
+            self._execOnHostId(hostId, "sudo docker ps -aq | while read line; do sudo docker kill \\\\\\$line; sudo docker rm \\\\\\$line; done")
             self._execOnHostId(hostId, "sudo rm -fr /var/jopamaTest/*")
 
 class ScopedDockerRunnerWrapper(object):
