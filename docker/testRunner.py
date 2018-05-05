@@ -143,8 +143,15 @@ class DockerMachineDockerRunner(DockerRunner):
         hostIdsAndDirs.append((0, ccLogsDir)) 
         tvLogsDir=format("/var/jopamaTest/logs/TV")
         hostIdsAndDirs.append((0, tvLogsDir)) 
+        dirsForHostId = []
+        for i in range(len(self._dmIps)):
+            dirsForHostId.append([])
         for hostId, dirPath in hostIdsAndDirs:
-            self._execOnHostId(hostId, "mkdir -p %s" % (dirPath, )) 
+            dirsForHostId[hostId].append(dirPath)
+        for i in range(len(self._dmIps)):
+            desiredDirsOnHost = ' '.join(dirsForHostId[i])
+            print("going to create on host: %s dirs: %s" % (i, desiredDirsOnHost, ))
+            self._execOnHostId(i, "mkdir -p %s" % (desiredDirsOnHost, ))
 
     def runDockerCmd(self, hostId, cmd):
         print('DMDR::runDockerCmd, hostId: %d cmd: %s' % (hostId, cmd, ))
