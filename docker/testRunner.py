@@ -582,7 +582,7 @@ class TestRunner(object):
         self.start = datetime.now()
         self.triggerStart()
         self.waitDesiredDuration()
-        self.listFiles()
+        #self.listFiles()
         self.triggerFinish()
         self.waitForDone()
         self.finish = datetime.now()

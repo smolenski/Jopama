@@ -10,7 +10,7 @@ function runOnce()
     #python testRunner.py -dockerRunnerArg NATIVE:3 -numClusters 2 -clusterSize 3 -numTP 1 -numTC 1 -firstComp 100 -numComp 10000 -compsInTra 10 -outForTC 100 -outForTP 20 -duration 180
     #python testRunner.py -dockerRunnerArg NATIVE:1 -outputDir /tmp/jopamaResults -numClusters 1 -clusterSize 1 -numTP 1 -numTC 1 -firstComp 100 -numComp 10000 -compsInTra 10 -outForTC 400 -outForTP 200 -duration 180
     #python testRunner.py -dockerRunnerArg NATIVE:1 -outputDir /tmp/jopamaResults -numClusters 3 -clusterSize 1 -numTP 1 -numTC 1 -firstComp 100 -numComp 100000 -compsInTra 2 -outForTC 100 -outForTP 10 -duration 180
-    python testRunner.py -dockerRunnerArg "DOCKERMACHINE:ens5;myengine000,myengine001,myengine002" -outputDir /tmp/jopamaResults -numClusters 4 -clusterSize 3 -numTP 3 -numTC 1 -firstComp 100 -numComp 100000 -compsInTra 2 -outForTC 100 -outForTP 10 -duration 180
+    python testRunner.py -dockerRunnerArg "DOCKERMACHINE:ens5;myengine000,myengine001,myengine002" -outputDir /tmp/jopamaResults -numClusters 1 -clusterSize 3 -numTP 3 -numTC 1 -firstComp 100 -numComp 100000 -compsInTra 4 -outForTC 400 -outForTP 20 -duration 180
     #python testRunner.py -dockerRunnerArg "DOCKERMACHINE:eth0;myengine000" -outputDir /tmp/jopamaResults -numClusters 1 -clusterSize 1 -numTP 1 -numTC 1 -firstComp 100 -numComp 10000 -compsInTra 10 -outForTC 100 -outForTP 20 -duration 180
     #python testRunner.py -dockerRunnerArg "DOCKERMACHINE:ens5;myengine000" -outputDir /tmp/jopamaResults -numClusters 1 -clusterSize 3 -numTP 1 -numTC 1 -firstComp 100 -numComp 100000 -compsInTra 10 -outForTC 100 -outForTP 10 -duration 180
     local retVal=$?
@@ -43,8 +43,8 @@ function performTestForMult()
     fi
     local mult=$1
     local mstr="$(getMachinesString $mult)"
-    local numClusters=$((4 * mult))
-    { python testRunner.py -dockerRunnerArg "DOCKERMACHINE:ens5;${mstr}" -outputDir /tmp/jopamaResults -numClusters $numClusters -clusterSize 3 -numTP 3 -numTC 1 -firstComp 100 -numComp 100000 -compsInTra 2 -outForTC 100 -outForTP 10 -duration 180 2>&1; } | tee ~/dockerLogs/testRunner_$(date +%Y%m%d_%H%M%S).log
+    local numClusters=$((1 * mult))
+    { python testRunner.py -dockerRunnerArg "DOCKERMACHINE:ens5;${mstr}" -outputDir /tmp/jopamaResults -numClusters $numClusters -clusterSize 3 -numTP 3 -numTC 1 -firstComp 100 -numComp 100000 -compsInTra 2 -outForTC 400 -outForTP 40 -duration 180 2>&1; } | tee ~/dockerLogs/testRunner_$(date +%Y%m%d_%H%M%S).log
 }
 
 function runNumTimes()
@@ -74,7 +74,7 @@ source ~/docker-machine-aws
 
 function myParallel()
 {
-    parallel --jobs 0 $*
+    parallel --jobs 12 $*
 }
 
 function getMachineIDs()
@@ -166,7 +166,7 @@ function _createMachine()
 {
     local id=$1
     local name=$(getMachineName $id)
-    myDockerMachine create --driver $DM_DRIVER $name
+    myDockerMachine create --driver $DM_DRIVER --amazonec2-request-spot-instance $name
 }
 
 export -f _createMachine
