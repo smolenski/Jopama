@@ -35,15 +35,22 @@ function getMachinesString()
     echo $str
 }
 
+NUM_MACHINES=3
+export JOPAMA_DIR=/var/jopamaTest
+export DM_DRIVER=kvm
+export DM_DRIVER=amazonec2
+
+source ~/docker-machine-aws
+
 function performTestForMult()
 {
-    if [[ $# -ne 1 ]]; then
+    if [[ $# -ne 0 ]]; then
         echo "performTestForMult args"
         return 1
     fi
-    local mult=$1
+    local mult=$((NUM_MACHINES / 3))
     local mstr="$(getMachinesString $mult)"
-    local numClusters=$((1 * mult))
+    local numClusters=$mult
     { python testRunner.py -dockerRunnerArg "DOCKERMACHINE:ens5;${mstr}" -outputDir /tmp/jopamaResults -numClusters $numClusters -clusterSize 3 -numTP 3 -numTC 1 -firstComp 100 -numComp 100000 -compsInTra 2 -outForTC 400 -outForTP 40 -duration 180 2>&1; } | tee ~/dockerLogs/testRunner_$(date +%Y%m%d_%H%M%S).log
 }
 
@@ -64,13 +71,6 @@ function runNumTimes()
         fi
     done
 }
-
-NUM_MACHINES=3
-export JOPAMA_DIR=/var/jopamaTest
-export DM_DRIVER=kvm
-export DM_DRIVER=amazonec2
-
-source ~/docker-machine-aws
 
 function myParallel()
 {
@@ -166,7 +166,7 @@ function _createMachine()
 {
     local id=$1
     local name=$(getMachineName $id)
-    myDockerMachine create --driver $DM_DRIVER --amazonec2-request-spot-instance $name
+    myDockerMachine create --driver $DM_DRIVER --amazonec2-request-spot-instance --amazonec2-spot-price 0.1 $name
 }
 
 export -f _createMachine
