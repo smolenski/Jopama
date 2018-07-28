@@ -1,6 +1,5 @@
 package pl.rodia.jopama.integration.zookeeper;
 
-import java.util.Random;
 import java.util.concurrent.ExecutionException;
 
 import org.apache.logging.log4j.LogManager;
@@ -18,7 +17,8 @@ public class ZooKeeperTransactionCreatorRunner extends ZooKeeperSyncedRunner
 			Integer desiredOutstandingTransactionsNum,
 			Long firstComponentId,
 			Long numComponents,
-			Long numComponentsInTransaction
+			Long numComponentsInTransaction,
+			Long singleComponentLimit
 	)
 	{
 		super(id, addresses, clusterSize, startFinishDir);
@@ -27,6 +27,7 @@ public class ZooKeeperTransactionCreatorRunner extends ZooKeeperSyncedRunner
 		this.firstComponentId = firstComponentId;
 		this.numComponents = numComponents;
 		this.numComponentsInTransaction = numComponentsInTransaction;
+		this.singleComponentLimit = singleComponentLimit;
 	}
 
 	void startDetected()
@@ -40,7 +41,8 @@ public class ZooKeeperTransactionCreatorRunner extends ZooKeeperSyncedRunner
 				this.desiredOutstandingTransactionsNum,
 				this.firstComponentId,
 				this.numComponents,
-				this.numComponentsInTransaction
+				this.numComponentsInTransaction,
+				this.singleComponentLimit
 		);
 		this.transactionCreator.start();
 		logger.info(this.id + " start detected - done");
@@ -91,6 +93,7 @@ public class ZooKeeperTransactionCreatorRunner extends ZooKeeperSyncedRunner
 	Long firstComponentId;
 	Long numComponents;
 	Long numComponentsInTransaction;
+	Long singleComponentLimit;
 	ZooKeeperTransactionCreator transactionCreator;
 	static final Logger logger = LogManager.getLogger();
 
@@ -124,6 +127,9 @@ public class ZooKeeperTransactionCreatorRunner extends ZooKeeperSyncedRunner
 		Long numComponentsInTransaction = Long.parseLong(
 				args[8]
 		);
+		Long singleComponentLimit = Long.parseLong(
+				args[9]
+		);
 		ThreadExceptionHandlerSetter.setHandler();
 		ZooKeeperTransactionCreatorRunner transactionCreatorRunner = new ZooKeeperTransactionCreatorRunner(
 				id,
@@ -134,7 +140,8 @@ public class ZooKeeperTransactionCreatorRunner extends ZooKeeperSyncedRunner
 				desiredOutstandingTransactionsNum,
 				firstComponentId,
 				numComponents,
-				numComponentsInTransaction
+				numComponentsInTransaction,
+				singleComponentLimit
 		);
 		transactionCreatorRunner.start();
 		try

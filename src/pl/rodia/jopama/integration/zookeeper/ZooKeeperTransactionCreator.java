@@ -1,7 +1,13 @@
 package pl.rodia.jopama.integration.zookeeper;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.Set;
+import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -34,7 +40,8 @@ public class ZooKeeperTransactionCreator extends ZooKeeperActorBase
 			Integer desiredOutstandingTransactionsNum,
 			Long firstComponentId,
 			Long numComponents,
-			Long numComponentsInTransaction
+			Long numComponentsInTransaction,
+			Long singleComponentLimit
 	)
 	{
 		super(
@@ -56,6 +63,8 @@ public class ZooKeeperTransactionCreator extends ZooKeeperActorBase
 		this.firstComponentId = firstComponentId;
 		this.numComponents = numComponents;
 		this.numComponentsInTransaction = numComponentsInTransaction;
+		this.singleComponentLimit = singleComponentLimit;
+		this.currentTransactions = new HashMap<Long, Transaction>();
         this.numAtomicAsyncOperations = new AtomicInteger(0);
 		this.numCreated = new Long(0);
 	}
@@ -117,7 +126,7 @@ public class ZooKeeperTransactionCreator extends ZooKeeperActorBase
 													));
 												}
 												tryToPerformCont(
-														children.size()
+														children
 												);
 											}
 										}
@@ -136,17 +145,28 @@ public class ZooKeeperTransactionCreator extends ZooKeeperActorBase
 	}
 
 	public Transaction generateTransaction(
-			Long transactionId
+			Long transactionId,
+			SortedMap<Long, Long> compsCount
 	)
 	{
+		Long numUnusable = ZooKeeperTransactionCreatorHelpers.getNumUnusableComponents(this.singleComponentLimit, compsCount);
+		assert (numComponents.compareTo(numUnusable) >= 0);
+		Long usableComps = new Long(numComponents - numUnusable);
+		if (usableComps.compareTo(this.numComponentsInTransaction) < 0)
+		{
+			return null;
+		}
 		TreeMap<ObjectId, TransactionComponent> transactionComponents = new TreeMap<ObjectId, TransactionComponent>();
 		while (
 			transactionComponents.size() < this.numComponentsInTransaction
 		)
 		{
-			Long componentId = this.firstComponentId + Math.floorMod(
-					this.random.nextLong(),
-					this.numComponents
+			Long componentId = ZooKeeperTransactionCreatorHelpers.generateComponentId(
+				this.firstComponentId.longValue(),
+				this.numComponents.longValue(),
+				this.singleComponentLimit.longValue(),
+				this.random.nextLong(),
+				compsCount
 			);
 			transactionComponents.put(
 					new ZooKeeperObjectId(
@@ -172,65 +192,47 @@ public class ZooKeeperTransactionCreator extends ZooKeeperActorBase
 	}
 
 	public void tryToPerformCont(
-			Integer numExistingFiles
+			List<String> children
 	)
 	{
+		Integer numExistingFiles = children.size();
         assert this.numAtomicAsyncOperations.get() == 1;
 		logger.info(
 				"numExisitingFiles: " + numExistingFiles
 		);
-
 		assert this.desiredOutstandingTransactionsNum.compareTo(
 				numExistingFiles
 		) >= 0;
-		Integer numFilesToCreate = (this.desiredOutstandingTransactionsNum - numExistingFiles);
-		logger.info(
-				"ZooKeeperTransactionCreator::createFilesUpToTheTreshold, numFilesToCreate: " + numFilesToCreate
+		ZooKeeperProvider zooKeeperProvider = this.zooKeeperMultiProvider.getResponsibleProvider(
+				this.clusterId
 		);
-
-        this.numAtomicAsyncOperations.set(numFilesToCreate);
-		for (int i = 0; i < numFilesToCreate; ++i)
+		synchronized (zooKeeperProvider)
 		{
-			Long transactionId = ZooKeeperObjectId.getRandomIdForCluster(
-					this.random,
-					this.clusterId,
-					this.zooKeeperMultiProvider.getNumClusters()
-			);
-			ZooKeeperObjectId zooKeeperObjectId = new ZooKeeperObjectId(
-					ZooKeeperObjectId.getTransactionUniqueName(
-							transactionId
-					)
-			);
-			assert zooKeeperObjectId.getClusterId(
-					this.zooKeeperMultiProvider.getNumClusters()
-			).equals(
-					new Integer(
-							this.clusterId
-					)
-			);
-			ZooKeeperProvider zooKeeperProvider = this.zooKeeperMultiProvider.getResponsibleProvider(
-					this.clusterId
-			);
-			synchronized (zooKeeperProvider)
+			if (
+				zooKeeperProvider.zooKeeper == null
+						||
+						zooKeeperProvider.zooKeeper.getState() != States.CONNECTED
+			)
 			{
-				if (
-					zooKeeperProvider.zooKeeper == null
-							||
-							zooKeeperProvider.zooKeeper.getState() != States.CONNECTED
-				)
+                Integer numAsyncBefore = new Integer(this.numAtomicAsyncOperations.getAndDecrement());
+                assert numAsyncBefore.compareTo(new Integer(0)) > 0;
+				return;
+			}
+			else
+			{
+				Map<Long, Transaction> transToCreate = this.generateNewTransactions(children);
+				numAtomicAsyncOperations.set(transToCreate.size());
+				for (Map.Entry<Long, Transaction> entry : transToCreate.entrySet())
 				{
-                    Integer numAsyncBefore = new Integer(this.numAtomicAsyncOperations.getAndDecrement());
-                    assert numAsyncBefore.compareTo(new Integer(0)) > 0;
-					continue;
-				}
-				else
-				{
-					Transaction transaction = this.generateTransaction(
-							transactionId
+					Long transactionId = entry.getKey();
+					ZooKeeperObjectId zooKeeperObjectId = new ZooKeeperObjectId(
+							ZooKeeperObjectId.getTransactionUniqueName(
+									transactionId
+							)
 					);
-					byte[] serializedTransaction = ZooKeeperHelpers.serializeTransaction(
-							transaction
-					);
+					assert zooKeeperObjectId.getClusterId(this.zooKeeperMultiProvider.getNumClusters()).equals(new Integer(this.clusterId));
+					Transaction transaction = entry.getValue();
+					byte[] serializedTransaction = ZooKeeperHelpers.serializeTransaction(transaction);
 					zooKeeperProvider.zooKeeper.create(
 							ZooKeeperHelpers.getTransactionPath(
 									zooKeeperObjectId
@@ -245,20 +247,33 @@ public class ZooKeeperTransactionCreator extends ZooKeeperActorBase
 										int rc, String path, Object ctx, String name
 								)
 								{
-                                    Integer numAsyncBefore = new Integer(numAtomicAsyncOperations.getAndDecrement());
-                                    assert numAsyncBefore.compareTo(new Integer(0)) > 0;
-									if (rc == KeeperException.Code.OK.intValue())
+                                    if (rc == KeeperException.Code.OK.intValue())
 									{
 										logger.debug(
 												"ZooKeeperTransactionCreator fileCreation success, name: " + zooKeeperObjectId.uniqueName
 										);
-										numCreated = new Long(numCreated.longValue() + 1);
+										schedule(
+											new Task()
+											{
+												@Override
+												public void execute()
+												{
+													numCreated = new Long(numCreated.longValue() + 1);
+													Transaction putResult = currentTransactions.put(transactionId, transaction);
+													assert (putResult == null);
+													Integer numAsyncBefore = new Integer(numAtomicAsyncOperations.getAndDecrement());
+				                                    assert numAsyncBefore.compareTo(new Integer(0)) > 0;
+												}
+											}
+										);
 									}
 									else
 									{
 										logger.debug(
 												"ZooKeeperTransactionCreator fileCreation failed, name: " + zooKeeperObjectId.uniqueName
 										);
+										Integer numAsyncBefore = new Integer(numAtomicAsyncOperations.getAndDecrement());
+	                                    assert numAsyncBefore.compareTo(new Integer(0)) > 0;
 									}
 								}
 							},
@@ -268,6 +283,53 @@ public class ZooKeeperTransactionCreator extends ZooKeeperActorBase
 			}
 		}
 	}
+	
+
+	Map<Long, Transaction> generateNewTransactions(List<String> existing)
+	{
+		Set<Long> existingIds = new HashSet<Long>();
+		for (String name : existing)
+		{
+			ZooKeeperObjectId objectId = new ZooKeeperObjectId(name);
+			assert (existingIds.add(objectId.getId()));
+		}
+		List<Long> tIdsToRemove = new LinkedList<Long>();
+		for (Long tid : this.currentTransactions.keySet())
+		{
+			if (!existingIds.contains(tid))
+			{
+				tIdsToRemove.add(tid);
+			}
+		}
+		for (Long tId : tIdsToRemove)
+		{
+			Transaction removeResult = this.currentTransactions.remove(tId);
+			assert (removeResult != null);
+		}
+		SortedMap<Long, Long> compsCount = new TreeMap<Long, Long>();
+		for (Map.Entry<Long, Transaction> entry : this.currentTransactions.entrySet())
+		{
+			ZooKeeperTransactionCreatorHelpers.updateCompCount(compsCount, entry.getValue());
+		}
+		Map<Long, Transaction> result = new HashMap<Long, Transaction>();
+		while (this.currentTransactions.size() + result.size() < this.desiredOutstandingTransactionsNum)
+		{
+			Long transactionId = ZooKeeperObjectId.getRandomIdForCluster(
+					this.random,
+					this.clusterId,
+					this.zooKeeperMultiProvider.getNumClusters()
+			);
+			Transaction transaction = this.generateTransaction(transactionId, compsCount);
+			if (transaction == null)
+			{
+				break;
+			}
+			result.put(transactionId, transaction);
+			ZooKeeperTransactionCreatorHelpers.updateCompCount(compsCount, transaction);
+		}
+		return result;
+	}
+	
 
 	Integer clusterId;
 	Integer desiredOutstandingTransactionsNum;
@@ -276,6 +338,8 @@ public class ZooKeeperTransactionCreator extends ZooKeeperActorBase
 	Long firstComponentId;
 	Long numComponents;
 	Long numComponentsInTransaction;
+	Long singleComponentLimit;
+	Map<Long, Transaction> currentTransactions;
 	Long numCreated;
     AtomicInteger numAtomicAsyncOperations;
 	static final Logger logger = LogManager.getLogger();
