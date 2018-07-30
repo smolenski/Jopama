@@ -101,7 +101,7 @@ public class ZooKeeperTransactionCreatorRunner extends ZooKeeperSyncedRunner
 			String[] args
 	)
 	{
-		assert (args.length == 9);
+		assert (args.length == 10);
 		String id = args[0];
 		String addresses = args[1];
 		Integer clusterSize = new Integer(
