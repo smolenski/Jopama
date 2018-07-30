@@ -400,7 +400,7 @@ class TestRunner(object):
                         self.args.outForTC,
                         self.args.firstComp,
                         self.args.numComp,
-                        self.args.compsInTra
+                        self.args.compsInTra,
                         self.args.singleCompLimit
                     ),
                 )
