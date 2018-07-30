@@ -212,7 +212,7 @@
 		<delete dir="${tests.perf.dir.tc}"/>
 		<mkdir dir="${tests.perf.dir.tc}"/>
 		<java fork="true" dir="${tests.perf.dir.tc}" classname="${transactionCreator.class}">
-			<arg line="TC 127.0.0.1:2181 1 /StartFinish 0 10 100 100 10" />
+			<arg line="TC 127.0.0.1:2181 1 /StartFinish 0 10 100 100 10 3" />
 			<jvmarg value="-ea" />
 			<classpath>
 				<path refid="libraries" />

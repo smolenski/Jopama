@@ -386,7 +386,7 @@ class TestRunner(object):
                 hostLogsDir=format("/var/jopamaTest/logs/%d/TC" % ins.gId)
                 self.dockerRunner.runDockerCmd(
                     hostId = ins.hostId,
-                    cmd = 'docker run -d --name %s --net host -v %s:/var/jopamaTest/logs smolenski/jopama %d pl.rodia.jopama.integration.zookeeper.ZooKeeperTransactionCreatorRunner %s %s %d %s %d %d %d %d %d'
+                    cmd = 'docker run -d --name %s --net host -v %s:/var/jopamaTest/logs smolenski/jopama %d pl.rodia.jopama.integration.zookeeper.ZooKeeperTransactionCreatorRunner %s %s %d %s %d %d %d %d %d %d'
                     %
                     (
                         name,
@@ -401,6 +401,7 @@ class TestRunner(object):
                         self.args.firstComp,
                         self.args.numComp,
                         self.args.compsInTra
+                        self.args.singleCompLimit
                     ),
                 )
 
@@ -601,6 +602,7 @@ if __name__ == '__main__':
     parser.add_argument('-firstComp', type=int, required=True, dest='firstComp', help="First component")
     parser.add_argument('-numComp', type=int, required=True, dest='numComp', help="Number of components")
     parser.add_argument('-compsInTra', type=int, required=True, dest='compsInTra', help="Components in transaction")
+    parser.add_argument('-singleCompLimit', type=int, required=True, dest='singleCompLimit', help="Single component limit in not processed transactions")
     parser.add_argument('-outForTC', type=int, required=True, dest='outForTC', help="Outstanding transactions for creator")
     parser.add_argument('-outForTP', type=int, required=True, dest='outForTP', help="Outstanding transactions for processor")
     parser.add_argument('-duration', type=int, required=True, dest='duration', help="Test duration")
