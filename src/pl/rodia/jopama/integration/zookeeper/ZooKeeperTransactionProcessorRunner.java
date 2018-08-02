@@ -14,12 +14,14 @@ public class ZooKeeperTransactionProcessorRunner extends ZooKeeperSyncedRunner
 			Integer clusterSize,
 			String startFinishDir,
 			Integer clusterId,
-			Integer numOutstanding
+			Integer numOutstanding,
+			Integer singleComponentLimit
 	)
 	{
 		super(id, addresses, clusterSize, startFinishDir);
 		this.clusterId = clusterId;
 		this.numOutstanding = numOutstanding;
+		this.singleComponentLimit = singleComponentLimit;
 	}
 
 	void startDetected()
@@ -30,7 +32,8 @@ public class ZooKeeperTransactionProcessorRunner extends ZooKeeperSyncedRunner
 				this.addresses,
 				this.clusterSize,
 				this.clusterId,
-				this.numOutstanding
+				this.numOutstanding,
+				this.singleComponentLimit
 		);
 		this.transactionProcessor.start();
 		logger.info(this.id + " start detected - done");
@@ -77,6 +80,7 @@ public class ZooKeeperTransactionProcessorRunner extends ZooKeeperSyncedRunner
 
 	Integer clusterId;
 	Integer numOutstanding;
+	Integer singleComponentLimit;
 	ZooKeeperTransactionProcessor transactionProcessor;
 	static final Logger logger = LogManager.getLogger();
 
@@ -84,7 +88,7 @@ public class ZooKeeperTransactionProcessorRunner extends ZooKeeperSyncedRunner
 			String[] args
 	)
 	{
-		assert (args.length == 6);
+		assert (args.length == 7);
 		String id = args[0];
 		String addresses = args[1];
 		Integer clusterSize = new Integer(
@@ -99,6 +103,9 @@ public class ZooKeeperTransactionProcessorRunner extends ZooKeeperSyncedRunner
 		Integer numOutstanding = Integer.parseInt(
 				args[5]
 		);
+		Integer singleComponentLimit = Integer.parseInt(
+				args[6]
+		);
 		ThreadExceptionHandlerSetter.setHandler();
 		ZooKeeperTransactionProcessorRunner transactionCreatorRunner = new ZooKeeperTransactionProcessorRunner(
 				id,
@@ -106,7 +113,8 @@ public class ZooKeeperTransactionProcessorRunner extends ZooKeeperSyncedRunner
 				clusterSize,
 				startFinishDir,
 				clusterId,
-				numOutstanding
+				numOutstanding,
+				singleComponentLimit
 		);
 		transactionCreatorRunner.start();
 		try

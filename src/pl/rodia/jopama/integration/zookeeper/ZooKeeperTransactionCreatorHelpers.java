@@ -65,7 +65,28 @@ public class ZooKeeperTransactionCreatorHelpers
 		return result;
 	}
 	
-	static public void updateCompCount(Map<Long, Long> compCount, Transaction transaction)
+	static public Boolean allCompsBelowLimit(
+		long singleComponentLimit,
+		SortedMap<Long, Long> compsCount,
+		Set<Long> compIds
+	)
+	{
+		for (Long compId : compIds)
+		{
+			Long counter = compsCount.get(compId);
+			if (counter != null)
+			{
+				assert (counter.compareTo(new Long(singleComponentLimit)) <= 0);
+				if (counter.equals(new Long(singleComponentLimit)))
+				{
+					return new Boolean(false);
+				}
+			}
+		}
+		return new Boolean(true);
+	}
+	
+	static public Set<Long> getCompIds(Transaction transaction)
 	{
 		Set<Long> ids = new TreeSet<Long>();
 		for (ObjectId compId : transaction.transactionComponents.keySet())
@@ -74,7 +95,12 @@ public class ZooKeeperTransactionCreatorHelpers
 			Long cId = zooCompId.getId();
 			ids.add(cId);
 		}
-		updateCompCount(compCount, ids);
+		return ids;
+	}
+	
+	static public void updateCompCount(Map<Long, Long> compCount, Transaction transaction)
+	{
+		updateCompCount(compCount, ZooKeeperTransactionCreatorHelpers.getCompIds(transaction));
 	}
 
 	static public void updateCompCount(Map<Long, Long> compCount, Set<Long> compIds)
