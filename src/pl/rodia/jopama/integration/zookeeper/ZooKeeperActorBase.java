@@ -227,7 +227,6 @@ public abstract class ZooKeeperActorBase
 	Integer scheduledTaskId;
 	String id;
 	String dir;
-	DirChangesObserver dirChangesObserver;
 	ZooKeeperMultiProvider zooKeeperMultiProvider;
 	TaskRunner taskRunner;
 	Thread taskRunnerThread;

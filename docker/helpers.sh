@@ -7,12 +7,13 @@ function runOnce()
         return 1
     fi
     local id=$1
-    #python testRunner.py -dockerRunnerArg NATIVE:3 -numClusters 2 -clusterSize 3 -numTP 1 -numTC 1 -firstComp 100 -numComp 10000 -compsInTra 10 -singleCompLimit 3 -outForTC 100 -outForTP 20 -duration 180
-    #python testRunner.py -dockerRunnerArg NATIVE:1 -outputDir /tmp/jopamaResults -numClusters 1 -clusterSize 1 -numTP 1 -numTC 1 -firstComp 100 -numComp 10000 -compsInTra 10 -singleCompLimit 3 -outForTC 400 -outForTP 200 -duration 180
-    #python testRunner.py -dockerRunnerArg NATIVE:1 -outputDir /tmp/jopamaResults -numClusters 3 -clusterSize 1 -numTP 1 -numTC 1 -firstComp 100 -numComp 100000 -compsInTra 2 -singleCompLimit 3 -outForTC 100 -outForTP 10 -duration 180
-    python testRunner.py -dockerRunnerArg "DOCKERMACHINE:ens5;myengine000,myengine001,myengine002" -outputDir /tmp/jopamaResults -numClusters 1 -clusterSize 3 -numTP 3 -numTC 1 -firstComp 100 -numComp 100000 -compsInTra 4 -singleCompLimit 3 -outForTC 400 -outForTP 20 -duration 180
-    #python testRunner.py -dockerRunnerArg "DOCKERMACHINE:eth0;myengine000" -outputDir /tmp/jopamaResults -numClusters 1 -clusterSize 1 -numTP 1 -numTC 1 -firstComp 100 -numComp 10000 -compsInTra 10 -singleCompLimit 3 -outForTC 100 -outForTP 20 -duration 180
-    #python testRunner.py -dockerRunnerArg "DOCKERMACHINE:ens5;myengine000" -outputDir /tmp/jopamaResults -numClusters 1 -clusterSize 3 -numTP 1 -numTC 1 -firstComp 100 -numComp 100000 -compsInTra 10 -singleCompLimit 3 -outForTC 100 -outForTP 10 -duration 180
+    #python -u testRunner.py -dockerRunnerArg NATIVE:3 -numClusters 2 -clusterSize 3 -numTP 1 -numTC 1 -firstComp 100 -numComp 10000 -compsInTra 10 -singleCompLimit 3 -outForTC 100 -outForTP 20 -duration 180
+    #python -u testRunner.py -dockerRunnerArg NATIVE:1 -outputDir /tmp/jopamaResults -numClusters 1 -clusterSize 1 -numTP 1 -numTC 1 -firstComp 100 -numComp 10000 -compsInTra 10 -singleCompLimit 3 -outForTC 400 -outForTP 200 -duration 180
+    #python -u testRunner.py -dockerRunnerArg NATIVE:1 -outputDir /tmp/jopamaResults -numClusters 3 -clusterSize 1 -numTP 1 -numTC 1 -firstComp 100 -numComp 100000 -compsInTra 2 -singleCompLimit 3 -outForTC 100 -outForTP 10 -duration 180
+    python -u testRunner.py -dockerRunnerArg NATIVE:1 -outputDir /tmp/jopamaResults -numClusters 1 -clusterSize 1 -numTP 1 -numTC 1 -firstComp 100 -numComp 1 -compsInTra 1 -singleCompLimit 10 -outForTC 100 -outForTP 10 -duration 180
+    #python -u testRunner.py -dockerRunnerArg "DOCKERMACHINE:ens5;myengine000,myengine001,myengine002" -outputDir /tmp/jopamaResults -numClusters 1 -clusterSize 3 -numTP 3 -numTC 1 -firstComp 100 -numComp 100000 -compsInTra 4 -singleCompLimit 3 -outForTC 400 -outForTP 20 -duration 180
+    #python -u testRunner.py -dockerRunnerArg "DOCKERMACHINE:eth0;myengine000" -outputDir /tmp/jopamaResults -numClusters 1 -clusterSize 1 -numTP 1 -numTC 1 -firstComp 100 -numComp 10000 -compsInTra 10 -singleCompLimit 3 -outForTC 100 -outForTP 20 -duration 180
+    #python -u testRunner.py -dockerRunnerArg "DOCKERMACHINE:ens5;myengine000" -outputDir /tmp/jopamaResults -numClusters 1 -clusterSize 3 -numTP 1 -numTC 1 -firstComp 100 -numComp 100000 -compsInTra 10 -singleCompLimit 3 -outForTC 100 -outForTP 10 -duration 180
     local retVal=$?
     echo "python finished with $retVal"
     return $retVal
@@ -35,7 +36,7 @@ function getMachinesString()
     echo $str
 }
 
-NUM_MACHINES=12
+NUM_MACHINES=2
 export JOPAMA_DIR=/var/jopamaTest
 export DM_DRIVER=kvm
 export DM_DRIVER=amazonec2
@@ -55,12 +56,25 @@ function performTestForMult()
         echo "performTestForMult: NUM_COMPS not set"
         return 1
     fi
-    { python testRunner.py -dockerRunnerArg "DOCKERMACHINE:ens5;${mstr}" -outputDir /tmp/jopamaResults -numClusters $numClusters -clusterSize 3 -numTP 3 -numTC 1 -firstComp 100 -numComp ${NUM_COMPS} -compsInTra 1 -singleCompLimit 10 -outForTC 400 -outForTP 40 -duration 180 2>&1; } | tee ~/dockerLogs/testRunner_$(date +%Y%m%d_%H%M%S).log
+    { python -u testRunner.py -dockerRunnerArg "DOCKERMACHINE:ens5;${mstr}" -outputDir /tmp/jopamaResults -numClusters $numClusters -clusterSize 3 -numTP 3 -numTC 1 -firstComp 100 -numComp ${NUM_COMPS} -compsInTra 1 -singleCompLimit $((400 / ${NUM_COMPS})) -outForTC 400 -outForTP 40 -duration 180 2>&1; } | tee ~/dockerLogs/testRunner_$(date +%Y%m%d_%H%M%S).log
+}
+
+function performTestForSingle()
+{
+    #local mstr="myengine000,myengine001"
+    #local numClusters=2
+    local mstr="myengine000"
+    local numClusters=1
+    if [[ -z ${NUM_COMPS} ]]; then
+        echo "performTestForMult: NUM_COMPS not set"
+        return 1
+    fi
+    { python -u testRunner.py -dockerRunnerArg "DOCKERMACHINE:ens5;${mstr}" -outputDir /tmp/jopamaResults -numClusters $numClusters -clusterSize 1 -numTP 1 -numTC 1 -firstComp 100 -numComp ${NUM_COMPS} -compsInTra 1 -singleCompLimit $((400 / ${NUM_COMPS})) -outForTC 400 -outForTP 40 -duration 180 2>&1; } | tee ~/dockerLogs/testRunner_$(date +%Y%m%d_%H%M%S).log
 }
 
 function performSeqTests
 {
-    local sbdir=/home/barbara/zoo/zookeeper-3.4.9/code/Jopama/docker/perfSeqTestingResults2
+    local sbdir=/home/barbara/zoo/zookeeper-3.4.9/code/Jopama/docker/perfSeqTestingResults6
     local stdir=""
     local mult=$((NUM_MACHINES / 3))
     local multStr=$(printf "%02d" ${mult})
@@ -70,7 +84,7 @@ function performSeqTests
         export NUM_COMPS=${numComps} 
         stdir=${sbdir}/comps${numComps}/mult_${multStr}
         mkdir -p $stdir
-        performTestForMult       
+        performTestForSingle
         lastCreated=$(ls -1c ~/dockerLogs/ | head -1)
         mv ~/dockerLogs/${lastCreated} $stdir
         mv /tmp/jopamaResults/stats $stdir

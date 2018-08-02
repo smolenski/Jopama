@@ -214,19 +214,19 @@ def getZooClientName():
     return format('ZOO_CLIENT_%s' % str(random.getrandbits(100)))
 
 def id2ZKPortExt(id):
-    return 10000 + 10 * id
+    return 20000 + 10 * id
 
 def id2ZKPortInt1(id):
-    return 10001 + 10 * id
+    return 20001 + 10 * id
 
 def id2ZKPortInt2(id):
-    return 10002 + 10 * id
+    return 20002 + 10 * id
 
 def id2TPDebugPort(id):
-    return 10003 + 10 * id
+    return 20003 + 10 * id
 
 def id2TCDebugPort(id):
-    return 10004 + 10 * id
+    return 20004 + 10 * id
 
 def printIt(cmd, shell=None):
     print('%s' % cmd)

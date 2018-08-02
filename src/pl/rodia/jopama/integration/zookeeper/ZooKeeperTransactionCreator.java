@@ -72,7 +72,7 @@ public class ZooKeeperTransactionCreator extends ZooKeeperActorBase
 	public Long getRetryDelay()
 	{
 		return new Long(
-				200
+				1000
 		);
 	}
 
