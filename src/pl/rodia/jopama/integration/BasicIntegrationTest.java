@@ -2,6 +2,7 @@ package pl.rodia.jopama.integration;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 
@@ -100,25 +101,27 @@ public class BasicIntegrationTest
 						ComponentPhase.INITIAL
 				)
 		);
-		ObjectId tran1 = storageAccess.createTransaction(
+		Transaction transaction1 = new Transaction(
+			TransactionPhase.INITIAL,
+			transactionComponents,
+			new Increment()
+		);
+		ObjectId tranId1 = storageAccess.createTransaction(
 				new Long(
 						1001
 				),
 				new ExtendedTransaction(
-						new Transaction(
-								TransactionPhase.INITIAL,
-								transactionComponents,
-								new Increment()
-						),
+						transaction1,
 						new Integer(
 								0
 						)
 				)
 		);
 
-		List<ObjectId> transactionIds = new LinkedList<ObjectId>();
-		transactionIds.add(
-				tran1
+		SortedMap<ObjectId, Transaction> transactionIds = new TreeMap<ObjectId, Transaction>();
+		transactionIds.put(
+				tranId1,
+				transaction1
 		);
 
 		List<Integrator> integrators = new LinkedList<Integrator>();
@@ -129,6 +132,7 @@ public class BasicIntegrationTest
 							"Integrator_" + i,
 							storageGateway,
 							transactionIds,
+							transactionIds.size(),
 							transactionIds.size()
 					)
 			);

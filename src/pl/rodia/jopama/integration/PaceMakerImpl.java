@@ -1,9 +1,9 @@
 package pl.rodia.jopama.integration;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -12,6 +12,7 @@ import org.apache.logging.log4j.Logger;
 
 import pl.rodia.jopama.core.TransactionProcessor;
 import pl.rodia.jopama.data.ObjectId;
+import pl.rodia.jopama.data.Transaction;
 import pl.rodia.mpf.Task;
 import pl.rodia.mpf.TaskRunner;
 
@@ -20,8 +21,9 @@ public class PaceMakerImpl implements PaceMaker
 
 	public PaceMakerImpl(
 			String name,
-			List<ObjectId> toDoTransactions,
+			SortedMap<ObjectId, Transaction> toDoTransactions,
 			Integer numRunningPace,
+			Integer singleComponentLimit,
 			TransactionProcessor transactionProcessor,
 			TaskRunner transactionTaskRunner
 	)
@@ -43,15 +45,11 @@ public class PaceMakerImpl implements PaceMaker
 				0
 		);
 		this.name = name;
-		this.waitingTransactions = new TreeSet<ObjectId>();
-		for (ObjectId transactionId : toDoTransactions)
-		{
-			this.waitingTransactions.add(
-					transactionId
-			);
-		}
-		this.runningTransactions = new HashSet<ObjectId>();
+		this.waitingTransactions = new TreeMap<ObjectId, Transaction>();
+		this.waitingTransactions.putAll(toDoTransactions);
+		this.runningTransactions = new HashMap<ObjectId, Transaction>();
 		this.numRunningPace = numRunningPace;
+		this.singleComponentLimit = singleComponentLimit;
 		this.transactionProcessor = transactionProcessor;
 		this.transactionTaskRunner = transactionTaskRunner;
 	}
@@ -153,7 +151,7 @@ public class PaceMakerImpl implements PaceMaker
 	}
 
 	public void addTransactions(
-			Set<ObjectId> transactionIds
+			SortedMap<ObjectId, Transaction> transactionIds
 	)
 	{
 		if (
@@ -172,7 +170,7 @@ public class PaceMakerImpl implements PaceMaker
 					@Override
 					public void execute()
 					{
-						waitingTransactions.addAll(
+						waitingTransactions.putAll(
 								transactionIds
 						);
 						scheduleUpToTheLimit();
@@ -225,6 +223,51 @@ public class PaceMakerImpl implements PaceMaker
 				this.name + "PaceMaker::scheduling done: " + transactionId
 		);
 	}
+	
+	void moveToNextEntry()
+	{
+		if (this.waitingTransactions.isEmpty())
+		{
+			this.lastCandidate = null;
+		}
+		else if (this.lastCandidate == null)
+		{
+			this.lastCandidate = this.waitingTransactions.firstKey();
+		}
+		else
+		{
+			this.lastCandidate = this.waitingTransactions.higherKey(this.lastCandidate);
+			if (this.lastCandidate == null)
+			{
+				this.lastCandidate = this.waitingTransactions.firstKey();
+			}
+		}
+	}
+	
+	ObjectId getNextTransactionIdToPass()
+	{
+		Map<Long, Long> compsCount = new HashMap<Long, Long>();
+		for (Map.Entry<ObjectId, Transaction> entry : this.runningTransactions.entrySet())
+		{
+			ZooKeeperTransactionHelpers.updateCompCount(compsCount, ZooKeeperTransactionHelpers.getCompIds(entry.getValue()));
+		}
+		for (int i = 0; i < this.waitingTransactions.size(); ++i)
+		{
+			this.moveToNextEntry();
+			assert (this.lastCandidate != null);
+			if (ZooKeeperTransactionHelpers.allCompsBelowLimit(
+				this.singleComponentLimit,
+				compsCount,
+				ZooKeeperTransactionHelpers.getCompIds(
+					this.waitingTransactions.get(this.lastCandidate)
+				)
+			))
+			{
+				return this.lastCandidate;
+			}
+		}
+		return null;
+	}
 
 	void scheduleUpToTheLimit()
 	{
@@ -242,14 +285,19 @@ public class PaceMakerImpl implements PaceMaker
 			this.waitingTransactions.size() > 0 && this.runningTransactions.size() < this.numRunningPace
 		)
 		{
-			ObjectId transactionId = this.waitingTransactions.first();
-			this.waitingTransactions.remove(
+			ObjectId transactionId = this.getNextTransactionIdToPass();
+			if (transactionId == null)
+			{
+				break;
+			}
+			Transaction transaction = this.waitingTransactions.remove(
 					transactionId
 			);
-                        if (!this.runningTransactions.contains(transactionId))
+                        if (!this.runningTransactions.containsKey(transactionId))
                         {
-                                this.runningTransactions.add(
-                                        transactionId
+                                this.runningTransactions.put(
+                                        transactionId,
+                                        transaction
                                 );
                                 this.schedule(
                                         transactionId
@@ -265,7 +313,7 @@ public class PaceMakerImpl implements PaceMaker
 		logger.info(
 				this.name + "PaceMaker::onTransactionDone: " + transactionId
 		);
-		assert this.runningTransactions.contains(
+		assert this.runningTransactions.containsKey(
 				transactionId
 		);
 		this.runningTransactions.remove(
@@ -292,9 +340,11 @@ public class PaceMakerImpl implements PaceMaker
 	Thread taskRunnerThread;
 	Integer numFinished;
 	final String name;
-	TreeSet<ObjectId> waitingTransactions;
-	Set<ObjectId> runningTransactions;
+	ObjectId lastCandidate;
+	TreeMap<ObjectId, Transaction> waitingTransactions;
+	Map<ObjectId, Transaction> runningTransactions;
 	final Integer numRunningPace;
+	final Integer singleComponentLimit;
 	TransactionProcessor transactionProcessor;
 	TaskRunner transactionTaskRunner;
 	static final Logger logger = LogManager.getLogger();

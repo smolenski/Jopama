@@ -2,6 +2,7 @@ package pl.rodia.jopama.integration;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.SortedMap;
 import java.util.concurrent.ExecutionException;
 
 import org.apache.logging.log4j.LogManager;
@@ -14,6 +15,7 @@ import pl.rodia.jopama.core.TransactionAnalyzer;
 import pl.rodia.jopama.core.TransactionAnalyzerImpl;
 import pl.rodia.jopama.core.TransactionProcessorImpl;
 import pl.rodia.jopama.data.ObjectId;
+import pl.rodia.jopama.data.Transaction;
 import pl.rodia.jopama.gateway.RemoteStorageGateway;
 import pl.rodia.jopama.stats.StatsAsyncSource;
 import pl.rodia.mpf.TaskRunner;
@@ -24,8 +26,9 @@ public class Integrator
 	public Integrator(
 			String name,
 			RemoteStorageGateway targetRemoteStorageGateway,
-			List<ObjectId> toDoTransactions,
-			Integer numRunningPace
+			SortedMap<ObjectId, Transaction> toDoTransactions,
+			Integer numRunningPace,
+			Integer singleComponentLimit
 	)
 	{
 		this.taskRunner = new TaskRunner(
@@ -53,6 +56,7 @@ public class Integrator
 				name + ":PM",
 				toDoTransactions,
 				numRunningPace,
+				singleComponentLimit,
 				transactionProcessor,
 				taskRunner
 		);

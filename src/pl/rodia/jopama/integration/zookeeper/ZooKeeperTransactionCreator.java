@@ -27,6 +27,7 @@ import pl.rodia.jopama.data.Transaction;
 import pl.rodia.jopama.data.TransactionComponent;
 import pl.rodia.jopama.data.TransactionPhase;
 import pl.rodia.jopama.integration.RandomExchangeFunction;
+import pl.rodia.jopama.integration.ZooKeeperTransactionHelpers;
 import pl.rodia.mpf.Task;
 
 public class ZooKeeperTransactionCreator extends ZooKeeperActorBase
@@ -72,7 +73,7 @@ public class ZooKeeperTransactionCreator extends ZooKeeperActorBase
 	public Long getRetryDelay()
 	{
 		return new Long(
-				1000
+				2000
 		);
 	}
 
@@ -149,7 +150,7 @@ public class ZooKeeperTransactionCreator extends ZooKeeperActorBase
 			SortedMap<Long, Long> compsCount
 	)
 	{
-		Long numUnusable = ZooKeeperTransactionCreatorHelpers.getNumUnusableComponents(this.singleComponentLimit, compsCount);
+		Long numUnusable = ZooKeeperTransactionHelpers.getNumUnusableComponents(this.singleComponentLimit, compsCount);
 		assert (numComponents.compareTo(numUnusable) >= 0);
 		Long usableComps = new Long(numComponents - numUnusable);
 		if (usableComps.compareTo(this.numComponentsInTransaction) < 0)
@@ -161,7 +162,7 @@ public class ZooKeeperTransactionCreator extends ZooKeeperActorBase
 			transactionComponents.size() < this.numComponentsInTransaction
 		)
 		{
-			Long componentId = ZooKeeperTransactionCreatorHelpers.generateComponentId(
+			Long componentId = ZooKeeperTransactionHelpers.generateComponentId(
 				this.firstComponentId.longValue(),
 				this.numComponents.longValue(),
 				this.singleComponentLimit.longValue(),
@@ -309,7 +310,7 @@ public class ZooKeeperTransactionCreator extends ZooKeeperActorBase
 		SortedMap<Long, Long> compsCount = new TreeMap<Long, Long>();
 		for (Map.Entry<Long, Transaction> entry : this.currentTransactions.entrySet())
 		{
-			ZooKeeperTransactionCreatorHelpers.updateCompCount(compsCount, entry.getValue());
+			ZooKeeperTransactionHelpers.updateCompCount(compsCount, entry.getValue());
 		}
 		Map<Long, Transaction> result = new HashMap<Long, Transaction>();
 		while (this.currentTransactions.size() + result.size() < this.desiredOutstandingTransactionsNum)
@@ -325,7 +326,7 @@ public class ZooKeeperTransactionCreator extends ZooKeeperActorBase
 				break;
 			}
 			result.put(transactionId, transaction);
-			ZooKeeperTransactionCreatorHelpers.updateCompCount(compsCount, transaction);
+			ZooKeeperTransactionHelpers.updateCompCount(compsCount, transaction);
 		}
 		return result;
 	}

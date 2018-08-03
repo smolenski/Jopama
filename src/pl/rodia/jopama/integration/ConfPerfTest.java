@@ -23,6 +23,7 @@ public class ConfPerfTest
 				1000,
 				2,
 				5,
+				3,
 				30
 		);
 	}

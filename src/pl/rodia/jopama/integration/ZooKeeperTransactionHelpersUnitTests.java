@@ -1,4 +1,4 @@
-package pl.rodia.jopama.integration.zookeeper;
+package pl.rodia.jopama.integration;
 
 import java.util.Set;
 import java.util.SortedMap;
@@ -10,14 +10,14 @@ import org.apache.logging.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class ZooKeeperTransactionCreatorHelperUnitTests
+public class ZooKeeperTransactionHelpersUnitTests
 {
 
 	@Test
 	public void checkEmpty()
 	{
 		SortedMap<Long, Long> compCount = new TreeMap<Long, Long>();
-		Long compId = ZooKeeperTransactionCreatorHelpers.generateComponentId(100, 1, 1, 10, compCount);
+		Long compId = ZooKeeperTransactionHelpers.generateComponentId(100, 1, 1, 10, compCount);
 		Assert.assertTrue(
 			"checkEmpty 1 component",
 			compId.equals(new Long(100))
@@ -29,7 +29,7 @@ public class ZooKeeperTransactionCreatorHelperUnitTests
 	{
 		SortedMap<Long, Long> compCount = new TreeMap<Long, Long>();
 		compCount.put(new Long(100), new Long(1));
-		Long compId = ZooKeeperTransactionCreatorHelpers.generateComponentId(100, 1, 2, 10, compCount);
+		Long compId = ZooKeeperTransactionHelpers.generateComponentId(100, 1, 2, 10, compCount);
 		Assert.assertTrue(
 			"checkBelowLimit 1 component",
 			compId.equals(new Long(100))
@@ -42,7 +42,7 @@ public class ZooKeeperTransactionCreatorHelperUnitTests
 		SortedMap<Long, Long> compCount = new TreeMap<Long, Long>();
 		compCount.put(new Long(100), new Long(2));
 		compCount.put(new Long(101), new Long(1));
-		Long compId = ZooKeeperTransactionCreatorHelpers.generateComponentId(100, 2, 2, 10, compCount);
+		Long compId = ZooKeeperTransactionHelpers.generateComponentId(100, 2, 2, 10, compCount);
 		Assert.assertTrue(
 			"checkAtLimit 1 component",
 			compId.equals(new Long(101))
@@ -55,7 +55,7 @@ public class ZooKeeperTransactionCreatorHelperUnitTests
 		SortedMap<Long, Long> compCount = new TreeMap<Long, Long>();
 		compCount.put(new Long(101), new Long(2));
 		compCount.put(new Long(102), new Long(2));
-		Long compId = ZooKeeperTransactionCreatorHelpers.generateComponentId(100, 3, 2, 10, compCount);
+		Long compId = ZooKeeperTransactionHelpers.generateComponentId(100, 3, 2, 10, compCount);
 		Assert.assertTrue(
 			"checkBefore",
 			compId.equals(new Long(100))
@@ -68,7 +68,7 @@ public class ZooKeeperTransactionCreatorHelperUnitTests
 		SortedMap<Long, Long> compCount = new TreeMap<Long, Long>();
 		compCount.put(new Long(100), new Long(2));
 		compCount.put(new Long(102), new Long(2));
-		Long compId = ZooKeeperTransactionCreatorHelpers.generateComponentId(100, 3, 2, 10, compCount);
+		Long compId = ZooKeeperTransactionHelpers.generateComponentId(100, 3, 2, 10, compCount);
 		Assert.assertTrue(
 			"checkMid",
 			compId.equals(new Long(101))
@@ -81,7 +81,7 @@ public class ZooKeeperTransactionCreatorHelperUnitTests
 		SortedMap<Long, Long> compCount = new TreeMap<Long, Long>();
 		compCount.put(new Long(100), new Long(2));
 		compCount.put(new Long(101), new Long(2));
-		Long compId = ZooKeeperTransactionCreatorHelpers.generateComponentId(100, 3, 2, 10, compCount);
+		Long compId = ZooKeeperTransactionHelpers.generateComponentId(100, 3, 2, 10, compCount);
 		Assert.assertTrue(
 			"checkAfter",
 			compId.equals(new Long(102))
@@ -94,54 +94,54 @@ public class ZooKeeperTransactionCreatorHelperUnitTests
 		SortedMap<Long, Long> compCount = new TreeMap<Long, Long>();
 		Set<Long> compIds = new TreeSet<Long>();
 		Long compId;
-		compId = ZooKeeperTransactionCreatorHelpers.generateComponentId(100, 3, 2, 10, compCount);
+		compId = ZooKeeperTransactionHelpers.generateComponentId(100, 3, 2, 10, compCount);
 		Assert.assertTrue(
 			"checkComplex 101 - first",
 			compId.equals(new Long(101))
 		);
 		compIds.clear();
 		compIds.add(compId);
-		ZooKeeperTransactionCreatorHelpers.updateCompCount(compCount, compIds);
-		compId = ZooKeeperTransactionCreatorHelpers.generateComponentId(100, 3, 2, 9, compCount);
+		ZooKeeperTransactionHelpers.updateCompCount(compCount, compIds);
+		compId = ZooKeeperTransactionHelpers.generateComponentId(100, 3, 2, 9, compCount);
 		Assert.assertTrue(
 				"checkComplex 100 - first",
 				compId.equals(new Long(100))
 		);
 		compIds.clear();
 		compIds.add(compId);
-		ZooKeeperTransactionCreatorHelpers.updateCompCount(compCount, compIds);
-		compId = ZooKeeperTransactionCreatorHelpers.generateComponentId(100, 3, 2, 31, compCount);
+		ZooKeeperTransactionHelpers.updateCompCount(compCount, compIds);
+		compId = ZooKeeperTransactionHelpers.generateComponentId(100, 3, 2, 31, compCount);
 		Assert.assertTrue(
 				"checkComplex 101 - second",
 				compId.equals(new Long(101))
 		);
 		compIds.clear();
 		compIds.add(compId);
-		ZooKeeperTransactionCreatorHelpers.updateCompCount(compCount, compIds);
-		compId = ZooKeeperTransactionCreatorHelpers.generateComponentId(100, 3, 2, 21, compCount);
+		ZooKeeperTransactionHelpers.updateCompCount(compCount, compIds);
+		compId = ZooKeeperTransactionHelpers.generateComponentId(100, 3, 2, 21, compCount);
 		Assert.assertTrue(
 				"checkComplex 102 - first",
 				compId.equals(new Long(102))
 		);		
 		compIds.clear();
 		compIds.add(compId);
-		ZooKeeperTransactionCreatorHelpers.updateCompCount(compCount, compIds);
-		compId = ZooKeeperTransactionCreatorHelpers.generateComponentId(100, 3, 2, 4, compCount);
+		ZooKeeperTransactionHelpers.updateCompCount(compCount, compIds);
+		compId = ZooKeeperTransactionHelpers.generateComponentId(100, 3, 2, 4, compCount);
 		Assert.assertTrue(
 				"checkComplex 100 - second",
 				compId.equals(new Long(100))
 		);		
 		compIds.clear();
 		compIds.add(compId);
-		ZooKeeperTransactionCreatorHelpers.updateCompCount(compCount, compIds);
-		compId = ZooKeeperTransactionCreatorHelpers.generateComponentId(100, 3, 2, 75, compCount);
+		ZooKeeperTransactionHelpers.updateCompCount(compCount, compIds);
+		compId = ZooKeeperTransactionHelpers.generateComponentId(100, 3, 2, 75, compCount);
 		Assert.assertTrue(
 				"checkComplex 102 - second",
 				compId.equals(new Long(102))
 		);
 		compIds.clear();
 		compIds.add(compId);
-		ZooKeeperTransactionCreatorHelpers.updateCompCount(compCount, compIds);
+		ZooKeeperTransactionHelpers.updateCompCount(compCount, compIds);
 	}
 	
 	@Test
@@ -155,10 +155,10 @@ public class ZooKeeperTransactionCreatorHelperUnitTests
 		final Long singleCompLimit = new Long(3);
 		for (long i = 0; i < singleCompLimit * numComps; ++i)
 		{
-			compId = ZooKeeperTransactionCreatorHelpers.generateComponentId(firstComp, numComps, singleCompLimit, i * i, compCount);
+			compId = ZooKeeperTransactionHelpers.generateComponentId(firstComp, numComps, singleCompLimit, i * i, compCount);
 			compIds.clear();
 			compIds.add(compId);
-			ZooKeeperTransactionCreatorHelpers.updateCompCount(compCount, compIds);
+			ZooKeeperTransactionHelpers.updateCompCount(compCount, compIds);
 		}
 		Assert.assertTrue(
 				"checkReal - size",

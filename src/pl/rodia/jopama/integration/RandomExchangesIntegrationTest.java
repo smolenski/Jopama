@@ -7,7 +7,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.SortedSet;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
 
 import org.apache.logging.log4j.LogManager;
@@ -37,6 +40,7 @@ public class RandomExchangesIntegrationTest
 			Integer NUM_TRANSACTIONS,
 			Integer TRANSACTION_REPEAT_COUNT,
 			Integer NUM_IN_FLIGHT_IN_INITIATOR,
+			Integer SINGLE_COMPONENT_LIMIT,
 			Integer DURATION_SEC
 	) throws InterruptedException, ExecutionException
 	{
@@ -82,7 +86,8 @@ public class RandomExchangesIntegrationTest
 		Random random = new Random(
 				seed
 		);
-		List<ObjectId> transactionIds = new LinkedList<ObjectId>();
+		SortedSet<ObjectId> transactionIds = new TreeSet<ObjectId>();
+		SortedMap<ObjectId, Transaction> allTransactions = new TreeMap<ObjectId, Transaction>();
 		for (int it = 0; it < NUM_TRANSACTIONS; ++it)
 		{
 			Long transactionLongId = new Long(
@@ -107,35 +112,37 @@ public class RandomExchangesIntegrationTest
 				);
 			}
 			Function randomExchangeFunction = new RandomExchangeFunction(transactionLongId, seed + transactionLongId);
+			Transaction transaction = new Transaction(
+				TransactionPhase.INITIAL,
+				transactionComponents,
+				randomExchangeFunction
+			);
 			ObjectId transactionId = storageAccess.createTransaction(
 					transactionLongId,
 					new ExtendedTransaction(
-							new Transaction(
-									TransactionPhase.INITIAL,
-									transactionComponents,
-									randomExchangeFunction
-							),
+							transaction,
 							new Integer(
 									0
 							)
 					)
 			);
+			allTransactions.put(transactionId, transaction);
 			transactionIds.add(transactionId);
 		}
 
-		Map<Integer, List<ObjectId>> integratorTransactions = new HashMap<Integer, List<ObjectId>>();
+		Map<Integer, SortedMap<ObjectId, Transaction>> integratorTransactions = new HashMap<Integer, SortedMap<ObjectId, Transaction>>();
 		for (int ii = 0; ii < NUM_INTEGRATORS; ++ii)
 		{
 			integratorTransactions.put(
 					new Integer(
 							ii
 					),
-					new LinkedList<ObjectId>()
+					new TreeMap<ObjectId, Transaction>()
 			);
 		}
-		for (int it = 0; it < NUM_TRANSACTIONS; ++it)
+		//for (int it = 0; it < NUM_TRANSACTIONS; ++it)
+		for (ObjectId transactionId : transactionIds)
 		{
-			ObjectId transactionId = transactionIds.get(it);
 			Set<Integer> integratorIds = new HashSet<Integer>();
 			while (
 				integratorIds.size() < TRANSACTION_REPEAT_COUNT
@@ -151,8 +158,9 @@ public class RandomExchangesIntegrationTest
 			{
 				integratorTransactions.get(
 						integratorId
-				).add(
-						transactionId
+				).put(
+						transactionId,
+						allTransactions.get(transactionId)
 				);
 			}
 		}
@@ -161,14 +169,13 @@ public class RandomExchangesIntegrationTest
 		Long processingStartTimeMillis = System.currentTimeMillis();
 		for (int ii = 0; ii < NUM_INTEGRATORS; ++ii)
 		{
-			List<ObjectId> transactions = integratorTransactions.get(
-					ii
-			);
+			SortedMap<ObjectId, Transaction> transactions = integratorTransactions.get(ii);
 			Integrator integrator = new Integrator(
 					"Integrator_" + ii,
 					storageGateway,
 					transactions,
-					NUM_IN_FLIGHT_IN_INITIATOR
+					NUM_IN_FLIGHT_IN_INITIATOR,
+					SINGLE_COMPONENT_LIMIT
 			);
 			integrators.add(
 					integrator

@@ -1,4 +1,4 @@
-package pl.rodia.jopama.integration.zookeeper;
+package pl.rodia.jopama.integration;
 
 import java.util.Map;
 import java.util.Set;
@@ -7,8 +7,9 @@ import java.util.TreeSet;
 
 import pl.rodia.jopama.data.ObjectId;
 import pl.rodia.jopama.data.Transaction;
+import pl.rodia.jopama.integration.zookeeper.ZooKeeperObjectId;
 
-public class ZooKeeperTransactionCreatorHelpers
+public class ZooKeeperTransactionHelpers
 {
 	
 	static public Long getNumUnusableComponents(long singleComponentLimit, Map<Long, Long> compCount)
@@ -32,7 +33,7 @@ public class ZooKeeperTransactionCreatorHelpers
 		SortedMap<Long, Long> compCount
 	)
 	{
-		long numUnusable = ZooKeeperTransactionCreatorHelpers.getNumUnusableComponents(singleComponentLimit, compCount).longValue();
+		long numUnusable = ZooKeeperTransactionHelpers.getNumUnusableComponents(singleComponentLimit, compCount).longValue();
 		assert (numUnusable < numComponents);
 		Long componentSeq = Math.floorMod(
 			desiredSeqDisc,
@@ -66,8 +67,8 @@ public class ZooKeeperTransactionCreatorHelpers
 	}
 	
 	static public Boolean allCompsBelowLimit(
-		long singleComponentLimit,
-		SortedMap<Long, Long> compsCount,
+		Integer singleComponentLimit,
+		Map<Long, Long> compsCount,
 		Set<Long> compIds
 	)
 	{
@@ -100,7 +101,7 @@ public class ZooKeeperTransactionCreatorHelpers
 	
 	static public void updateCompCount(Map<Long, Long> compCount, Transaction transaction)
 	{
-		updateCompCount(compCount, ZooKeeperTransactionCreatorHelpers.getCompIds(transaction));
+		updateCompCount(compCount, ZooKeeperTransactionHelpers.getCompIds(transaction));
 	}
 
 	static public void updateCompCount(Map<Long, Long> compCount, Set<Long> compIds)

@@ -1,11 +1,6 @@
 package pl.rodia.jopama.integration.zookeeper;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
@@ -50,9 +45,7 @@ public class ZooKeeperTransactionProcessor extends ZooKeeperActorBase
 		this.integratorZooKeeperStorageGateway = new ZooKeeperStorageGateway(
 				zooKeeperMultiProvider
 		);
-		this.integrator = new Integrator("Integrator", this.integratorZooKeeperStorageGateway, new LinkedList<ObjectId>(), numOutstanding);
-		this.singleComponentLimit = singleComponentLimit;
-		this.currentTransactions = new HashMap<Long, Transaction>();
+		this.integrator = new Integrator("Integrator", this.integratorZooKeeperStorageGateway, new TreeMap<ObjectId, Transaction>(), numOutstanding, singleComponentLimit);
 		this.numAtomicAsyncOperations = new AtomicInteger(0);
 		this.statsCollector = new StatsCollector(
 				this.integrator.getStatsSources()
@@ -164,6 +157,7 @@ public class ZooKeeperTransactionProcessor extends ZooKeeperActorBase
 	)
 	{
 		assert numAtomicAsyncOperations.get() == 1;
+		/*
 		Set<Long> existingIds = new HashSet<Long>();
 		for (String fileName : children)
 		{
@@ -194,10 +188,12 @@ public class ZooKeeperTransactionProcessor extends ZooKeeperActorBase
 				toConsider.add(tId);
 			}
 		}
-		numAtomicAsyncOperations.set(toConsider.size());
-		for (Long tId : toConsider)
+		*/
+		numAtomicAsyncOperations.set(children.size());
+		for (String fileName : children)
 		{
-			ZooKeeperObjectId objectId = new ZooKeeperObjectId(ZooKeeperObjectId.getTransactionUniqueName(tId));
+			ZooKeeperObjectId objectId = new ZooKeeperObjectId(fileName);
+			Long tId = objectId.getId();
 			ZooKeeperProvider zooKeeperProvider = this.zooKeeperMultiProvider.getResponsibleProvider(
 					objectId.getClusterId(this.zooKeeperMultiProvider.getNumClusters())
 			);
@@ -227,33 +223,12 @@ public class ZooKeeperTransactionProcessor extends ZooKeeperActorBase
 							{
 								if (rc == KeeperException.Code.OK.intValue())
 								{
-									schedule(
-										new Task()
-										{
-											@Override
-											public void execute()
-											{
-												Transaction transaction = ZooKeeperHelpers.deserializeTransaction(data);
-												SortedMap<Long, Long> compsCount = new TreeMap<Long, Long>();
-												for (Map.Entry<Long, Transaction> entry : currentTransactions.entrySet())
-												{
-													ZooKeeperTransactionCreatorHelpers.updateCompCount(compsCount, entry.getValue());
-												}
-												Set<Long> compIds = ZooKeeperTransactionCreatorHelpers.getCompIds(transaction);												
-												Boolean belowLimit = ZooKeeperTransactionCreatorHelpers.allCompsBelowLimit(singleComponentLimit, compsCount, compIds);
-												if (belowLimit.equals(new Boolean(true)))
-												{
-													Transaction res = currentTransactions.put(objectId.getId(), transaction);
-													assert(res == null);
-													Set<ObjectId> tIds = new HashSet<ObjectId>();
-													tIds.add(objectId);
-													integrator.paceMaker.addTransactions(tIds);
-												}
-												Integer numAsyncBefore = new Integer(numAtomicAsyncOperations.getAndDecrement());
-			                                    assert numAsyncBefore.compareTo(new Integer(0)) > 0;
-											}
-										}
-									);
+									Transaction transaction = ZooKeeperHelpers.deserializeTransaction(data);
+									SortedMap<ObjectId, Transaction> tIds = new TreeMap<ObjectId, Transaction>();
+									tIds.put(objectId, transaction);
+									integrator.paceMaker.addTransactions(tIds);
+									Integer numAsyncBefore = new Integer(numAtomicAsyncOperations.getAndDecrement());
+			                        assert numAsyncBefore.compareTo(new Integer(0)) > 0;
 								}
 								else
 								{
@@ -273,9 +248,6 @@ public class ZooKeeperTransactionProcessor extends ZooKeeperActorBase
 	Integer clusterId;
 	ZooKeeperMultiProvider integratorZooKeeperMultiProvider;
 	ZooKeeperStorageGateway integratorZooKeeperStorageGateway;
-	Integer singleComponentLimit;
-	Map<Long, Transaction> currentTransactions;
-	SortedMap<Long, Long> compsCount;
 	AtomicInteger numAtomicAsyncOperations;
 	StatsCollector statsCollector;
 	Integrator integrator;
