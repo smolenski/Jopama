@@ -157,45 +157,14 @@ public class ZooKeeperTransactionProcessor extends ZooKeeperActorBase
 	)
 	{
 		assert numAtomicAsyncOperations.get() == 1;
-		/*
-		Set<Long> existingIds = new HashSet<Long>();
-		for (String fileName : children)
-		{
-			ZooKeeperObjectId zooKeeperObjectId = new ZooKeeperObjectId(fileName);
-			Long tId = zooKeeperObjectId.getId();
-			boolean res = existingIds.add(tId);
-			assert(res == true);
-		}
-		Set<Long> idsToRemove = new HashSet<Long>();
-		for (Map.Entry<Long, Transaction> entry : this.currentTransactions.entrySet())
-		{
-			if (!existingIds.contains(entry.getKey()))
-			{
-				boolean res = idsToRemove.add(entry.getKey());
-				assert(res == true);
-			}
-		}
-		for (Long tId : idsToRemove)
-		{
-			Transaction result = this.currentTransactions.remove(tId);
-			assert(result != null);
-		}
-		Set<Long> toConsider = new HashSet<Long>();
-		for (Long tId : existingIds)
-		{
-			if (!this.currentTransactions.containsKey(tId))
-			{
-				toConsider.add(tId);
-			}
-		}
-		*/
 		numAtomicAsyncOperations.set(children.size());
 		for (String fileName : children)
 		{
 			ZooKeeperObjectId objectId = new ZooKeeperObjectId(fileName);
 			Long tId = objectId.getId();
+            assert(objectId.getClusterId(this.zooKeeperMultiProvider.getNumClusters()).equals(this.clusterId));
 			ZooKeeperProvider zooKeeperProvider = this.zooKeeperMultiProvider.getResponsibleProvider(
-					objectId.getClusterId(this.zooKeeperMultiProvider.getNumClusters())
+				this.clusterId	
 			);
 			synchronized (zooKeeperProvider)
 			{
@@ -227,14 +196,9 @@ public class ZooKeeperTransactionProcessor extends ZooKeeperActorBase
 									SortedMap<ObjectId, Transaction> tIds = new TreeMap<ObjectId, Transaction>();
 									tIds.put(objectId, transaction);
 									integrator.paceMaker.addTransactions(tIds);
-									Integer numAsyncBefore = new Integer(numAtomicAsyncOperations.getAndDecrement());
-			                        assert numAsyncBefore.compareTo(new Integer(0)) > 0;
 								}
-								else
-								{
-									Integer numAsyncBefore = new Integer(numAtomicAsyncOperations.getAndDecrement());
-                                    assert numAsyncBefore.compareTo(new Integer(0)) > 0;
-								}
+								Integer numAsyncBefore = new Integer(numAtomicAsyncOperations.getAndDecrement());
+                                assert numAsyncBefore.compareTo(new Integer(0)) > 0;
 							}
 						},
 						null

@@ -140,7 +140,6 @@ public class RandomExchangesIntegrationTest
 					new TreeMap<ObjectId, Transaction>()
 			);
 		}
-		//for (int it = 0; it < NUM_TRANSACTIONS; ++it)
 		for (ObjectId transactionId : transactionIds)
 		{
 			Set<Integer> integratorIds = new HashSet<Integer>();

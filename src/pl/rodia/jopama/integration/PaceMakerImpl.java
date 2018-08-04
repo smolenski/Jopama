@@ -45,6 +45,7 @@ public class PaceMakerImpl implements PaceMaker
 				0
 		);
 		this.name = name;
+        this.lastCandidate = null;
 		this.waitingTransactions = new TreeMap<ObjectId, Transaction>();
 		this.waitingTransactions.putAll(toDoTransactions);
 		this.runningTransactions = new HashMap<ObjectId, Transaction>();
