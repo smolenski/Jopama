@@ -92,9 +92,7 @@ public class ZooKeeperTransactionHelpers
 		Set<Long> ids = new TreeSet<Long>();
 		for (ObjectId compId : transaction.transactionComponents.keySet())
 		{
-			ZooKeeperObjectId zooCompId = (ZooKeeperObjectId) compId;
-			Long cId = zooCompId.getId();
-			ids.add(cId);
+			ids.add(compId.getId());
 		}
 		return ids;
 	}

@@ -100,6 +100,7 @@ public class ZooKeeperObjectId extends ObjectId implements Serializable
 		);
 	}
 	
+    @Override
 	public Long getId()
 	{
 		assert this.uniqueName.indexOf('_') + 21 == this.uniqueName.length();

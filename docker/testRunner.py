@@ -363,7 +363,7 @@ class TestRunner(object):
                 hostLogsDir=format("/var/jopamaTest/logs/%d/TP" % ins.gId)
                 self.dockerRunner.runDockerCmd(
                     hostId = ins.hostId,
-                    cmd = 'docker run -d --name %s --net host -v %s:/var/jopamaTest/logs smolenski/jopama %d pl.rodia.jopama.integration.zookeeper.ZooKeeperTransactionProcessorRunner %s %s %d %s %d %d'
+                    cmd = 'docker run -d --name %s --net host -v %s:/var/jopamaTest/logs smolenski/jopama %d pl.rodia.jopama.integration.zookeeper.ZooKeeperTransactionProcessorRunner %s %s %d %s %d %d %d'
                     %
                     (
                         name,
@@ -374,7 +374,8 @@ class TestRunner(object):
                         self.args.clusterSize,
                         '/StartFinish',
                         ins.clId,
-                        self.args.outForTP
+                        self.args.outForTP,
+                        self.args.sclForTP
                     ),
                 )
 
@@ -401,7 +402,7 @@ class TestRunner(object):
                         self.args.firstComp,
                         self.args.numComp,
                         self.args.compsInTra,
-                        self.args.singleCompLimit
+                        self.args.sclForTC
                     ),
                 )
 
@@ -602,7 +603,8 @@ if __name__ == '__main__':
     parser.add_argument('-firstComp', type=int, required=True, dest='firstComp', help="First component")
     parser.add_argument('-numComp', type=int, required=True, dest='numComp', help="Number of components")
     parser.add_argument('-compsInTra', type=int, required=True, dest='compsInTra', help="Components in transaction")
-    parser.add_argument('-singleCompLimit', type=int, required=True, dest='singleCompLimit', help="Single component limit in not processed transactions")
+    parser.add_argument('-sclForTC', type=int, required=True, dest='sclForTC', help="Single component limit in created not removed transactions")
+    parser.add_argument('-sclForTP', type=int, required=True, dest='sclForTP', help="Single component limit in transactions being processed")
     parser.add_argument('-outForTC', type=int, required=True, dest='outForTC', help="Outstanding transactions for creator")
     parser.add_argument('-outForTP', type=int, required=True, dest='outForTP', help="Outstanding transactions for processor")
     parser.add_argument('-duration', type=int, required=True, dest='duration', help="Test duration")

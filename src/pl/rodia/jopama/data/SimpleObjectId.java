@@ -23,6 +23,12 @@ public class SimpleObjectId extends ObjectId implements Serializable
 	}
 
 	@Override
+    public Long getId()
+    {
+        return this.id;
+    }
+
+	@Override
 	public int hashCode()
 	{
 		final int prime = 31;

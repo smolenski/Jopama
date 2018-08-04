@@ -226,7 +226,7 @@
 		<delete dir="${tests.perf.dir.tp}"/>
 		<mkdir dir="${tests.perf.dir.tp}"/>
 		<java fork="true" dir="${tests.perf.dir.tp}" classname="${transactionProcessor.class}">
-			<arg line="TP 127.0.0.1:2181 1 /StartFinish 0 5" />
+			<arg line="TP 127.0.0.1:2181 1 /StartFinish 0 5 3" />
 			<jvmarg value="-ea" />
 			<classpath>
 				<path refid="libraries" />
