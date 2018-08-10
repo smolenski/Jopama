@@ -162,11 +162,20 @@ public class ZooKeeperTransactionCreator extends ZooKeeperActorBase
 			transactionComponents.size() < this.numComponentsInTransaction
 		)
 		{
+            Long componentHint;
+            if (usableComps.equals(this.numComponentsInTransaction))
+            {
+                componentHint = new Long(transactionComponents.size());   
+            }
+            else
+            {
+                componentHint = new Long(this.random.nextLong());
+            }
 			Long componentId = ZooKeeperTransactionHelpers.generateComponentId(
 				this.firstComponentId.longValue(),
 				this.numComponents.longValue(),
 				this.singleComponentLimit.longValue(),
-				this.random.nextLong(),
+				componentHint,
 				compsCount
 			);
 			transactionComponents.put(
