@@ -36,7 +36,7 @@ function getMachinesString()
     echo $str
 }
 
-NUM_MACHINES=6
+NUM_MACHINES=48
 export JOPAMA_DIR=/var/jopamaTest
 export DM_DRIVER=kvm
 export DM_DRIVER=amazonec2
@@ -74,13 +74,14 @@ function performTestForSingle()
 
 function performSeqTests
 {
-    local sbdir=/home/barbara/zoo/zookeeper-3.4.9/code/Jopama/docker/perfSeqTestingResultsE_${NUM_MACHINES}
+    local sbdir=/home/barbara/zoo/zookeeper-3.4.9/code/Jopama/docker/perfSeqTestingResultsF_${NUM_MACHINES}
     local stdir=""
     local mult=$((NUM_MACHINES / 3))
     local multStr=$(printf "%02d" ${mult})
     local lastCreated=""
     #for numComps in 1 2 4 16 64 256 1024 16384; do
-    for numComps in 1 2; do
+    #for numComps in 1 256 4096 32768; do
+    for numComps in 2 4 32; do
         export NUM_COMPS=${numComps} 
         stdir=${sbdir}/comps${numComps}/mult_${multStr}
         mkdir -p $stdir
