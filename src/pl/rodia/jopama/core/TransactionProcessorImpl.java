@@ -33,9 +33,11 @@ public class TransactionProcessorImpl extends TransactionProcessor implements St
 			super();
 			this.done = done;
 			this.startTimeMs = startTimeMs;
+			this.numAsyncScheduled = new Integer(0);
 		}
 		Task done;
 		Long startTimeMs;
+		Integer numAsyncScheduled;
 	};
 
 	public TransactionProcessorImpl(
@@ -163,7 +165,7 @@ public class TransactionProcessorImpl extends TransactionProcessor implements St
 					}
 				},
 				new Long(
-						3 * 1000
+						1 * 100
 				)
 		);
 	}
@@ -172,11 +174,8 @@ public class TransactionProcessorImpl extends TransactionProcessor implements St
 			ObjectId transactionId
 	)
 	{
-		if (
-			this.transactions.containsKey(
-					transactionId
-			) == false
-		)
+		TransactionEntry entry = this.transactions.get(transactionId);
+		if (entry == null || !entry.numAsyncScheduled.equals(new Integer(0)))
 		{
 			return;
 		}
@@ -267,6 +266,9 @@ public class TransactionProcessorImpl extends TransactionProcessor implements St
 		ObjectId componentId
 	)
 	{
+		TransactionEntry entry = this.transactions.get(transactionId);
+		assert entry != null;
+		entry.numAsyncScheduled = new Integer(entry.numAsyncScheduled.intValue() + 1);
 		return new NewComponentVersionFeedback()
 		{
 			@Override
@@ -274,6 +276,7 @@ public class TransactionProcessorImpl extends TransactionProcessor implements St
 					ExtendedComponent extendedComponent
 			)
 			{
+				entry.numAsyncScheduled = new Integer(entry.numAsyncScheduled.intValue() - 1);
 				assert (extendedComponent != null);
 				if (transactions.get(transactionId) == null)
 				{
@@ -304,6 +307,7 @@ public class TransactionProcessorImpl extends TransactionProcessor implements St
 					ErrorCode errorCode
 			)
 			{
+				entry.numAsyncScheduled = new Integer(entry.numAsyncScheduled.intValue() - 1);
 				componentUpdateFailed.increase();
 				logger.info("Failure, transactionId: " + transactionId + " componentId: " + componentId + " errorCode: " + errorCode);
 				assert errorCode != ErrorCode.NOT_EXISTS;
@@ -315,6 +319,9 @@ public class TransactionProcessorImpl extends TransactionProcessor implements St
 			ObjectId transactionId
 	)
 	{
+		TransactionEntry entry = this.transactions.get(transactionId);
+		assert entry != null;
+		entry.numAsyncScheduled = new Integer(entry.numAsyncScheduled.intValue() + 1);
 		return new NewTransactionVersionFeedback()
 		{
 			@Override
@@ -322,6 +329,7 @@ public class TransactionProcessorImpl extends TransactionProcessor implements St
 					ExtendedTransaction extendedTransaction
 			)
 			{
+				entry.numAsyncScheduled = new Integer(entry.numAsyncScheduled.intValue() - 1);
 				assert (extendedTransaction != null);
 				if (transactions.get(transactionId) == null)
 				{
@@ -352,6 +360,7 @@ public class TransactionProcessorImpl extends TransactionProcessor implements St
 					ErrorCode errorCode
 			)
 			{
+				entry.numAsyncScheduled = new Integer(entry.numAsyncScheduled.intValue() - 1);
 				transactionUpdateFailed.increase();
 				if (
 					errorCode == ErrorCode.NOT_EXISTS

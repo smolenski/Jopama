@@ -36,7 +36,7 @@ function getMachinesString()
     echo $str
 }
 
-NUM_MACHINES=48
+NUM_MACHINES=3
 export JOPAMA_DIR=/var/jopamaTest
 export DM_DRIVER=kvm
 export DM_DRIVER=amazonec2
@@ -56,40 +56,60 @@ function performTestForMult()
         echo "performTestForMult: NUM_COMPS not set"
         return 1
     fi
-    { python -u testRunner.py -dockerRunnerArg "DOCKERMACHINE:ens5;${mstr}" -outputDir /tmp/jopamaResults -numClusters $numClusters -clusterSize 3 -numTP 3 -numTC 1 -firstComp 100 -numComp ${NUM_COMPS} -compsInTra 1 -sclForTC $((512 / ${NUM_COMPS})) -sclForTP 1 -outForTC 512 -outForTP 40 -duration 180 2>&1; } | tee ~/dockerLogs/testRunner_$(date +%Y%m%d_%H%M%S).log
+    if [[ -z ${COMPS_IN_TRANS} ]]; then
+        echo "performTestForMult: COMPS_IN_TRANS not set"
+        return 1
+    fi
+    { python -u testRunner.py -dockerRunnerArg "DOCKERMACHINE:ens5;${mstr}" -outputDir /tmp/jopamaResults -numClusters $numClusters -clusterSize 3 -numTP 3 -numTC 1 -firstComp 100 -numComp ${NUM_COMPS} -compsInTra ${COMPS_IN_TRANS} -sclForTC $((2 * 512 * ${COMPS_IN_TRANS} / ${NUM_COMPS})) -sclForTP 1 -outForTC 512 -outForTP 40 -duration 180 2>&1; } | tee ~/dockerLogs/testRunner_$(date +%Y%m%d_%H%M%S).log
 }
 
-function performTestForSingle()
+function performTestForSimple()
 {
-    local mstr="myengine000,myengine001"
-    local numClusters=2
-    #local mstr="myengine000"
-    #local numClusters=1
+    if [[ $# -ne 0 ]]; then
+        echo "performTestForMult args"
+        return 1
+    fi
+    local numClusters=1
+    local clusterSize=1
     if [[ -z ${NUM_COMPS} ]]; then
         echo "performTestForMult: NUM_COMPS not set"
         return 1
     fi
-    { python -u testRunner.py -dockerRunnerArg "DOCKERMACHINE:ens5;${mstr}" -outputDir /tmp/jopamaResults -numClusters $numClusters -clusterSize 1 -numTP 1 -numTC 1 -firstComp 100 -numComp ${NUM_COMPS} -compsInTra 1 -sclForTC $((512 / ${NUM_COMPS})) -sclForTP 1 -outForTC 512 -outForTP 40 -duration 180 2>&1; } | tee ~/dockerLogs/testRunner_$(date +%Y%m%d_%H%M%S).log
+    if [[ -z ${COMPS_IN_TRANS} ]]; then
+        echo "performTestForMult: COMPS_IN_TRANS not set"
+        return 1
+    fi
+    if [[ -z ${SCL_FOR_TP} ]]; then
+        echo "performTestForMult: SCL_FOR_TP not set"
+        return 1
+    fi
+    { python -u testRunner.py -dockerRunnerArg "NATIVE:$((numClusters * clusterSize))" -outputDir /tmp/jopamaResults -alllogs -numClusters ${numClusters} -clusterSize ${clusterSize} -numTP ${clusterSize} -numTC 1 -firstComp 100 -numComp ${NUM_COMPS} -compsInTra ${COMPS_IN_TRANS} -sclForTC $((2 * 512 * ${COMPS_IN_TRANS} / ${NUM_COMPS})) -sclForTP ${SCL_FOR_TP} -outForTC 512 -outForTP 40 -duration 180 2>&1; } | tee ~/dockerLogs/testRunner_$(date +%Y%m%d_%H%M%S).log
 }
 
 function performSeqTests
 {
-    local sbdir=/home/barbara/zoo/zookeeper-3.4.9/code/Jopama/docker/perfSeqTestingResultsF_${NUM_MACHINES}
+    local sbdir=/home/barbara/zoo/zookeeper-3.4.9/code/Jopama/docker/perfSeqTestingResultsL10S_1
     local stdir=""
     local mult=$((NUM_MACHINES / 3))
     local multStr=$(printf "%02d" ${mult})
     local lastCreated=""
     #for numComps in 1 2 4 16 64 256 1024 16384; do
     #for numComps in 1 256 4096 32768; do
-    for numComps in 2 4 32; do
-        export NUM_COMPS=${numComps} 
-        stdir=${sbdir}/comps${numComps}/mult_${multStr}
-        mkdir -p $stdir
-        performTestForMult
-        lastCreated=$(ls -1c ~/dockerLogs/ | head -1)
-        mv ~/dockerLogs/${lastCreated} $stdir
-        mv /tmp/jopamaResults/stats $stdir
-        rm -fr /tmp/jopamaResults
+    for compsInTrans in 2; do
+        for numComps in 16; do
+            for sclForTP in 1 2 4 8; do
+                export COMPS_IN_TRANS=${compsInTrans}
+                export NUM_COMPS=${numComps} 
+                export SCL_FOR_TP=${sclForTP}
+                stdir=${sbdir}/comps${numComps}/cint_${compsInTrans}_scltp_${sclForTP}
+                mkdir -p $stdir
+                performTestForSimple
+                lastCreated=$(ls -1c ~/dockerLogs/ | head -1)
+                mv ~/dockerLogs/${lastCreated} $stdir
+                mv /tmp/jopamaResults $stdir
+                rm -fr /tmp/jopamaResults
+            done
+        done
     done
 }
 
