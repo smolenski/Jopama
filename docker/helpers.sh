@@ -36,7 +36,7 @@ function getMachinesString()
     echo $str
 }
 
-NUM_MACHINES=3
+NUM_MACHINES=24
 export JOPAMA_DIR=/var/jopamaTest
 export DM_DRIVER=kvm
 export DM_DRIVER=amazonec2
@@ -60,7 +60,11 @@ function performTestForMult()
         echo "performTestForMult: COMPS_IN_TRANS not set"
         return 1
     fi
-    { python -u testRunner.py -dockerRunnerArg "DOCKERMACHINE:ens5;${mstr}" -outputDir /tmp/jopamaResults -numClusters $numClusters -clusterSize 3 -numTP 3 -numTC 1 -firstComp 100 -numComp ${NUM_COMPS} -compsInTra ${COMPS_IN_TRANS} -sclForTC $((2 * 512 * ${COMPS_IN_TRANS} / ${NUM_COMPS})) -sclForTP 1 -outForTC 512 -outForTP 40 -duration 180 2>&1; } | tee ~/dockerLogs/testRunner_$(date +%Y%m%d_%H%M%S).log
+    if [[ -z ${SCL_FOR_TP} ]]; then
+        echo "performTestForMult: SCL_FOR_TP not set"
+        return 1
+    fi
+    { python -u testRunner.py -dockerRunnerArg "DOCKERMACHINE:ens5;${mstr}" -outputDir /tmp/jopamaResults -numClusters $numClusters -clusterSize 3 -numTP 3 -numTC 1 -firstComp 100 -numComp ${NUM_COMPS} -compsInTra ${COMPS_IN_TRANS} -sclForTC $((2 * 512 * ${COMPS_IN_TRANS} / ${NUM_COMPS})) -sclForTP ${SCL_FOR_TP} -outForTC 512 -outForTP 40 -duration 180 2>&1; } | tee ~/dockerLogs/testRunner_$(date +%Y%m%d_%H%M%S).log
 }
 
 function performTestForSimple()
@@ -88,22 +92,22 @@ function performTestForSimple()
 
 function performSeqTests
 {
-    local sbdir=/home/barbara/zoo/zookeeper-3.4.9/code/Jopama/docker/perfSeqTestingResultsL10S_1
+    local sbdir=/home/barbara/zoo/zookeeper-3.4.9/code/Jopama/docker/perfSeqTestingResultsP
     local stdir=""
     local mult=$((NUM_MACHINES / 3))
     local multStr=$(printf "%02d" ${mult})
     local lastCreated=""
     #for numComps in 1 2 4 16 64 256 1024 16384; do
     #for numComps in 1 256 4096 32768; do
-    for compsInTrans in 2; do
-        for numComps in 16; do
-            for sclForTP in 1 2 4 8; do
+    for compsInTrans in 2 16; do
+        for numComps in 16 4096 131072; do
+            for sclForTP in 1; do
                 export COMPS_IN_TRANS=${compsInTrans}
                 export NUM_COMPS=${numComps} 
                 export SCL_FOR_TP=${sclForTP}
-                stdir=${sbdir}/comps${numComps}/cint_${compsInTrans}_scltp_${sclForTP}
+                stdir=${sbdir}/nm${NUM_MACHINES}_comps${numComps}/cint_${compsInTrans}_scltp_${sclForTP}
                 mkdir -p $stdir
-                performTestForSimple
+                performTestForMult
                 lastCreated=$(ls -1c ~/dockerLogs/ | head -1)
                 mv ~/dockerLogs/${lastCreated} $stdir
                 mv /tmp/jopamaResults $stdir
