@@ -2,7 +2,6 @@ package pl.rodia.jopama.core;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import pl.rodia.jopama.data.ComponentChange;
 import pl.rodia.jopama.data.ExtendedComponent;
 import pl.rodia.jopama.data.ExtendedTransaction;
@@ -12,6 +11,7 @@ import pl.rodia.jopama.gateway.ErrorCode;
 import pl.rodia.jopama.gateway.NewComponentVersionFeedback;
 import pl.rodia.jopama.gateway.NewTransactionVersionFeedback;
 import pl.rodia.jopama.gateway.RemoteStorageGateway;
+import pl.rodia.jopama.stats.OperationCounter;
 import pl.rodia.jopama.stats.StatsResult;
 import pl.rodia.jopama.stats.StatsSyncSource;
 import pl.rodia.mpf.Task;
@@ -34,6 +34,12 @@ public class RemoteStorageGatewayImpl extends RemoteStorageGateway implements St
 		this.operationStats = new OperationStats(
 				this.taskRunner.name + "::RemoteStorageGateway::Operation"
 		);
+		this.componentFailureBaseVersionNotEqual = new OperationCounter("componentFailureBaseVersionNotEqual");
+		this.componentFailureStorageNotAvailable = new OperationCounter("componentFailureStorageNotAvailable");
+		this.componentFailureEntryNotExists = new OperationCounter("componentFailureEntryNotExists");
+		this.transactionFailureBaseVersionNotEqual = new OperationCounter("transactionFailureBaseVersionNotEqual");
+		this.transactionFailureStorageNotAvailable = new OperationCounter("transactionFailureStorageNotAvailable");
+		this.transactionFailureEntryNotExists = new OperationCounter("transactionFailureEntryNotExists");
 	}
 
 	@Override
@@ -265,6 +271,7 @@ public class RemoteStorageGatewayImpl extends RemoteStorageGateway implements St
 										public void execute()
 										{
 											operationResultStats.updateTransactionResult.noticeFailure();
+											transactionFailureBaseVersionNotEqual.increase();
 											Long finishTime = System.currentTimeMillis();
 											operationStats.updateTransaction.onRequestFinished(
 													finishTime - startTime
@@ -290,6 +297,15 @@ public class RemoteStorageGatewayImpl extends RemoteStorageGateway implements St
 										public void execute()
 										{
 											operationResultStats.updateTransactionResult.noticeFailure();
+											if (errorCode == ErrorCode.NOT_AVAILABLE)
+											{
+												transactionFailureStorageNotAvailable.increase();
+											}
+											else
+											{
+												assert(errorCode == ErrorCode.NOT_EXISTS);
+												transactionFailureEntryNotExists.increase();
+											}
 											Long finishTime = System.currentTimeMillis();
 											operationStats.updateTransaction.onRequestFinished(
 													finishTime - startTime
@@ -395,6 +411,7 @@ public class RemoteStorageGatewayImpl extends RemoteStorageGateway implements St
 										public void execute()
 										{
 											operationResultStats.updateComponentResult.noticeFailure();
+											componentFailureBaseVersionNotEqual.increase();
 											Long finishTime = System.currentTimeMillis();
 											operationStats.updateComponent.onRequestFinished(
 													finishTime - startTime
@@ -420,6 +437,15 @@ public class RemoteStorageGatewayImpl extends RemoteStorageGateway implements St
 										public void execute()
 										{
 											operationResultStats.updateComponentResult.noticeFailure();
+											if (errorCode == ErrorCode.NOT_AVAILABLE)
+											{
+												componentFailureStorageNotAvailable.increase();
+											}
+											else
+											{
+												assert(errorCode == ErrorCode.NOT_EXISTS);
+												componentFailureEntryNotExists.increase();
+											}
 											Long finishTime = System.currentTimeMillis();
 											operationStats.updateComponent.onRequestFinished(
 													finishTime - startTime
@@ -442,6 +468,12 @@ public class RemoteStorageGatewayImpl extends RemoteStorageGateway implements St
 		StatsResult result = new StatsResult();
 		result.addSamples(this.operationResultStats.getStats());
 		result.addSamples(this.operationStats.getStats());
+		result.addSamples(this.componentFailureBaseVersionNotEqual.getStats());
+		result.addSamples(this.componentFailureStorageNotAvailable.getStats());
+		result.addSamples(this.componentFailureEntryNotExists.getStats());
+		result.addSamples(this.transactionFailureBaseVersionNotEqual.getStats());
+		result.addSamples(this.transactionFailureStorageNotAvailable.getStats());
+		result.addSamples(this.transactionFailureEntryNotExists.getStats());
 		return result;
 	}
 
@@ -449,6 +481,12 @@ public class RemoteStorageGatewayImpl extends RemoteStorageGateway implements St
 	RemoteStorageGateway targetStorageGateway;
 	OperationStats operationStats;
 	OperationResultStats operationResultStats;
+	OperationCounter componentFailureBaseVersionNotEqual;
+	OperationCounter componentFailureStorageNotAvailable;
+	OperationCounter componentFailureEntryNotExists;
+	OperationCounter transactionFailureBaseVersionNotEqual;
+	OperationCounter transactionFailureStorageNotAvailable;
+	OperationCounter transactionFailureEntryNotExists;
 	static final Logger logger = LogManager.getLogger();
 
 }
