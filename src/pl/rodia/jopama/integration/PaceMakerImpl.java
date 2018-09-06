@@ -1,5 +1,7 @@
 package pl.rodia.jopama.integration;
 
+import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.SortedMap;
@@ -45,9 +47,9 @@ public class PaceMakerImpl implements PaceMaker
 				0
 		);
 		this.name = name;
-        this.lastCandidate = null;
 		this.waitingTransactions = new TreeMap<ObjectId, Transaction>();
 		this.waitingTransactions.putAll(toDoTransactions);
+		this.selectedTransactions = new ArrayList<Map.Entry<ObjectId, Transaction>>();
 		this.runningTransactions = new HashMap<ObjectId, Transaction>();
 		this.numRunningPace = numRunningPace;
 		this.singleComponentLimit = singleComponentLimit;
@@ -107,10 +109,12 @@ public class PaceMakerImpl implements PaceMaker
 						true
 				)
 		);
+		logger.info("PaceMakerImpl prepareToFinish done");
 	}
 
 	public void finish() throws InterruptedException, ExecutionException
 	{
+		logger.info("PaceMakerImpl finish");
 		while (
 			true
 		)
@@ -149,6 +153,7 @@ public class PaceMakerImpl implements PaceMaker
 		this.finished = new Boolean(
 				true
 		);
+		logger.info("PaceMakerImpl finish done");
 	}
 
 	public void addTransactions(
@@ -225,46 +230,47 @@ public class PaceMakerImpl implements PaceMaker
 		);
 	}
 	
-	void moveToNextEntry()
-	{
-		if (this.waitingTransactions.isEmpty())
-		{
-			this.lastCandidate = null;
-		}
-		else if (this.lastCandidate == null)
-		{
-			this.lastCandidate = this.waitingTransactions.firstKey();
-		}
-		else
-		{
-			this.lastCandidate = this.waitingTransactions.higherKey(this.lastCandidate);
-			if (this.lastCandidate == null)
-			{
-				this.lastCandidate = this.waitingTransactions.firstKey();
-			}
-		}
-	}
-	
-	ObjectId getNextTransactionIdToPass()
+	Map.Entry<ObjectId, Transaction> getNextTransactionToPass()
 	{
 		Map<Long, Long> compsCount = new HashMap<Long, Long>();
 		for (Map.Entry<ObjectId, Transaction> entry : this.runningTransactions.entrySet())
 		{
 			ZooKeeperTransactionHelpers.updateCompCount(compsCount, ZooKeeperTransactionHelpers.getCompIds(entry.getValue()));
 		}
-		for (int i = 0; i < this.waitingTransactions.size(); ++i)
+		if (this.selectedTransactions.isEmpty() && !this.waitingTransactions.isEmpty())
 		{
-			this.moveToNextEntry();
-			assert (this.lastCandidate != null);
+			for (Map.Entry<ObjectId, Transaction> entry : this.waitingTransactions.entrySet())
+			{
+				Map.Entry<ObjectId, Transaction> newEntry = new AbstractMap.SimpleEntry<ObjectId, Transaction>(entry.getKey(), entry.getValue());
+				this.selectedTransactions.add(newEntry);
+			}
+			java.util.Collections.shuffle(this.selectedTransactions);
+		}
+		if (this.selectedTransactions.isEmpty())
+		{
+			return null;
+		}
+		for (int i = 0; i < this.selectedTransactions.size(); ++i)
+		{
+			
+			Map.Entry<ObjectId, Transaction> candidateEntry = this.selectedTransactions.get(0);
+			ObjectId candidateId = candidateEntry.getKey();
 			if (ZooKeeperTransactionHelpers.allCompsBelowLimit(
 				this.singleComponentLimit,
 				compsCount,
 				ZooKeeperTransactionHelpers.getCompIds(
-					this.waitingTransactions.get(this.lastCandidate)
+					candidateEntry.getValue()
 				)
 			))
 			{
-				return this.lastCandidate;
+				this.selectedTransactions.remove(0);
+				Transaction trans = this.waitingTransactions.remove(candidateId);
+				assert(trans != null);
+				return candidateEntry;
+			}
+			else
+			{
+				this.selectedTransactions.add(this.selectedTransactions.remove(0));
 			}
 		}
 		return null;
@@ -286,24 +292,21 @@ public class PaceMakerImpl implements PaceMaker
 			this.waitingTransactions.size() > 0 && this.runningTransactions.size() < this.numRunningPace
 		)
 		{
-			ObjectId transactionId = this.getNextTransactionIdToPass();
-			if (transactionId == null)
+			Map.Entry<ObjectId, Transaction> transactionEntry = this.getNextTransactionToPass();
+			if (transactionEntry == null)
 			{
 				break;
 			}
-			Transaction transaction = this.waitingTransactions.remove(
-					transactionId
-			);
-                        if (!this.runningTransactions.containsKey(transactionId))
-                        {
-                                this.runningTransactions.put(
-                                        transactionId,
-                                        transaction
-                                );
-                                this.schedule(
-                                        transactionId
-                                );
-                        }
+            if (!this.runningTransactions.containsKey(transactionEntry.getKey()))
+            {
+            	this.runningTransactions.put(
+            			transactionEntry.getKey(),
+                        transactionEntry.getValue()
+                );
+                this.schedule(
+                        transactionEntry.getKey()
+                );
+            }
 		}
 	}
 
@@ -341,8 +344,8 @@ public class PaceMakerImpl implements PaceMaker
 	Thread taskRunnerThread;
 	Integer numFinished;
 	final String name;
-	ObjectId lastCandidate;
 	TreeMap<ObjectId, Transaction> waitingTransactions;
+	ArrayList<Map.Entry<ObjectId, Transaction>> selectedTransactions;
 	Map<ObjectId, Transaction> runningTransactions;
 	final Integer numRunningPace;
 	final Integer singleComponentLimit;
