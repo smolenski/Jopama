@@ -1,35 +1,22 @@
 # Jopama
-Scalable transactional distributed database.
 
-# Internals
-There are two types of objects stored:
-* data
-* transaction
+**Jopama** is a scalable transactional key-value store.
 
-Object:
-- rver
-- rown
-- val
-- newval
+**Jopama** provides following highly-desired properties:
 
-Transaction:
-- done
-- object data:
---- vtolock
---- vlocked
-- fun
+- **Consistency** - Always, in all scenarios
+- **Scalability for storing components** - Use more servers to store more components - Linear scalability
+- **Transaction Processing** - Allows to process transactions on components distributed in the whole system
+- **Scalability for processing transactions** - Use more servers to process more transactions - Linear scalability
+- **Fault Tolerance** - There is no single point of failures - Number of tolerated failures can be tuned (it is determined by subcluster size)
 
-* ::add
-    * create TID with fun with all objects (vtolock=NIL,vlocked=NIL)
-* ::advanceVTolock
-    * with rver,rown=NIL cmpSet(rver)(vlocked=NIL,vtolock=NIL || vtolock < rver -> vtolock=rver)
-* ::lock
-    * with vtolock cmpSet(vtolock)(rown=NIL,rver=vtolock -> rown=TID)
-    * with vlocked=NIL,rown=TID -> vlocked=rver
-* ::update
-    * with all objects rown=TID,vlocked!=NIL all objects cmpSet(rown=TID -> newval=fun(values))[i]
-    * with all objects rown[i]=TID and newval[i] != NIL -> done := true
-* ::release
-    * with done if rown[i]=TID -> with vlocked[i] cmpSet(rown=TID -> rver=vlocked+1,rval=rnewval,rnewval=NIL,rown=NIL)
-* ::delete
-    * if all objects vlocked!=NIL then if all objects rown!=NIL then remove TID
+Jopama has two main components:
+
+- Fault-tolerant non-scalable transactional key-value store (e.g. ZooKeeper) - let's call it **FTNonScalableKVStore**
+- Novel fault-tolerant algorithm for distributed transaction processing - let's call it **JopamaAlgorithm**
+
+Jopama stores components (key-value entries) and transactions on instances of *FTNonScalableKVStore*.
+*JopamaAlgorithm* is executed by *TransactionProcessors*.
+*TransactionProcessors* watch *FTNonScalableKVStore* for transactions.
+There is redundancy in *TransactionProcessors* - so that each transaction is detected and processed by *TransactionProcessor* from mutliple nodes.
+*JopamaAlgorithm* ensures that single transaction is processed consistently - no metter how many *TransactionProcessors* are processing it.
