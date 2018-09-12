@@ -71,7 +71,7 @@ Linear scalability.
 
 Bigger **Jopama** system does not increase performance if there are small number of components and many transactions.
 At some point bigger **Jopama** system generates more load - in consequence transactions are processed slower.
-It is important that **Jopama** ensures consistency/correctness in such case.
+It is important that **Jopama** ensures consistency/correctness in such a case.
 
 
 ###### TransactionSize: 16 NumComponents: 16
