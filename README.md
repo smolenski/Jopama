@@ -54,7 +54,8 @@ Linear scalability.
 
 ![](doc/perf/perf_TS_02_NC_000016.png)
 
-Bigger **Jopama** system generates more load - in consequence transactions are processed slower.
+Bigger **Jopama** system does not increase performance if there are small number of components and many transactions.
+At some point bigger **Jopama** system generates more load - in consequence transactions are processed slower.
 It is important that **Jopama** ensures consistency/correctness in such a case.
 
 
@@ -78,5 +79,6 @@ It is important that **Jopama** ensures consistency/correctness in such a case.
 
 ![](doc/perf/perf_TS_16_NC_000016.png)
 
-Bigger **Jopama** system generates more load - in consequence transactions are processed slower.
+Bigger **Jopama** system does not increase performance if there are small number of components and many transactions.
+At some point bigger **Jopama** system generates more load - in consequence transactions are processed slower.
 It is important that **Jopama** ensures consistency/correctness in such a case.
