@@ -1,5 +1,7 @@
 # Jopama
 
+## Overview
+
 **Jopama** is a scalable transactional key-value store.
 
 **Jopama** provides following highly-desired properties:
@@ -21,7 +23,7 @@ Jopama stores components (key-value entries) and transactions on instances of *F
 There is redundancy in *TransactionProcessors* - so that each transaction is detected and processed by *TransactionProcessor* from mutliple nodes.
 *JopamaAlgorithm* ensures that single transaction is processed consistently - no metter how many *TransactionProcessors* are processing it.
 
-#### Performance
+## Performance
 
 The main purpose of performance testing was to verify **Jopama** scalability.
 We tested particular workloads on different **Jopama** sizes - 3, 6, 12, 24 and 48 servers.
@@ -36,21 +38,21 @@ Single transaction performs some random permutation on values of these entries -
 Before test we create entries in such a way that values are unique.
 After test we verify that transactions were processed correctly - by checking that each value is present exactly once.
 
-###### TransactionSize: 2 NumComponents: 131072
+#### TransactionSize: 2 NumComponents: 131072
 
 ![](doc/perf/perf_TS_02_NC_131072.png)
 
 Linear scalability.
 
 
-###### TransactionSize: 2 NumComponents: 4096
+#### TransactionSize: 2 NumComponents: 4096
 
 ![](doc/perf/perf_TS_02_NC_004096.png)
 
 Linear scalability.
 
 
-###### TransactionSize: 2 NumComponents: 16
+#### TransactionSize: 2 NumComponents: 16
 
 ![](doc/perf/perf_TS_02_NC_000016.png)
 
@@ -59,14 +61,14 @@ At some point bigger **Jopama** system generates more load - in consequence tran
 It is important that **Jopama** ensures consistency/correctness in such a case.
 
 
-###### TransactionSize: 16 NumComponents: 131072
+#### TransactionSize: 16 NumComponents: 131072
 
 ![](doc/perf/perf_TS_16_NC_131072.png)
 
 Linear scalability.
 
 
-###### TransactionSize: 16 NumComponents: 4096
+#### TransactionSize: 16 NumComponents: 4096
 
 ![](doc/perf/perf_TS_16_NC_004096.png)
 
@@ -75,7 +77,7 @@ At some point bigger **Jopama** system generates more load - in consequence tran
 It is important that **Jopama** ensures consistency/correctness in such a case.
 
 
-###### TransactionSize: 16 NumComponents: 16
+#### TransactionSize: 16 NumComponents: 16
 
 ![](doc/perf/perf_TS_16_NC_000016.png)
 
